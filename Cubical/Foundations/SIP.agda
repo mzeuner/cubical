@@ -1,8 +1,9 @@
 {-# OPTIONS --cubical --safe #-}
-module Cubical.Foundations.SIP where
+module SIP  where
 
 open import Cubical.Core.Everything
 open import Cubical.Foundations.Everything
+open import Cubical.Foundations.HAEquiv
 open import Cubical.Data.Sigma.Properties
 
 variable
@@ -34,7 +35,7 @@ canonical-map : {S : Type ℓ → Type ℓ'}
                 (ρ : (A : Σ[ X ∈ (Type ℓ) ] (S X)) → ι A A (idEquiv ⟨ A ⟩))
                 {X : Type ℓ}
                 (s t : S X)
-                → (s ≡ t) →  ι (X , s) (X , t) (idEquiv X)
+                → (s ≡ t) → ι (X , s) (X , t) (idEquiv X)
 
 canonical-map ι ρ {X} s t p = transport (λ i → ι (X , s) (X , p i) (idEquiv X)) (ρ (X , s))
 --transp (λ i → ι (X , s) (X , p i) (idEquiv X)) i0 (ρ (X , s))
@@ -117,31 +118,11 @@ hom-lemma  {S = S} (ι , ρ , θ) A B p =
                    (sym (substRefl {B = S} (A .snd))) (ε t) 
 
 
-{-
 
---characterization of equality in Σ-types using subst instead of PathP
-
-≡-to-Σ : {X : Type ℓ} {A : X → Type ℓ'} (σ τ : Σ[ x ∈ X ] (A x))
-        → (σ ≡ τ) → Σ[ p ∈ (σ .fst) ≡ (τ .fst) ] (subst A p (σ .snd) ≡ (τ .snd))
-≡-to-Σ {A = A} σ τ q = J (λ y x →  Σ[ p ∈ (σ .fst) ≡ (y .fst) ] (subst A p (σ .snd) ≡ (y .snd)))
-                           ((refl , substRefl {B = A} {x = (σ .fst)} (σ .snd))) q
-
-Σ-to-≡ : {X : Type ℓ} {A : X → Type ℓ'} (σ τ : Σ[ x ∈ X ] (A x))
-        → Σ[ p ∈ (σ .fst) ≡ (τ .fst) ] (subst A p (σ .snd) ≡ (τ .snd)) → σ ≡ τ
-Σ-to-≡ {ℓ = ℓ} {ℓ' = ℓ'} {X = X} {A = A} σ τ (p , q) = (J C (λ a t
-               → D (σ .fst) (σ .snd) a ((sym (substRefl {B = A} {x = (σ .fst)} (σ .snd))) ∙ t)) p)
-                (τ .snd) q
-               where
-                C : (x : X) (r : (σ .fst) ≡ x) → Type (ℓ-max ℓ ℓ')
-                C x r = (a : A x) → (subst A r (σ .snd) ≡ a) → σ ≡ (x , a)
-
-                D : (x : X) (a b : A x) (r : a ≡ b) → (Path (Σ[ x ∈ X ] (A x)) (x , a) (x , b))
-                D x a b r = λ i → (x , r i)
-
--}
-
-
--- SIP
+-- inverse independently of SIP
+Id→Eq-ua : (A B : Type ℓ) (p : A ≡ B) → (ua (Id→Eq A B p)) ≡ p
+Id→Eq-ua A B p = J (λ b p → ua (Id→Eq A b p) ≡ p)
+                   (subst (λ f → ua f ≡ refl) (sym (Id→EqRefl A)) uaIdEquiv) p
 
 ua-Id→Eq : (A B : Type ℓ) (e : A ≃ B) → (Id→Eq A B (ua e)) ≡ e
 ua-Id→Eq A B e = EquivJ (λ b a f →  (Id→Eq a b (ua f)) ≡ f)
@@ -159,6 +140,15 @@ homEq→Id {S = S} σ A B (e , H) = sigmaPath→pathSigma A B (p , q)
                  q = ((invEquiv (hom-lemma σ A B p)) .fst)
                      (subst (λ g →  homomorphic σ A B g) (sym (ua-Id→Eq ⟨ A ⟩ ⟨ B ⟩ e)) H)
 
+-- homEq→Id' : {S : Type ℓ → Type ℓ'} (σ : SNS S ℓ'') (A B : Σ[ X ∈ (Type ℓ) ] (S X))
+--            → (A ≃[ σ ] B) → (A ≡ B)
+-- homEq→Id' {S = S} σ A B (e , H) i = (p i , q i)
+--                 where
+--                  p : ⟨ A ⟩ ≡ ⟨ B ⟩
+--                  p = ua e
+--                  q : PathP (λ i → S (p i)) (A .snd) (B .snd)
+--                  q = {!!}
+
 
 
 
@@ -175,29 +165,102 @@ homEq→Id {S = S} σ A B (e , H) = sigmaPath→pathSigma A B (p , q)
 Σ-≡-≃ {A = A} σ τ = Id→Eq (σ ≡ τ) (Σ[ p ∈ (σ .fst) ≡ (τ .fst) ] (subst A p (σ .snd) ≡ (τ .snd)))
                  (pathSigma≡sigmaPath σ τ)
 
+NatΣ : {X : Type ℓ} {A : X → Type ℓ'} {B : X → Type ℓ''}
+      → ((x : X) → (A x) → (B x)) → (Σ X A) → (Σ X B)
+NatΣ τ (x , a) = (x , τ x a)
+
 Σ-cong : {X : Type ℓ} {A B : X → Type ℓ'} →
          ((x : X) → (A x ≡ B x)) → (Σ X A ≡ Σ X B)
 Σ-cong {X = X} p i = Σ[ x ∈ X ] (p x i)
 
+
+Σ-to-≡-2 : {X : Type ℓ} {A : X → Type ℓ'} {x : X} {a b : A x}
+          → (a ≡ b) → PathP (λ i → Σ X A) (x , a) (x , b)
+Σ-to-≡-2 {x = x} p i = (x , p i)
+
+
 Σ-cong-≃ :  {X : Type ℓ} {A : X → Type ℓ'} {B : X → Type ℓ''} →
          ((x : X) → (A x ≃ B x)) → (Σ X A ≃ Σ X B)
-Σ-cong-≃ {X = X} {A = A} {B = B} H = {!!}
+Σ-cong-≃ {X = X} {A = A} {B = B} φ = isoToEquiv (iso (NatΣ f) (NatΣ g) NatΣ-ε NatΣ-η)
+ where
+  f : (x : X) → (A x) → (B x)
+  f x = equivFun (φ x)
+
+  g : (x : X) → (B x) → (A x)
+  g x = equivFun (invEquiv (φ x))
+
+  η : (x : X) → (a : A x) → (g x) ((f x) a) ≡ a
+  η x = retEq (invEquiv (φ x))
+
+  ε : (x : X) → (b : B x) → f x (g x b) ≡ b
+  ε x = secEq  (invEquiv (φ x))
+
+  NatΣ-η : (w : Σ X A) → NatΣ g (NatΣ f w) ≡ w
+  NatΣ-η (x , a)  = (x , g x (f x a)) ≡⟨ Σ-to-≡-2 (η x a)  ⟩
+                    (x , a)           ∎
+
+  NatΣ-ε : (u : Σ X B) → NatΣ f (NatΣ g u) ≡ u
+  NatΣ-ε (x , b) = (x , f x (g x b)) ≡⟨ Σ-to-≡-2 (ε x b) ⟩
+                   (x , b)           ∎
+  
 -- Id→Eq (Σ X A) (Σ X B) (Σ-cong p)
 --         where
 --          p : (x : X) → (A x ≡ B x)
 --          p x = ua (H x)
 
-Σ-change-of-variable-≃ : {X Y : Type ℓ} {A : Y → Type ℓ'} (f : X → Y)
+
+Σ-change-of-variable-Iso :  {X : Type ℓ} {Y : Type ℓ'} {A : Y → Type ℓ''} (f : X → Y)
+                           → (isHAEquiv f) → (Iso (Σ X (A ∘ f)) (Σ Y A))
+Σ-change-of-variable-Iso {ℓ = ℓ} {ℓ' = ℓ'} {X = X} {Y = Y} {A = A} f isHAEquivf = iso φ ψ φψ ψφ
+  where
+   g : Y → X
+   g = isHAEquiv.g isHAEquivf
+   ε : (x : X) → (g (f x)) ≡ x
+   ε = isHAEquiv.sec isHAEquivf
+   η : (y : Y) → f (g y) ≡ y
+   η = isHAEquiv.ret isHAEquivf
+   τ :  (x : X) → cong f (ε x) ≡ η (f x)
+   τ = isHAEquiv.com isHAEquivf
+   
+   φ : (Σ X (A ∘ f)) → (Σ Y A)
+   φ (x , a) = (f x , a)
+
+   ψ : (Σ Y A) → (Σ X (A ∘ f))
+   ψ (y , a) = (g y , subst A (sym (η y)) a)
+
+   φψ : (z : (Σ Y A)) → φ (ψ z) ≡ z
+   φψ (y , a) = sigmaPath→pathSigma (φ (ψ (y , a))) (y , a)
+                                    (η y ,  transportTransport⁻ (λ i → A (η y i)) a)
+     -- last term proves transp (λ i → A (η y i)) i0 (transp (λ i → A (η y (~ i))) i0 a) ≡ a
+
+   ψφ : (z : (Σ X (A ∘ f))) → ψ (φ z) ≡ z 
+   ψφ (x , a) = sigmaPath→pathSigma (ψ (φ (x , a))) (x , a) (ε x , q)
+     where
+      b : A (f (g (f x)))
+      b = (transp (λ i → A (η (f x) (~ i))) i0 a)
+    
+      q : transp (λ i → A (f (ε x i))) i0 (transp (λ i → A (η (f x) (~ i))) i0 a) ≡ a
+      q =  transp (λ i → A (f (ε x i))) i0 b  ≡⟨ S ⟩
+           transp (λ i → A (η (f x) i)) i0 b  ≡⟨ transportTransport⁻ (λ i → A (η (f x) i)) a ⟩
+           a                                  ∎
+       where
+        S : (transp (λ i → A (f (ε x i))) i0 b)  ≡ (transp (λ i → A (η (f x) i)) i0 b)
+        S = subst (λ p → (transp (λ i → A (f (ε x i))) i0 b)  ≡ (transp (λ i → A (p i)) i0 b))
+                 (τ x) refl
+
+Σ-change-of-variable-≃ : {X : Type ℓ} {Y : Type ℓ'} {A : Y → Type ℓ''} (f : X → Y)
                       → (isEquiv f) → ((Σ X (A ∘ f)) ≃ (Σ Y A))
-Σ-change-of-variable-≃ {ℓ = ℓ} {ℓ' = ℓ'} {X = X} {Y = Y} {A = A} f isEquivf  =  EquivJ P d
-                    Y X ((f ,  isEquivf)) A
-                      where
-                       P : (Y X : Type ℓ) (f : X ≃ Y) → Type (ℓ-max ℓ (ℓ-suc ℓ'))
-                       P Y X f = (A : Y → Type ℓ') → ((Σ X (A ∘ (f .fst))) ≃ (Σ Y A))
+Σ-change-of-variable-≃ f isEquivf =
+                      isoToEquiv (Σ-change-of-variable-Iso f (equiv→HAEquiv (f , isEquivf) .snd))
 
-                       d : (X : Type ℓ) → P X X (idEquiv X)
-                       d X A = idEquiv (Σ X A)
+                    -- EquivJ P d
+                    -- Y X ((f ,  isEquivf)) A
+                    --   where
+                    --    P : (Y X : Type ℓ) (f : X ≃ Y) → Type (ℓ-max ℓ (ℓ-suc ℓ'))
+                    --    P Y X f = (A : Y → Type ℓ') → ((Σ X (A ∘ (f .fst))) ≃ (Σ Y A))
 
+                    --    d : (X : Type ℓ) → P X X (idEquiv X)
+                    --    d X A = idEquiv (Σ X A)
 
 
 
@@ -235,16 +298,16 @@ SIP {ℓ} {ℓ'} {ℓ''} {S = S} σ A B =
             (A ≡ B)                                                  ≃⟨ i ⟩
             (Σ[ p ∈ ⟨ A ⟩ ≡ ⟨ B ⟩ ] (subst S p (A .snd) ≡ (B .snd))) ≃⟨ ii ⟩
             (Σ[ p ∈ ⟨ A ⟩ ≡ ⟨ B ⟩ ] (ι A B (Id→Eq ⟨ A ⟩ ⟨ B ⟩ p)))   ≃⟨ iii ⟩
-            (Σ[ e ∈ ⟨ A ⟩ ≃ ⟨ B ⟩ ] (ι A B e))                       ≃⟨ iv ⟩
             (A ≃[ σ ] B)                                             ■
               where
                ι = homomorphic σ
              
-               i = Σ-≡-≃ {ℓ = ℓ-suc ℓ} {X = Type ℓ} A B
+               i =   Σ-≡-≃ {ℓ = ℓ-suc ℓ} {X = Type ℓ} A B
                ii =  Σ-cong-≃ (hom-lemma σ A B)
-               iii : (Σ[ p ∈ ⟨ A ⟩ ≡ ⟨ B ⟩ ] (ι A B (Id→Eq ⟨ A ⟩ ⟨ B ⟩ p))) ≃ (Σ[ e ∈ ⟨ A ⟩ ≃ ⟨ B ⟩ ] (ι A B e))
-               iii = {!Σ-change-of-variable-≃ ? ? !} 
-               iv = idEquiv _
+               iii = Σ-change-of-variable-≃ (Id→Eq ⟨ A ⟩ ⟨ B ⟩)
+                    (isoToEquiv
+                     (iso (Id→Eq ⟨ A ⟩ ⟨ B ⟩) ua (ua-Id→Eq ⟨ A ⟩ ⟨ B ⟩) (Id→Eq-ua ⟨ A ⟩ ⟨ B ⟩)) .snd) 
+
 
 
 
@@ -272,26 +335,6 @@ transp-lemma {ℓ = ℓ} {X = X} x y p = goal
   goal = bar ∙ baz
 
 
-
-{- goal
-  where
-  goal : p ≡ λ j → comp (λ i → X) (λ k → \ { (j=i0) → x ; (j=i1) → p k }) x
-  goal = {!!}
-J (λ y p → p ≡ transport (λ i → x ≡ p i) (λ _ → x)) goal'' p
-  where
-  -- goal : refl ≡ transp (λ i → x ≡ refl i) i0 (λ _ → x)
-  -- goal = {!refl!}
-
-  -- goal' : refl ≡ λ j → comp (λ i → X) (λ k → λ { (j = i0) → x ; (j = i1) → x}) x
-  -- goal' = {!refl!}
-
-  goal'' : refl ≡ λ j → hcomp (λ k → λ { (j = i0) → transp (λ _ → X) k x ; (j = i1) → transp (λ _ → X) k x}) (transport refl x)
-  goal'' = λ j i → hcomp {φ = {!j ∨ ~ j ∨ i ∨ ~ i!}}
-                        (λ k → λ { (j=i0) → transp (\ _ → X) (i ∧ k) x ; (j=i1) → transp (\ _ → X) (i ∧ k) x ; (i=i0) → x ; (i=i1) → x })
-                        (transportRefl x j)
-  -- hfill (λ k → λ { (j = i0) → {!!} ; (j = i1) → {!transp (\ _ → X) k x!}}) (inS {!!}) j
--- fill {ℓ′ = λ _ → ℓ} (λ i → {!X!}) (λ k → λ { (j = i0) → {!!} ; (j = i1) → {!!}}) (inS x) (~ j)
--}
 
 
 
@@ -323,3 +366,27 @@ pointed-is-sns {ℓ = ℓ} = (ι , ρ , θ)
 pointed-type-to-≡ : (X Y : Type ℓ) (x : X) (y : Y) (f : (X ≃ Y))
                    → ((f .fst) x ≡ y) → (X , x) ≡ (Y , y)
 pointed-type-to-≡ X Y x y f p = homEq→Id pointed-is-sns (X , x) (Y , y) ((f , p))
+
+pointed-type-sip : (X Y : Type ℓ) (x : X) (y : Y)
+                   → ((Σ[ f ∈ X ≃ Y ] (f .fst) x ≡ y) ≃ ((X , x) ≡ (Y , y)))
+pointed-type-sip X Y x y = invEquiv (SIP pointed-is-sns (X , x) (Y , y)) 
+
+
+
+-- -- Type embeddings
+-- module _ (X : Type ℓ) where
+
+--  is-embedding : {Y : Type ℓ'} (f : Y → X) → Type (ℓ-max ℓ ℓ')
+--  is-embedding {Y = Y} f = (y : Y) → isContr (fiber f (f y))
+              
+--  Subtypes-structure : Type ℓ' → Type (ℓ-max ℓ ℓ')
+--  Subtypes-structure Y = Σ[ f ∈ (Y → X) ](is-embedding f)
+
+--  Subtype : Type (ℓ-max ℓ (ℓ-suc ℓ'))
+--  Subtype {ℓ' = ℓ'} = Σ (Type ℓ') Subtypes-structure
+
+--  subtypes-is-sns : SNS {ℓ = ℓ'} Subtypes-structure (ℓ-max ℓ ℓ')
+--  subtypes-is-sns  = (ι , {!!}  , {!!})
+--   where
+--    ι : (A B : Subtype)  → (⟨ A ⟩ ≃ ⟨ B ⟩) → Type (ℓ-max ℓ ℓ')    
+--    ι A B f = (a : ⟨ A ⟩) → (structure A .fst) a ≡ (structure B .fst) ((f .fst) a)

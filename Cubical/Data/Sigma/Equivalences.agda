@@ -1,5 +1,5 @@
 {-# OPTIONS --cubical --safe #-}
-module Equivalences  where
+module Cubical.Data.Sigma.Equivalences  where
 
 open import Cubical.Core.Everything
 open import Cubical.Foundations.Prelude

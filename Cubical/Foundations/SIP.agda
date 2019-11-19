@@ -128,3 +128,45 @@ pointed-type-sip : (X Y : Type ℓ) (x : X) (y : Y)
 pointed-type-sip X Y x y = invEquiv (SIP pointed-structure pointed-ι pointed-is-sns (X , x) (Y , y))
  
 
+
+-- A new approach using glue types
+-- First we define the "push-forward" of an equivalence
+
+_⋆_ : (S : Type ℓ → Type ℓ') {X Y : Type ℓ} → (X ≃ Y) → (S X ≃ S Y)
+S ⋆ f = pathToEquiv (cong S (ua f))
+
+-- strong new definition of standard notion of structure.
+-- Find something easier later and give a corresponding hom-lemma
+
+
+SNS' : (S : Type ℓ → Type ℓ')
+     → ((A B : Σ[ X ∈ (Type ℓ) ] (S X)) → ((A .fst) ≃ (B .fst)) → Type ℓ'')
+     → Type (ℓ-max (ℓ-max(ℓ-suc ℓ) ℓ') ℓ'')
+SNS'  {ℓ = ℓ} S ι = (A B : Σ[ X ∈ (Type ℓ) ] (S X)) → (f : (A .fst) ≃ (B .fst))
+                  → ((equivFun (S ⋆ f)) (A .snd) ≡ (B .snd)) ≃ (ι A B f)
+
+module _(S : Type ℓ → Type ℓ')
+        (ι : (A B : Σ[ X ∈ (Type ℓ) ] (S X)) → ((A .fst) ≃ (B .fst)) → Type ℓ'')
+        (θ : SNS' S ι)
+        (X Y : Type ℓ)
+        (s : S X) (t : S Y)
+        (f : X ≃ Y)
+        (ι-f : ι (X , s) (Y , t) f)                                                where
+
+ p : X ≡ Y
+ p = ua f
+ 
+ p⋆ : S X ≡ S Y
+ p⋆ = ua (S ⋆ f)
+ --  p⋆ = (cong S p) doesn't work since (p⋆ i) is not a glue type
+
+ a : (equivFun (S ⋆ f)) s ≡ t
+ a = equivFun (invEquiv (θ (X , s) (Y , t) f)) ι-f
+ 
+ q⋆ : PathP (λ i →  p⋆ i) s t
+ q⋆ i = glue (λ { (i = i0) → s ; (i = i1) → t })  (a i)
+
+ p⋆-to-p : (i : I) → (p⋆ i) → (S (p i))
+ p⋆-to-p i x = {!!}
+
+

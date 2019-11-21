@@ -197,11 +197,19 @@ module _(S : Type ℓ → Type ℓ')
  p⋆-char : p⋆ ≡ (cong S p)
  p⋆-char = ua-lemma-2 (S X) (S Y) (cong S p)
 
- p⋆-to-p : (i : I) → (p⋆ i) ≡ (S (p i))
- p⋆-to-p i j = p⋆-char j i
+ -- p⋆-to-p : (i : I) → (p⋆ i) ≡ (S (p i))
+ -- p⋆-to-p i j = p⋆-char j i
 
+ PathP-lem : (PathP (λ i →  p⋆ i) s t) ≡ (PathP (λ i → S (p i)) s t)
+ PathP-lem = cong (λ r →  (PathP (λ i → r i) s t)) p⋆-char
  
- -- q : PathP (λ i → S (p i)) s t
- -- q i = hfill {φ = i ∨ ~ i} (λ j → {!!}) {!!} {!!}
+ -- PathP-lemma : (A B : (i : I ) → Type ℓ) → ((i : I) → (A i) ≡ (B i))
+ --              → (PathP (λ i → A i) (A i0) (A i1)) ≡ (PathP (λ i → B i) (B i0) (B i1))
+ -- PathP-lemma A B H i = ?
+              
+ q : PathP (λ i → S (p i)) s t
+ q = transport (λ i → PathP-lem i) q⋆ 
 
-
+ sip : (X , s) ≡ (Y , t)
+ sip = equivFun Σ≡ (p , q)
+ 

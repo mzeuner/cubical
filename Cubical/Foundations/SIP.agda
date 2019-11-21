@@ -132,19 +132,13 @@ pointed-type-sip X Y x y = invEquiv (SIP pointed-structure pointed-ι pointed-is
 -- A new approach using glue types
 -- First we define the "push-forward" of an equivalence
 
-_⋆_ : (S : Type ℓ → Type ℓ') {X Y : Type ℓ} → (X ≃ Y) → (S X ≃ S Y)
-S ⋆ f = pathToEquiv (cong S (ua f))
+_⋆_ : {X Y : Type ℓ} → (X ≃ Y) → (S : Type ℓ → Type ℓ') → (S X ≃ S Y)
+f ⋆ S = pathToEquiv (cong S (ua f))
 
-⋆-idEquiv : (S : Type ℓ → Type ℓ') (X : Type ℓ) → (S ⋆ idEquiv X) ≡ idEquiv (S X)
-⋆-idEquiv S X = (S ⋆ idEquiv X)           ≡⟨ cong (λ p → pathToEquiv (cong S p)) uaIdEquiv  ⟩
-                -- pathToEquiv (cong S refl) ≡⟨ refl ⟩
-                pathToEquiv refl          ≡⟨ pathToEquivRefl ⟩
-                idEquiv (S X)             ∎
-
-⋆-idEquiv-ap : (S : Type ℓ → Type ℓ') (X : Type ℓ) (s : S X) → (equivFun (S ⋆ idEquiv X)) s ≡ s
-⋆-idEquiv-ap S X s =  (equivFun (S ⋆ idEquiv X)) s  ≡⟨ cong (λ f → (equivFun f) s) (⋆-idEquiv S X) ⟩
-                      -- (equivFun (idEquiv (S X))) s  ≡⟨ refl ⟩
-                                                 s  ∎
+⋆-idEquiv : (S : Type ℓ → Type ℓ') (X : Type ℓ) → ((idEquiv X) ⋆ S) ≡ idEquiv (S X)
+⋆-idEquiv S X = ((idEquiv X) ⋆ S)  ≡⟨ cong (λ p → pathToEquiv (cong S p)) uaIdEquiv  ⟩
+                pathToEquiv refl   ≡⟨ pathToEquivRefl ⟩
+                idEquiv (S X)      ∎
 
 -- strong new definition of standard notion of structure.
 -- Find something easier later and give a corresponding hom-lemma
@@ -154,7 +148,7 @@ SNS' : (S : Type ℓ → Type ℓ')
      → ((A B : Σ[ X ∈ (Type ℓ) ] (S X)) → ((A .fst) ≃ (B .fst)) → Type ℓ'')
      → Type (ℓ-max (ℓ-max(ℓ-suc ℓ) ℓ') ℓ'')
 SNS'  {ℓ = ℓ} S ι = (A B : Σ[ X ∈ (Type ℓ) ] (S X)) → (f : (A .fst) ≃ (B .fst))
-                  → ((equivFun (S ⋆ f)) (A .snd) ≡ (B .snd)) ≃ (ι A B f)
+                  → ((equivFun (f ⋆ S)) (A .snd) ≡ (B .snd)) ≃ (ι A B f)
 
 
 SNS→SNS' : (S : Type ℓ → Type ℓ')
@@ -163,11 +157,18 @@ SNS→SNS' : (S : Type ℓ → Type ℓ')
 SNS→SNS' {ℓ = ℓ} {ℓ' = ℓ'} {ℓ'' = ℓ''} S ι θ A B f = (EquivJ P C (B .fst) (A .fst) f) (B .snd) (A .snd)
   where
    P : (X Y : Type ℓ) → Y ≃ X → Type (ℓ-max ℓ' ℓ'')
-   P X Y g = (s : S X) (t : S Y) → ((equivFun (S ⋆ g)) t ≡ s) ≃ (ι (Y , t) (X , s) g)
+   P X Y g = (s : S X) (t : S Y) → ((equivFun (g ⋆ S)) t ≡ s) ≃ (ι (Y , t) (X , s) g)
 
-   C : (X : Type ℓ) → (s t : S X) → ((equivFun (S ⋆ (idEquiv X))) t ≡ s) ≃ (ι (X , t) (X , s) (idEquiv X))
-   C X s t = subst (λ u →  (u ≡ s) ≃ (ι (X , t) (X , s) (idEquiv X))) (sym (⋆-idEquiv-ap S X t)) (θ t s) 
+   C : (X : Type ℓ) → (s t : S X) → ((equivFun ((idEquiv X) ⋆ S)) t ≡ s) ≃ (ι (X , t) (X , s) (idEquiv X))
+   C X s t = subst (λ u →  (u ≡ s) ≃ (ι (X , t) (X , s) (idEquiv X)))
+                   (sym ( cong (λ f → (equivFun f) t) (⋆-idEquiv S X))) (θ t s) 
 
+
+
+-- need a lemma about ua and bath ToEquiv that should be in the library
+ua-lemma-2 : ∀ {ℓ} (A B : Type ℓ) (p : A ≡ B) → ua (pathToEquiv p) ≡ p
+ua-lemma-2 A B p = J (λ b p → ua (pathToEquiv p) ≡ p)
+                      ((cong ua (pathToEquivRefl {A = A})) ∙ uaIdEquiv) p
 
 module _(S : Type ℓ → Type ℓ')
         (ι : (A B : Σ[ X ∈ (Type ℓ) ] (S X)) → ((A .fst) ≃ (B .fst)) → Type ℓ'')
@@ -175,37 +176,26 @@ module _(S : Type ℓ → Type ℓ')
         (X Y : Type ℓ)
         (s : S X) (t : S Y)
         (f : X ≃ Y)
-        (ι-f : ι (X , s) (Y , t) f)                                                where
+        (f-is-ι : ι (X , s) (Y , t) f)                                                where
 
  p : X ≡ Y
  p = ua f
  
  p⋆ : S X ≡ S Y
- p⋆ = ua (S ⋆ f)
- --  p⋆ = (cong S p) doesn't work since (p⋆ i) is not a glue type
+ p⋆ = ua (f ⋆ S)
+ --  p⋆ = (cong S p) doesn't work since (p⋆ i) would not be a Glue type
 
- a : (equivFun (S ⋆ f)) s ≡ t
- a = equivFun (invEquiv (θ (X , s) (Y , t) f)) ι-f
+ a : (equivFun (f ⋆ S)) s ≡ t
+ a = equivFun (invEquiv (θ (X , s) (Y , t) f)) f-is-ι
  
  q⋆ : PathP (λ i →  p⋆ i) s t
  q⋆ i = glue (λ { (i = i0) → s ; (i = i1) → t })  (a i)
 
- -- need a lemma about ua and bath ToEquiv that should be in the library
- ua-lemma-2 : ∀ {ℓ} (A B : Type ℓ) (p : A ≡ B) → ua (pathToEquiv p) ≡ p
- ua-lemma-2 A B p = J (λ b p → ua (pathToEquiv p) ≡ p) ((cong ua (pathToEquivRefl {A = A})) ∙ uaIdEquiv) p
-
  p⋆-char : p⋆ ≡ (cong S p)
  p⋆-char = ua-lemma-2 (S X) (S Y) (cong S p)
 
- -- p⋆-to-p : (i : I) → (p⋆ i) ≡ (S (p i))
- -- p⋆-to-p i j = p⋆-char j i
-
  PathP-lem : (PathP (λ i →  p⋆ i) s t) ≡ (PathP (λ i → S (p i)) s t)
  PathP-lem = cong (λ r →  (PathP (λ i → r i) s t)) p⋆-char
- 
- -- PathP-lemma : (A B : (i : I ) → Type ℓ) → ((i : I) → (A i) ≡ (B i))
- --              → (PathP (λ i → A i) (A i0) (A i1)) ≡ (PathP (λ i → B i) (B i0) (B i1))
- -- PathP-lemma A B H i = ?
               
  q : PathP (λ i → S (p i)) s t
  q = transport (λ i → PathP-lem i) q⋆ 

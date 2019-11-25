@@ -151,6 +151,13 @@ SNS'  {ℓ = ℓ} S ι = (A B : Σ[ X ∈ (Type ℓ) ] (S X)) → (f : (A .fst) 
                   → ((equivFun (f ⋆ S)) (A .snd) ≡ (B .snd)) ≃ (ι A B f)
 
 
+SNS'→SNS : (S : Type ℓ → Type ℓ')
+          → (ι : (A B : Σ[ X ∈ (Type ℓ) ] (S X)) → ((A .fst) ≃ (B .fst)) → Type ℓ'')
+          → (SNS' S ι) → (SNS S ι)
+SNS'→SNS {ℓ = ℓ} {ℓ' = ℓ'} {ℓ'' = ℓ''} S ι θ {X = X} s t = subst (λ x → ((equivFun x) s ≡ t) ≃ ι (X , s) (X , t) (idEquiv X)) (⋆-idEquiv S X) θ-id
+  where
+   θ-id = θ (X , s) (X , t) (idEquiv X)
+
 SNS→SNS' : (S : Type ℓ → Type ℓ')
           → (ι : (A B : Σ[ X ∈ (Type ℓ) ] (S X)) → ((A .fst) ≃ (B .fst)) → Type ℓ'')
           → (SNS S ι) → (SNS' S ι)
@@ -185,21 +192,23 @@ module _(S : Type ℓ → Type ℓ')
  p⋆ = ua (f ⋆ S)
  --  p⋆ = (cong S p) doesn't work since (p⋆ i) would not be a Glue type
 
- a : (equivFun (f ⋆ S)) s ≡ t
+ a : equivFun (f ⋆ S) s ≡ t
  a = equivFun (invEquiv (θ (X , s) (Y , t) f)) f-is-ι
  
  q⋆ : PathP (λ i →  p⋆ i) s t
  q⋆ i = glue (λ { (i = i0) → s ; (i = i1) → t })  (a i)
 
- p⋆-char : p⋆ ≡ (cong S p)
+ p⋆-char : p⋆ ≡ cong S p
  p⋆-char = ua-lemma-2 (S X) (S Y) (cong S p)
 
- PathP-lem : (PathP (λ i →  p⋆ i) s t) ≡ (PathP (λ i → S (p i)) s t)
- PathP-lem = cong (λ r →  (PathP (λ i → r i) s t)) p⋆-char
+ PathP-lem : (PathP (λ i → p⋆ i) s t) ≡ (PathP (λ i → S (p i)) s t)
+ PathP-lem i = PathP (λ j → p⋆-char i j) s t
+ -- cong (λ r →  (PathP (λ i → r i) s t)) p⋆-char
               
  q : PathP (λ i → S (p i)) s t
  q = transport (λ i → PathP-lem i) q⋆ 
 
  sip : (X , s) ≡ (Y , t)
- sip = equivFun Σ≡ (p , q)
+ sip i = (p i , q i)
+ -- equivFun Σ≡ (p , q)
  

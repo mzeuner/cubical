@@ -131,7 +131,6 @@ pointed-type-sip X Y x y = invEquiv (SIP pointed-structure pointed-ι pointed-is
 
 -- A new approach using glue types
 -- First we define the "push-forward" of an equivalence
-
 _⋆_ : {X Y : Type ℓ} → (X ≃ Y) → (S : Type ℓ → Type ℓ') → (S X ≃ S Y)
 f ⋆ S = pathToEquiv (cong S (ua f))
 
@@ -140,10 +139,22 @@ f ⋆ S = pathToEquiv (cong S (ua f))
                 pathToEquiv refl   ≡⟨ pathToEquivRefl ⟩
                 idEquiv (S X)      ∎
 
+-- need a lemma about ua and pathToEquiv that should be in the library
+ua-lemma-2 : ∀ {ℓ} (A B : Type ℓ) (p : A ≡ B) → ua (pathToEquiv p) ≡ p
+ua-lemma-2 A B p = J (λ b p → ua (pathToEquiv p) ≡ p)
+                      ((cong ua (pathToEquivRefl {A = A})) ∙ uaIdEquiv) p
+
+-- a small lemma characterising _⋆_ in Path types
+⋆-char : (S : Type ℓ → Type ℓ') (X Y : Type ℓ) (f : X ≃ Y) → ua (f ⋆ S) ≡ cong S (ua f)
+⋆-char S X Y f = ua-lemma-2 (S X) (S Y) (cong S (ua f))
+
+PathP-⋆-lemma :(S : Type ℓ → Type ℓ') (A B : Σ[ X ∈ (Type ℓ) ] (S X)) (f : (A .fst) ≃ (B .fst))
+               → (PathP (λ i →  ua (f ⋆ S) i) (A .snd) (B .snd)) ≡ (PathP (λ i → S ((ua f) i)) (A .snd) (B .snd))
+PathP-⋆-lemma S A B f i = PathP (λ j → (⋆-char S (A .fst) (B .fst) f) i j) (A .snd) (B .snd)
+     
+
 -- strong new definition of standard notion of structure.
--- Find something easier later and give a corresponding hom-lemma
-
-
+-- Find something easier later maybe and give a corresponding hom-lemma
 SNS' : (S : Type ℓ → Type ℓ')
      → ((A B : Σ[ X ∈ (Type ℓ) ] (S X)) → ((A .fst) ≃ (B .fst)) → Type ℓ'')
      → Type (ℓ-max (ℓ-max(ℓ-suc ℓ) ℓ') ℓ'')
@@ -151,6 +162,7 @@ SNS'  {ℓ = ℓ} S ι = (A B : Σ[ X ∈ (Type ℓ) ] (S X)) → (f : (A .fst) 
                   → ((equivFun (f ⋆ S)) (A .snd) ≡ (B .snd)) ≃ (ι A B f)
 
 
+-- a quick sanity-check that our definition is interchangible with Escardó's
 SNS'→SNS : (S : Type ℓ → Type ℓ')
           → (ι : (A B : Σ[ X ∈ (Type ℓ) ] (S X)) → ((A .fst) ≃ (B .fst)) → Type ℓ'')
           → (SNS' S ι) → (SNS S ι)
@@ -171,11 +183,37 @@ SNS→SNS' {ℓ = ℓ} {ℓ' = ℓ'} {ℓ'' = ℓ''} S ι θ A B f = (EquivJ P C
                    (sym ( cong (λ f → (equivFun f) t) (⋆-idEquiv S X))) (θ t s) 
 
 
+-- Our version of ρ and Id→homEq
+ρ' : {S : Type ℓ → Type ℓ'}
+    → {ι : (A B : Σ[ X ∈ (Type ℓ) ] (S X)) → ((A .fst) ≃ (B .fst)) → Type ℓ''}
+    → (θ : SNS' S ι)
+    → (A : Σ[ X ∈ (Type ℓ) ] (S X)) → (ι A A (idEquiv (A .fst)))
+ρ' {S = S} {ι = ι} θ A = equivFun (θ A A (idEquiv (A .fst)))
+                              (subst (λ f → (f .fst) (A .snd) ≡ (A .snd)) (sym (⋆-idEquiv S (A .fst))) refl)
 
--- need a lemma about ua and bath ToEquiv that should be in the library
-ua-lemma-2 : ∀ {ℓ} (A B : Type ℓ) (p : A ≡ B) → ua (pathToEquiv p) ≡ p
-ua-lemma-2 A B p = J (λ b p → ua (pathToEquiv p) ≡ p)
-                      ((cong ua (pathToEquivRefl {A = A})) ∙ uaIdEquiv) p
+pis :  (S : Type ℓ → Type ℓ')
+     → (ι : (A B : Σ[ X ∈ (Type ℓ) ] (S X)) → ((A .fst) ≃ (B .fst)) → Type ℓ'')
+     → (θ : SNS' S ι)
+     → (A B : Σ[ X ∈ (Type ℓ) ] (S X)) → (A ≡ B) → (A ≃[ ι ] B)
+pis S ι θ A B p = J (λ b p →  (A ≃[ ι ] b)) (idEquiv (A .fst) , ρ' θ A) p
+
+-- Now we can explicitly construct the inverse:
+sip : (S : Type ℓ → Type ℓ')
+     → (ι : (A B : Σ[ X ∈ (Type ℓ) ] (S X)) → ((A .fst) ≃ (B .fst)) → Type ℓ'')
+     → (θ : SNS' S ι)
+     → (A B : Σ[ X ∈ (Type ℓ) ] (S X)) → (A ≃[ ι ] B) → A ≡ B
+sip S ι θ A B (f , φ) i = p i , q i
+   where
+    p = ua f
+ 
+    q⋆ : PathP (λ i →  ua (f ⋆ S) i) (A .snd) (B .snd)
+    q⋆ i = glue (λ { (i = i0) → (A .snd) ; (i = i1) → (B .snd) })
+                (equivFun (invEquiv (θ A B f)) φ i)
+
+    q : PathP (λ i → S (p i)) (A .snd) (B .snd)
+    q = transport (λ i → PathP-⋆-lemma S A B f i) q⋆
+
+
 
 module _(S : Type ℓ → Type ℓ')
         (ι : (A B : Σ[ X ∈ (Type ℓ) ] (S X)) → ((A .fst) ≃ (B .fst)) → Type ℓ'')
@@ -208,7 +246,7 @@ module _(S : Type ℓ → Type ℓ')
  q : PathP (λ i → S (p i)) s t
  q = transport (λ i → PathP-lem i) q⋆ 
 
- sip : (X , s) ≡ (Y , t)
- sip i = (p i , q i)
+ -- sip : (X , s) ≡ (Y , t)
+ -- sip i = (p i , q i)
  -- equivFun Σ≡ (p , q)
  

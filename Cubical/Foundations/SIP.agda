@@ -183,7 +183,7 @@ SNS→SNS' {ℓ = ℓ} {ℓ' = ℓ'} {ℓ'' = ℓ''} S ι θ A B f = (EquivJ P C
                    (sym ( cong (λ f → (equivFun f) t) (⋆-idEquiv S X))) (θ t s) 
 
 
--- Our version of ρ and Id→homEq
+-- Our version of ρ
 ρ' : {S : Type ℓ → Type ℓ'}
     → {ι : (A B : Σ[ X ∈ (Type ℓ) ] (S X)) → ((A .fst) ≃ (B .fst)) → Type ℓ''}
     → (θ : SNS' S ι)
@@ -192,25 +192,24 @@ SNS→SNS' {ℓ = ℓ} {ℓ' = ℓ'} {ℓ'' = ℓ''} S ι θ A B f = (EquivJ P C
                               (subst (λ f → (f .fst) (A .snd) ≡ (A .snd)) (sym (⋆-idEquiv S (A .fst))) refl)
 
 
--- can we go without ρ? 
+-- Our version of Id→homEq not using J and ρ' 
 pis :  (S : Type ℓ → Type ℓ')
      → (ι : (A B : Σ[ X ∈ (Type ℓ) ] (S X)) → ((A .fst) ≃ (B .fst)) → Type ℓ'')
      → (θ : SNS' S ι)
      → (A B : Σ[ X ∈ (Type ℓ) ] (S X)) → (A ≡ B) → (A ≃[ ι ] B)
-pis S ι θ A B r =  J (λ b p →  (A ≃[ ι ] b)) (idEquiv (A .fst) , ρ' θ A) r
+pis S ι θ A B r = f , equivFun (θ A B f) (λ i → unglue (i ∨ ~ i) (q⋆⋆ i))
+   where
+    p = λ i → ((r i) .fst)
+    f = pathToEquiv p
+    q : PathP (λ i → S (p i)) (A .snd) (B .snd)
+    q = λ i → ((r i) .snd)
+    q⋆ : PathP (λ i → S (ua f i)) (A .snd) (B .snd)
+    q⋆ = subst (λ p →  PathP (λ i → S (p i)) (A .snd) (B .snd))
+               (sym (ua-lemma-2 (A .fst) (B .fst) p)) q
+    q⋆⋆ : PathP (λ i → ua (S ⋆ f) i) (A .snd) (B .snd)
+    q⋆⋆ =  transport (λ i → PathP-⋆-lemma S A B f (~ i)) q⋆
 
- -- f , equivFun (θ A B f) {!!}
- --   where
- --    p = λ i → ((r i) .fst)
- --    f = pathToEquiv p
- --    q : PathP (λ i → S (p i)) (A .snd) (B .snd)
- --    q = λ i → ((r i) .snd)
- --    q⋆ : PathP (λ i → S (ua f i)) (A .snd) (B .snd)
- --    q⋆ = subst (λ p →  PathP (λ i → S (p i)) (A .snd) (B .snd))
- --               (sym (ua-lemma-2 (A .fst) (B .fst) p)) q
- --    q⋆⋆ : PathP (λ i → ua (S ⋆ f) i) (A .snd) (B .snd)
- --    q⋆⋆ =  transport (λ i → PathP-⋆-lemma S A B f (~ i)) q⋆
-    
+--  J (λ b p →  (A ≃[ ι ] b)) (idEquiv (A .fst) , ρ' θ A) r
 
 
 

@@ -131,11 +131,11 @@ pointed-type-sip X Y x y = invEquiv (SIP pointed-structure pointed-ι pointed-is
 
 -- A new approach using glue types
 -- First we define the "push-forward" of an equivalence
-_⋆_ : {X Y : Type ℓ} → (X ≃ Y) → (S : Type ℓ → Type ℓ') → (S X ≃ S Y)
-f ⋆ S = pathToEquiv (cong S (ua f))
+_⋆_ : (S : Type ℓ → Type ℓ') → {X Y : Type ℓ} → (X ≃ Y) → (S X ≃ S Y)
+S ⋆ f = pathToEquiv (cong S (ua f))
 
-⋆-idEquiv : (S : Type ℓ → Type ℓ') (X : Type ℓ) → ((idEquiv X) ⋆ S) ≡ idEquiv (S X)
-⋆-idEquiv S X = ((idEquiv X) ⋆ S)  ≡⟨ cong (λ p → pathToEquiv (cong S p)) uaIdEquiv  ⟩
+⋆-idEquiv : (S : Type ℓ → Type ℓ') (X : Type ℓ) → (S ⋆ (idEquiv X)) ≡ idEquiv (S X)
+⋆-idEquiv S X = (S ⋆ (idEquiv X))  ≡⟨ cong (λ p → pathToEquiv (cong S p)) uaIdEquiv  ⟩
                 pathToEquiv refl   ≡⟨ pathToEquivRefl ⟩
                 idEquiv (S X)      ∎
 
@@ -145,11 +145,11 @@ ua-lemma-2 A B p = J (λ b p → ua (pathToEquiv p) ≡ p)
                       ((cong ua (pathToEquivRefl {A = A})) ∙ uaIdEquiv) p
 
 -- a small lemma characterising _⋆_ in Path types
-⋆-char : (S : Type ℓ → Type ℓ') (X Y : Type ℓ) (f : X ≃ Y) → ua (f ⋆ S) ≡ cong S (ua f)
+⋆-char : (S : Type ℓ → Type ℓ') (X Y : Type ℓ) (f : X ≃ Y) → ua (S ⋆ f) ≡ cong S (ua f)
 ⋆-char S X Y f = ua-lemma-2 (S X) (S Y) (cong S (ua f))
 
 PathP-⋆-lemma :(S : Type ℓ → Type ℓ') (A B : Σ[ X ∈ (Type ℓ) ] (S X)) (f : (A .fst) ≃ (B .fst))
-               → (PathP (λ i →  ua (f ⋆ S) i) (A .snd) (B .snd)) ≡ (PathP (λ i → S ((ua f) i)) (A .snd) (B .snd))
+               → (PathP (λ i →  ua (S ⋆ f) i) (A .snd) (B .snd)) ≡ (PathP (λ i → S ((ua f) i)) (A .snd) (B .snd))
 PathP-⋆-lemma S A B f i = PathP (λ j → (⋆-char S (A .fst) (B .fst) f) i j) (A .snd) (B .snd)
      
 
@@ -159,7 +159,7 @@ SNS' : (S : Type ℓ → Type ℓ')
      → ((A B : Σ[ X ∈ (Type ℓ) ] (S X)) → ((A .fst) ≃ (B .fst)) → Type ℓ'')
      → Type (ℓ-max (ℓ-max(ℓ-suc ℓ) ℓ') ℓ'')
 SNS'  {ℓ = ℓ} S ι = (A B : Σ[ X ∈ (Type ℓ) ] (S X)) → (f : (A .fst) ≃ (B .fst))
-                  → ((equivFun (f ⋆ S)) (A .snd) ≡ (B .snd)) ≃ (ι A B f)
+                  → ((equivFun (S ⋆ f)) (A .snd) ≡ (B .snd)) ≃ (ι A B f)
 
 
 -- a quick sanity-check that our definition is interchangible with Escardó's
@@ -176,9 +176,9 @@ SNS→SNS' : (S : Type ℓ → Type ℓ')
 SNS→SNS' {ℓ = ℓ} {ℓ' = ℓ'} {ℓ'' = ℓ''} S ι θ A B f = (EquivJ P C (B .fst) (A .fst) f) (B .snd) (A .snd)
   where
    P : (X Y : Type ℓ) → Y ≃ X → Type (ℓ-max ℓ' ℓ'')
-   P X Y g = (s : S X) (t : S Y) → ((equivFun (g ⋆ S)) t ≡ s) ≃ (ι (Y , t) (X , s) g)
+   P X Y g = (s : S X) (t : S Y) → ((equivFun (S ⋆ g)) t ≡ s) ≃ (ι (Y , t) (X , s) g)
 
-   C : (X : Type ℓ) → (s t : S X) → ((equivFun ((idEquiv X) ⋆ S)) t ≡ s) ≃ (ι (X , t) (X , s) (idEquiv X))
+   C : (X : Type ℓ) → (s t : S X) → ((equivFun (S ⋆ (idEquiv X))) t ≡ s) ≃ (ι (X , t) (X , s) (idEquiv X))
    C X s t = subst (λ u →  (u ≡ s) ≃ (ι (X , t) (X , s) (idEquiv X)))
                    (sym ( cong (λ f → (equivFun f) t) (⋆-idEquiv S X))) (θ t s) 
 
@@ -191,11 +191,28 @@ SNS→SNS' {ℓ = ℓ} {ℓ' = ℓ'} {ℓ'' = ℓ''} S ι θ A B f = (EquivJ P C
 ρ' {S = S} {ι = ι} θ A = equivFun (θ A A (idEquiv (A .fst)))
                               (subst (λ f → (f .fst) (A .snd) ≡ (A .snd)) (sym (⋆-idEquiv S (A .fst))) refl)
 
+
+-- can we go without ρ? 
 pis :  (S : Type ℓ → Type ℓ')
      → (ι : (A B : Σ[ X ∈ (Type ℓ) ] (S X)) → ((A .fst) ≃ (B .fst)) → Type ℓ'')
      → (θ : SNS' S ι)
      → (A B : Σ[ X ∈ (Type ℓ) ] (S X)) → (A ≡ B) → (A ≃[ ι ] B)
-pis S ι θ A B p = J (λ b p →  (A ≃[ ι ] b)) (idEquiv (A .fst) , ρ' θ A) p
+pis S ι θ A B r =  J (λ b p →  (A ≃[ ι ] b)) (idEquiv (A .fst) , ρ' θ A) r
+
+ -- f , equivFun (θ A B f) {!!}
+ --   where
+ --    p = λ i → ((r i) .fst)
+ --    f = pathToEquiv p
+ --    q : PathP (λ i → S (p i)) (A .snd) (B .snd)
+ --    q = λ i → ((r i) .snd)
+ --    q⋆ : PathP (λ i → S (ua f i)) (A .snd) (B .snd)
+ --    q⋆ = subst (λ p →  PathP (λ i → S (p i)) (A .snd) (B .snd))
+ --               (sym (ua-lemma-2 (A .fst) (B .fst) p)) q
+ --    q⋆⋆ : PathP (λ i → ua (S ⋆ f) i) (A .snd) (B .snd)
+ --    q⋆⋆ =  transport (λ i → PathP-⋆-lemma S A B f (~ i)) q⋆
+    
+
+
 
 -- Now we can explicitly construct the inverse:
 sip : (S : Type ℓ → Type ℓ')
@@ -206,7 +223,7 @@ sip S ι θ A B (f , φ) i = p i , q i
    where
     p = ua f
  
-    q⋆ : PathP (λ i →  ua (f ⋆ S) i) (A .snd) (B .snd)
+    q⋆ : PathP (λ i →  ua (S ⋆ f) i) (A .snd) (B .snd)
     q⋆ i = glue (λ { (i = i0) → (A .snd) ; (i = i1) → (B .snd) })
                 (equivFun (invEquiv (θ A B f)) φ i)
 
@@ -227,10 +244,10 @@ module _(S : Type ℓ → Type ℓ')
  p = ua f
  
  p⋆ : S X ≡ S Y
- p⋆ = ua (f ⋆ S)
+ p⋆ = ua (S ⋆ f)
  --  p⋆ = (cong S p) doesn't work since (p⋆ i) would not be a Glue type
 
- a : equivFun (f ⋆ S) s ≡ t
+ a : equivFun (S ⋆ f) s ≡ t
  a = equivFun (invEquiv (θ (X , s) (Y , t) f)) f-is-ι
  
  q⋆ : PathP (λ i →  p⋆ i) s t

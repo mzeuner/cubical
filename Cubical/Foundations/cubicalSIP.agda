@@ -180,3 +180,33 @@ axiom-lemma : ∀ {ℓ} {B : I → Type ℓ} → ((i : I) → isProp (B i)) → 
 axiom-lemma hB = toPathP (hB _ _ _)
 
 
+module _(S : Type ℓ → Type ℓ')
+        (ι : (A B : Σ[ X ∈ (Type ℓ) ] (S X)) → ((A .fst) ≃ (B .fst)) → Type ℓ'')
+        (axioms : (X : Type ℓ) → (S X) → Type ℓ''')
+        (axioms-are-Props : (X : Type ℓ) (s : S X) → isProp (axioms X s))
+        (θ : SNS' S ι)                                                            where
+
+ S' : Type ℓ → Type (ℓ-max ℓ' ℓ''')
+ S' X = Σ[ s ∈ S X ] (axioms X s)
+ 
+ ι' : (A B : Σ[ X ∈ (Type ℓ) ] (S' X)) → ((A .fst) ≃ (B .fst)) → Type ℓ''
+ ι' (X , (s , a)) (Y , (t , b)) f = ι (X , s) (Y , t) f
+
+ axiom-⋆-lemma : {X Y : Type ℓ} {s : S X} {t : S Y} {a : axioms X s} {b : axioms Y t}
+                (f : X ≃ Y) → (equivFun (S' ⋆ f) (s , a) ≡ (t , b)) ≃ (equivFun (S ⋆ f) s ≡ t)
+ axiom-⋆-lemma {Y = Y} {s = s} {t = t} {a = a} {b = b} f = isoToEquiv (iso φ ψ {!!} {!!})
+      where
+       φ : (equivFun (S' ⋆ f) (s , a) ≡ (t , b)) → (equivFun (S ⋆ f) s ≡ t)
+       φ r i = (r i) .fst
+       
+       ψ : (equivFun (S ⋆ f) s ≡ t) → (equivFun (S' ⋆ f) (s , a) ≡ (t , b))
+       ψ p i = p i , axiom-lemma (λ j → axioms-are-Props Y (p j)) {b0 = equivFun (S' ⋆ f) (s , a) .snd} {b1 = b} i
+
+ 
+ θ' : SNS' S' ι'
+ θ' (X , (s , a)) (Y , (t , b)) f = equivFun (S' ⋆ f) (s , a) ≡ (t , b) ≃⟨ axiom-⋆-lemma f ⟩
+                                    equivFun (S ⋆ f) s ≡ t              ≃⟨ θ (X , s) (Y , t) f ⟩
+                                 -- ι (X , s) (Y , t) f                 ≃⟨ idEquiv _ ⟩
+                                    ι' (X , (s , a)) (Y , (t , b)) f    ■
+ 
+

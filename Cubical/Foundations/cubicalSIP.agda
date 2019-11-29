@@ -179,6 +179,9 @@ axiom-lemma : ∀ {ℓ} {B : I → Type ℓ} → ((i : I) → isProp (B i)) → 
              → PathP (λ i → B i) b0 b1
 axiom-lemma hB = toPathP (hB _ _ _)
 
+axiom-lemma-isProp : ∀ {ℓ} {B : I → Type ℓ} → ((i : I) → isProp (B i)) → {b0 : B i0} {b1 : B i1}
+             → isProp (PathP (λ i → B i) b0 b1)
+axiom-lemma-isProp hB p q = {!!}
 
 module _(S : Type ℓ → Type ℓ')
         (ι : (A B : Σ[ X ∈ (Type ℓ) ] (S X)) → ((A .fst) ≃ (B .fst)) → Type ℓ'')
@@ -206,7 +209,7 @@ module _(S : Type ℓ → Type ℓ')
        η p = refl
        
        ε : retract φ ψ
-       ε r = {!!}
+       ε r =  λ i j → (r j) .fst , {!!}
        -- λ i j → (r j) .fst , {!!}
        
  

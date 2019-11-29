@@ -194,14 +194,21 @@ module _(S : Type ℓ → Type ℓ')
 
  axiom-⋆-lemma : {X Y : Type ℓ} {s : S X} {t : S Y} {a : axioms X s} {b : axioms Y t}
                 (f : X ≃ Y) → (equivFun (S' ⋆ f) (s , a) ≡ (t , b)) ≃ (equivFun (S ⋆ f) s ≡ t)
- axiom-⋆-lemma {Y = Y} {s = s} {t = t} {a = a} {b = b} f = isoToEquiv (iso φ ψ {!!} {!!})
+ axiom-⋆-lemma {Y = Y} {s = s} {t = t} {a = a} {b = b} f = isoToEquiv (iso φ ψ η ε)
       where
        φ : (equivFun (S' ⋆ f) (s , a) ≡ (t , b)) → (equivFun (S ⋆ f) s ≡ t)
        φ r i = (r i) .fst
        
        ψ : (equivFun (S ⋆ f) s ≡ t) → (equivFun (S' ⋆ f) (s , a) ≡ (t , b))
        ψ p i = p i , axiom-lemma (λ j → axioms-are-Props Y (p j)) {b0 = equivFun (S' ⋆ f) (s , a) .snd} {b1 = b} i
-
+       
+       η : section φ ψ
+       η p = refl
+       
+       ε : retract φ ψ
+       ε r = {!!}
+       -- λ i j → (r j) .fst , {!!}
+       
  
  θ' : SNS' S' ι'
  θ' (X , (s , a)) (Y , (t , b)) f = equivFun (S' ⋆ f) (s , a) ≡ (t , b) ≃⟨ axiom-⋆-lemma f ⟩

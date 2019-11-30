@@ -179,9 +179,10 @@ axiom-lemma : ∀ {ℓ} {B : I → Type ℓ} → ((i : I) → isProp (B i)) → 
              → PathP (λ i → B i) b0 b1
 axiom-lemma hB = toPathP (hB _ _ _)
 
--- axiom-lemma-isProp : ∀ {ℓ} {B : I → Type ℓ} → ((i : I) → isProp (B i)) → {b0 : B i0} {b1 : B i1}
---              → isProp (PathP (λ i → B i) b0 b1)
--- axiom-lemma-isProp hB p q i j = {!(hB j) (p j) (q j) i!}
+axiom-lemma-isProp : ∀ {ℓ} {B : I → Type ℓ} → ((i : I) → isProp (B i)) → {b0 : B i0} {b1 : B i1}
+             → isProp (PathP (λ i → B i) b0 b1)
+axiom-lemma-isProp hB p q = {!!}
+-- λ i j → (hB j) (p j) (q j) i not good enough
 
 module _(S : Type ℓ → Type ℓ')
         (ι : (A B : Σ[ X ∈ (Type ℓ) ] (S X)) → ((A .fst) ≃ (B .fst)) → Type ℓ'')
@@ -209,8 +210,20 @@ module _(S : Type ℓ → Type ℓ')
        η p = refl
        
        ε : retract φ ψ
-       ε r =  λ i j → (r j) .fst , {!!}
+       ε r = {!!}
        -- λ i j → (r j) .fst , {!!}
+
+
+-- ΣPathP : ∀ {x y}
+--   → Σ (fst x ≡ fst y) (λ a≡ → PathP (λ i → B (a≡ i)) (snd x) (snd y))
+--   → x ≡ y
+-- ΣPathP eq = λ i → (fst eq i) , (snd eq i)
+
+-- Σ≡ : {x y : Σ A B}  →
+--      Σ (fst x ≡ fst y) (λ a≡ → PathP (λ i → B (a≡ i)) (snd x) (snd y)) ≃
+--      (x ≡ y)
+-- Σ≡ {A = A} {B = B} {x} {y} = isoToEquiv (iso intro elim intro-elim elim-intro)
+
        
  
  θ' : SNS' S' ι'

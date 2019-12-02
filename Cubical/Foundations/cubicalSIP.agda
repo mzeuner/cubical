@@ -6,6 +6,7 @@ open import Cubical.Foundations.Everything
 open import Cubical.Foundations.HAEquiv
 open import Cubical.Data.Sigma.Properties
 open import Cubical.Data.Sigma.Equivalences
+open import Cubical.Data.Prod.Base
 
 private
  variable
@@ -179,9 +180,9 @@ PathP≡Path : ∀ {l} (P : I → Set l) (p : P i0) (q : P i1) →
              PathP P p q ≡ Path (P i1) (transp P i0 p) q
 PathP≡Path P p q i = PathP (λ j → P (i ∨ j)) (transp (λ j → P (i ∧ j)) (~ i) p) q
 
-axiom-lemma : ∀ {ℓ} {B : I → Type ℓ} → ((i : I) → isProp (B i)) → {b0 : B i0} {b1 : B i1}
+axiom-lemma : ∀ {ℓ} {B : I → Type ℓ} → ((i : I) → isProp (B i)) → (b0 : B i0) (b1 : B i1)
              → PathP (λ i → B i) b0 b1
-axiom-lemma hB = toPathP (hB _ _ _)
+axiom-lemma hB b0 b1 = toPathP (hB _ _ _)
 
 axiom-lemma-isProp : ∀ {ℓ} {B : I → Type ℓ} → ((i : I) → isProp (B i)) → (b0 : B i0) (b1 : B i1)
              → isProp (PathP (λ i → B i) b0 b1)
@@ -210,19 +211,21 @@ module _(S : Type ℓ → Type ℓ')
        φ r i = (r i) .fst
        
        ψ : (equivFun (S ⋆ f) s ≡ t) → (equivFun (S' ⋆ f) (s , a) ≡ (t , b))
-       ψ p i = p i , axiom-lemma (λ j → axioms-are-Props Y (p j)) {b0 = equivFun (S' ⋆ f) (s , a) .snd} {b1 = b} i
+       ψ p i = p i , axiom-lemma (λ j → axioms-are-Props Y (p j)) (equivFun (S' ⋆ f) (s , a) .snd) b i
        
        η : section φ ψ
        η p = refl
        
        ε : retract φ ψ
-       ε r i j = r j .fst , axiom-lemma-isProp (λ k → axioms-are-Props Y (r k .fst)) _ _ (λ k → axiom-lemma (λ j → axioms-are-Props Y (r j .fst)) {b0 = equivFun (S' ⋆ f) (s , a) .snd} {b1 = b} k) (λ k → (r k) .snd) i j
+       ε r i j = r j .fst , axiom-lemma-isProp (λ k → axioms-are-Props Y (r k .fst)) _ _
+                           (λ k → axiom-lemma (λ j → axioms-are-Props Y (r j .fst)) (equivFun (S' ⋆ f) (s , a) .snd) b k)
+                           (λ k → (r k) .snd) i j
        
  
  θ' : SNS' S' ι'
  θ' (X , (s , a)) (Y , (t , b)) f = equivFun (S' ⋆ f) (s , a) ≡ (t , b) ≃⟨ axiom-⋆-lemma f ⟩
                                     equivFun (S ⋆ f) s ≡ t              ≃⟨ θ (X , s) (Y , t) f ⟩
-                                 -- ι (X , s) (Y , t) f                 ≃⟨ idEquiv _ ⟩
+                                    ι (X , s) (Y , t) f                 ≃⟨ idEquiv _ ⟩
                                     ι' (X , (s , a)) (Y , (t , b)) f    ■
  
 
@@ -232,3 +235,32 @@ module _(S : Type ℓ → Type ℓ')
 -- sip and pis are inverse
 -- join of structures
 -- don't forget about queues
+
+
+-- Pointed types with SNS'
+pointed-structure : Type ℓ → Type ℓ
+pointed-structure X = X
+
+Pointed-Type : Type (ℓ-suc ℓ)
+Pointed-Type {ℓ = ℓ} = Σ (Type ℓ) pointed-structure
+
+pointed-iso : (A B : Pointed-Type) → (A .fst) ≃ (B .fst) → Type ℓ
+pointed-iso A B f = (equivFun f) (A .snd) ≡ (B .snd)
+
+pointed-is-SNS' : SNS' {ℓ = ℓ} pointed-structure pointed-iso
+pointed-is-SNS' A B f = transportEquiv (λ i → transportRefl (equivFun f (A .snd)) i ≡ B .snd)
+
+
+-- Now we're getting serious: Monoids
+monoid-structure : Type ℓ → Type ℓ
+monoid-structure X = (X → X → X) × X
+
+monoid-axioms : (X : Type ℓ) → monoid-structure X → Type ℓ
+monoid-axioms X (_·_ , e) = isSet X
+                          × ((x y z : X) → (x · (y · z)) ≡ ((x · y) · z))
+                          × ((x : X) → (x · e) ≡ x)
+                          × ((x : X) → (e · x) ≡ x)
+
+monoid-iso : (M N : Σ (Type ℓ) monoid-structure) → (M .fst) ≃ (N .fst) → Type ℓ
+monoid-iso (M , _·_ , e) (N , _∗_ , d) f = (equivFun f e ≡ d)
+                        × ((x y : M) → equivFun f (x · y) ≡ (equivFun f x) ∗ (equivFun f y))

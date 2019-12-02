@@ -55,7 +55,7 @@ A ≃[ ι ] B = Σ[ f ∈ ((A .fst) ≃ (B. fst)) ] (ι A B f)
 
 -- Before we can formulate our version of an SNS we have to introduce a bit of notation
 -- and prove a few basic results.
--- First, we define the "push-forward" of an equivalence:
+-- First, we define the "cong-≃":
 _⋆_ : (S : Type ℓ → Type ℓ') → {X Y : Type ℓ} → (X ≃ Y) → (S X ≃ S Y)
 S ⋆ f = pathToEquiv (cong S (ua f))
 
@@ -123,18 +123,18 @@ pis :  (S : Type ℓ → Type ℓ')
      → (A B : Σ[ X ∈ (Type ℓ) ] (S X)) → (A ≡ B) → (A ≃[ ι ] B)
 pis S ι θ A B r = f , equivFun (θ A B f) (λ i → unglue (i ∨ ~ i) (q⋆⋆ i))
    where
-    p = λ i → ((r i) .fst)
+    p = λ i → r i .fst
     f = pathToEquiv p
     
     q : PathP (λ i → S (p i)) (A .snd) (B .snd)
-    q = λ i → ((r i) .snd)
+    q = λ i → r i .snd
     
     q⋆ : PathP (λ i → S (ua f i)) (A .snd) (B .snd)
     q⋆ = subst (λ p →  PathP (λ i → S (p i)) (A .snd) (B .snd))
                (sym (ua-lemma-2 (A .fst) (B .fst) p)) q
                
     q⋆⋆ : PathP (λ i → ua (S ⋆ f) i) (A .snd) (B .snd)
-    q⋆⋆ =  transport (λ i → PathP-⋆-lemma S A B f (~ i)) q⋆
+    q⋆⋆ = transport (λ i → PathP-⋆-lemma S A B f (~ i)) q⋆
 
 
 -- Now we can also explicitly construct the inverse:
@@ -173,16 +173,22 @@ sip S ι θ A B (f , φ) i = p i , q i
 
 
 -- Now, we want to add axioms (i.e. propositions) to our Structure S
--- we use the following lemma due to Andrea Vezzosi:
+-- we use the following lemma due to Zesen Qian:
 -- https://github.com/riaqn/cubical/blob/hgroup/Cubical/Data/Group/Properties.agda#L83
+PathP≡Path : ∀ {l} (P : I → Set l) (p : P i0) (q : P i1) →
+             PathP P p q ≡ Path (P i1) (transp P i0 p) q
+PathP≡Path P p q i = PathP (λ j → P (i ∨ j)) (transp (λ j → P (i ∧ j)) (~ i) p) q
+
 axiom-lemma : ∀ {ℓ} {B : I → Type ℓ} → ((i : I) → isProp (B i)) → {b0 : B i0} {b1 : B i1}
              → PathP (λ i → B i) b0 b1
 axiom-lemma hB = toPathP (hB _ _ _)
 
-axiom-lemma-isProp : ∀ {ℓ} {B : I → Type ℓ} → ((i : I) → isProp (B i)) → {b0 : B i0} {b1 : B i1}
+axiom-lemma-isProp : ∀ {ℓ} {B : I → Type ℓ} → ((i : I) → isProp (B i)) → (b0 : B i0) (b1 : B i1)
              → isProp (PathP (λ i → B i) b0 b1)
-axiom-lemma-isProp hB p q = {!!}
--- λ i j → (hB j) (p j) (q j) i not good enough
+axiom-lemma-isProp {B = B} hB b0 b1 =
+  transport (λ i → isProp (PathP≡Path B b0 b1 (~ i))) (isProp→isSet (hB i1) _ _)
+
+  
 
 module _(S : Type ℓ → Type ℓ')
         (ι : (A B : Σ[ X ∈ (Type ℓ) ] (S X)) → ((A .fst) ≃ (B .fst)) → Type ℓ'')
@@ -210,20 +216,7 @@ module _(S : Type ℓ → Type ℓ')
        η p = refl
        
        ε : retract φ ψ
-       ε r = {!!}
-       -- λ i j → (r j) .fst , {!!}
-
-
--- ΣPathP : ∀ {x y}
---   → Σ (fst x ≡ fst y) (λ a≡ → PathP (λ i → B (a≡ i)) (snd x) (snd y))
---   → x ≡ y
--- ΣPathP eq = λ i → (fst eq i) , (snd eq i)
-
--- Σ≡ : {x y : Σ A B}  →
---      Σ (fst x ≡ fst y) (λ a≡ → PathP (λ i → B (a≡ i)) (snd x) (snd y)) ≃
---      (x ≡ y)
--- Σ≡ {A = A} {B = B} {x} {y} = isoToEquiv (iso intro elim intro-elim elim-intro)
-
+       ε r i j = r j .fst , axiom-lemma-isProp (λ k → axioms-are-Props Y (r k .fst)) _ _ (λ k → axiom-lemma (λ j → axioms-are-Props Y (r j .fst)) {b0 = equivFun (S' ⋆ f) (s , a) .snd} {b1 = b} k) (λ k → (r k) .snd) i j
        
  
  θ' : SNS' S' ι'
@@ -233,3 +226,9 @@ module _(S : Type ℓ → Type ℓ')
                                     ι' (X , (s , a)) (Y , (t , b)) f    ■
  
 
+
+-- Priorities:
+-- Monoids, Groups
+-- sip and pis are inverse
+-- join of structures
+-- don't forget about queues

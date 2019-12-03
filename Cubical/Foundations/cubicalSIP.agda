@@ -7,6 +7,7 @@ open import Cubical.Foundations.HAEquiv
 open import Cubical.Data.Sigma.Properties
 open import Cubical.Data.Sigma.Equivalences
 open import Cubical.Data.Prod.Base
+open import Cubical.Data.Prod.Properties
 
 private
  variable
@@ -227,6 +228,63 @@ module _(S : Type ℓ → Type ℓ')
                                     equivFun (S ⋆ f) s ≡ t              ≃⟨ θ (X , s) (Y , t) f ⟩
                                     ι (X , s) (Y , t) f                 ≃⟨ idEquiv _ ⟩
                                     ι' (X , (s , a)) (Y , (t , b)) f    ■
+ 
+
+-- Now, we want to join two structures
+technical-×-lemma : ∀ {ℓ₁ ℓ₂ ℓ₃ ℓ₄ : Level} {A : Type ℓ₁} {B : Type ℓ₂} {C : Type ℓ₃} {D : Type ℓ₄}
+                     → (A ≃ C) → (B ≃ D) → (A × B) ≃ (C × D)
+technical-×-lemma {A = A} {B = B} {C = C} {D = D} f g = isoToEquiv (iso φ ψ {!!} {!!})
+ where
+  φ : (A × B) → (C × D)
+  φ (a , b) = equivFun f a , equivFun g b
+  
+  ψ : (C × D) → (A × B)
+  ψ (c , d) = equivFun (invEquiv f) c , equivFun (invEquiv g) d
+
+-- this should hold definitionally:
+proj-lemma : {A : Type ℓ} {B : Type ℓ'} (x : A × B) → (proj₁ x , proj₂ x) ≡ x
+proj-lemma x = {!!}
+
+module _{ℓ₁ ℓ₂ ℓ₃ ℓ₄ ℓ₅ : Level}
+        (S₁ : Type ℓ₁ → Type ℓ₂)
+        (ι₁ : (A B : Σ[ X ∈ (Type ℓ₁) ] (S₁ X)) → ((A .fst) ≃ (B .fst)) → Type ℓ₃)
+        (θ₁ : SNS' S₁ ι₁)
+        (S₂ : Type ℓ₁ → Type ℓ₄)
+        (ι₂ : (A B : Σ[ X ∈ (Type ℓ₁) ] (S₂ X)) → ((A .fst) ≃ (B .fst)) → Type ℓ₅)
+        (θ₂ : SNS' S₂ ι₂)                                                            where
+
+ S : Type ℓ₁ → Type (ℓ-max ℓ₂ ℓ₄)
+ S X = (S₁ X) × (S₂ X)
+ 
+ ι : (A B : Σ[ X ∈ (Type ℓ₁) ] (S X)) → ((A .fst) ≃ (B .fst)) → Type (ℓ-max ℓ₃ ℓ₅)
+ ι (X , s₁ , s₂) (Y , t₁ , t₂) f = (ι₁ (X , s₁) (Y , t₁) f) × (ι₂ (X , s₂) (Y , t₂) f)
+
+ 
+ ⋆-to-×-lemma : {X Y : Type ℓ₁} {s₁ : S₁ X} {s₂ : S₂ X} {t₁ : S₁ Y} {t₂ : S₂ Y} (f : X ≃ Y)
+               → (equivFun (S ⋆ f) (s₁ , s₂) ≡ (t₁ , t₂)) ≃ (equivFun (S₁ ⋆ f) s₁ ≡ t₁) × (equivFun (S₂ ⋆ f) s₂ ≡ t₂)
+ ⋆-to-×-lemma {Y = Y} {s₁ = s₁} {s₂ = s₂} {t₁ = t₁} {t₂ = t₂} f = isoToEquiv (iso φ ψ η ε)
+   where
+    φ : (equivFun (S ⋆ f) (s₁ , s₂) ≡ (t₁ , t₂)) → (equivFun (S₁ ⋆ f) s₁ ≡ t₁) × (equivFun (S₂ ⋆ f) s₂ ≡ t₂)
+    φ p = (λ i → proj₁ (p i)) , (λ i → proj₂ (p i))
+    
+    ψ : (equivFun (S₁ ⋆ f) s₁ ≡ t₁) × (equivFun (S₂ ⋆ f) s₂ ≡ t₂) → (equivFun (S ⋆ f) (s₁ , s₂) ≡ (t₁ , t₂))
+    ψ (p , q) i = (p i) , (q i)
+    
+    η : section φ ψ
+    η (p , q) = refl
+    
+    ε : retract φ ψ
+    ε p = {!!}
+    -- something like λ i j → proj-lemma (p j) i
+    
+
+
+ θ : SNS' S ι
+ θ (X , s₁ , s₂) (Y , t₁ , t₂) f =
+  equivFun (S ⋆ f) (s₁ , s₂) ≡ (t₁ , t₂)                      ≃⟨ ⋆-to-×-lemma f ⟩
+  (equivFun (S₁ ⋆ f) s₁ ≡ t₁) × (equivFun (S₂ ⋆ f) s₂ ≡ t₂)   ≃⟨ technical-×-lemma (θ₁ (X , s₁) (Y , t₁) f) (θ₂ (X , s₂) (Y , t₂) f)  ⟩
+  (ι₁ (X , s₁) (Y , t₁) f) × (ι₂ (X , s₂) (Y , t₂) f)         ≃⟨ idEquiv _ ⟩
+  ι (X , s₁ , s₂) (Y , t₁ , t₂) f                             ■
  
 
 

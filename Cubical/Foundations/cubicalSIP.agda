@@ -6,8 +6,8 @@ open import Cubical.Foundations.Everything
 open import Cubical.Foundations.HAEquiv
 open import Cubical.Data.Sigma.Properties
 open import Cubical.Data.Sigma.Equivalences
-open import Cubical.Data.Prod.Base
-open import Cubical.Data.Prod.Properties
+open import Cubical.Data.Prod.Base hiding (_×_) renaming (_×Σ_ to _×_)
+
 
 private
  variable
@@ -233,7 +233,7 @@ module _(S : Type ℓ → Type ℓ')
 -- Now, we want to join two structures
 technical-×-lemma : ∀ {ℓ₁ ℓ₂ ℓ₃ ℓ₄ : Level} {A : Type ℓ₁} {B : Type ℓ₂} {C : Type ℓ₃} {D : Type ℓ₄}
                      → (A ≃ C) → (B ≃ D) → (A × B) ≃ (C × D)
-technical-×-lemma {A = A} {B = B} {C = C} {D = D} f g = isoToEquiv (iso φ ψ {!!} {!!})
+technical-×-lemma {A = A} {B = B} {C = C} {D = D} f g = isoToEquiv (iso φ ψ η ε)
  where
   φ : (A × B) → (C × D)
   φ (a , b) = equivFun f a , equivFun g b
@@ -241,9 +241,12 @@ technical-×-lemma {A = A} {B = B} {C = C} {D = D} f g = isoToEquiv (iso φ ψ {
   ψ : (C × D) → (A × B)
   ψ (c , d) = equivFun (invEquiv f) c , equivFun (invEquiv g) d
 
--- this should hold definitionally:
-proj-lemma : {A : Type ℓ} {B : Type ℓ'} (x : A × B) → (proj₁ x , proj₂ x) ≡ x
-proj-lemma x = {!!}
+  η : section φ ψ
+  η (c , d) i = retEq f c i , retEq g d i
+  
+  ε : retract φ ψ
+  ε (a , b) i = secEq f a i , secEq g b i
+
 
 module _{ℓ₁ ℓ₂ ℓ₃ ℓ₄ ℓ₅ : Level}
         (S₁ : Type ℓ₁ → Type ℓ₂)
@@ -265,7 +268,7 @@ module _{ℓ₁ ℓ₂ ℓ₃ ℓ₄ ℓ₅ : Level}
  ⋆-to-×-lemma {Y = Y} {s₁ = s₁} {s₂ = s₂} {t₁ = t₁} {t₂ = t₂} f = isoToEquiv (iso φ ψ η ε)
    where
     φ : (equivFun (S ⋆ f) (s₁ , s₂) ≡ (t₁ , t₂)) → (equivFun (S₁ ⋆ f) s₁ ≡ t₁) × (equivFun (S₂ ⋆ f) s₂ ≡ t₂)
-    φ p = (λ i → proj₁ (p i)) , (λ i → proj₂ (p i))
+    φ p = (λ i → (p i) .fst) , (λ i → (p i) .snd)
     
     ψ : (equivFun (S₁ ⋆ f) s₁ ≡ t₁) × (equivFun (S₂ ⋆ f) s₂ ≡ t₂) → (equivFun (S ⋆ f) (s₁ , s₂) ≡ (t₁ , t₂))
     ψ (p , q) i = (p i) , (q i)
@@ -274,13 +277,12 @@ module _{ℓ₁ ℓ₂ ℓ₃ ℓ₄ ℓ₅ : Level}
     η (p , q) = refl
     
     ε : retract φ ψ
-    ε p = {!!}
-    -- something like λ i j → proj-lemma (p j) i
+    ε p = refl
     
-
 
  θ : SNS' S ι
  θ (X , s₁ , s₂) (Y , t₁ , t₂) f =
+ 
   equivFun (S ⋆ f) (s₁ , s₂) ≡ (t₁ , t₂)                      ≃⟨ ⋆-to-×-lemma f ⟩
   (equivFun (S₁ ⋆ f) s₁ ≡ t₁) × (equivFun (S₂ ⋆ f) s₂ ≡ t₂)   ≃⟨ technical-×-lemma (θ₁ (X , s₁) (Y , t₁) f) (θ₂ (X , s₂) (Y , t₂) f)  ⟩
   (ι₁ (X , s₁) (Y , t₁) f) × (ι₂ (X , s₂) (Y , t₂) f)         ≃⟨ idEquiv _ ⟩
@@ -291,7 +293,6 @@ module _{ℓ₁ ℓ₂ ℓ₃ ℓ₄ ℓ₅ : Level}
 -- Priorities:
 -- Monoids, Groups
 -- sip and pis are inverse
--- join of structures
 -- don't forget about queues
 
 
@@ -307,6 +308,20 @@ pointed-iso A B f = (equivFun f) (A .snd) ≡ (B .snd)
 
 pointed-is-SNS' : SNS' {ℓ = ℓ} pointed-structure pointed-iso
 pointed-is-SNS' A B f = transportEquiv (λ i → transportRefl (equivFun f (A .snd)) i ≡ B .snd)
+
+
+-- ∞-Magmas with SNS'
+∞-magma-structure : Type ℓ → Type ℓ
+∞-magma-structure X = X → X → X
+
+∞-Magma : Type (ℓ-suc ℓ)
+∞-Magma {ℓ = ℓ} = Σ (Type ℓ) ∞-magma-structure
+
+∞-magma-iso : (A B : ∞-Magma) → (A .fst) ≃ (B .fst) → Type ℓ
+∞-magma-iso (X , _·_) (Y , _∗_) f = (x x' : X) → equivFun f (x · x')  ≡ (equivFun f x) ∗ (equivFun f x')
+
+∞-magma-is-SNS' : SNS' {ℓ = ℓ} ∞-magma-structure ∞-magma-iso
+∞-magma-is-SNS' (X , _·_) (Y , _∗_) f = {!!}
 
 
 -- Now we're getting serious: Monoids

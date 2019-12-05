@@ -311,6 +311,8 @@ pointed-is-SNS' A B f = transportEquiv (λ i → transportRefl (equivFun f (A .s
 
 
 -- ∞-Magmas with SNS'
+-- need function extensionality for binary functions
+
 ∞-magma-structure : Type ℓ → Type ℓ
 ∞-magma-structure X = X → X → X
 
@@ -318,22 +320,26 @@ pointed-is-SNS' A B f = transportEquiv (λ i → transportRefl (equivFun f (A .s
 ∞-Magma {ℓ = ℓ} = Σ (Type ℓ) ∞-magma-structure
 
 ∞-magma-iso : (A B : ∞-Magma) → (A .fst) ≃ (B .fst) → Type ℓ
-∞-magma-iso (X , _·_) (Y , _∗_) f = (x x' : X) → equivFun f (x · x')  ≡ (equivFun f x) ∗ (equivFun f x')
+∞-magma-iso (X , _·_) (Y , _∗_) f = (x x' : X) → equivFun f (x · x') ≡ (equivFun f x) ∗ (equivFun f x')
 
 ∞-magma-is-SNS' : SNS' {ℓ = ℓ} ∞-magma-structure ∞-magma-iso
-∞-magma-is-SNS' (X , _·_) (Y , _∗_) f = {!!}
-
+∞-magma-is-SNS' (X , _·_) (Y , _∗_) f = SNS→SNS' ∞-magma-structure ∞-magma-iso C (X , _·_) (Y , _∗_) f
+ where 
+  C : {X : Type ℓ} (_·_ _∗_ : X → X → X) → (_·_ ≡ _∗_) ≃ ((x x' : X) → (x · x') ≡ (x ∗ x'))
+  C _·_ _∗_ = invEquiv {!!}
+  -- should be more or less funExt
+  -- funExtEquiv (λ x → (λ x' → x · x')) (λ x → (λ x' → x ∗ x'))
 
 -- Now we're getting serious: Monoids
 monoid-structure : Type ℓ → Type ℓ
-monoid-structure X = (X → X → X) × X
+monoid-structure X = X × (X → X → X)
 
 monoid-axioms : (X : Type ℓ) → monoid-structure X → Type ℓ
-monoid-axioms X (_·_ , e) = isSet X
+monoid-axioms X (e , _·_ ) = isSet X
                           × ((x y z : X) → (x · (y · z)) ≡ ((x · y) · z))
                           × ((x : X) → (x · e) ≡ x)
                           × ((x : X) → (e · x) ≡ x)
 
 monoid-iso : (M N : Σ (Type ℓ) monoid-structure) → (M .fst) ≃ (N .fst) → Type ℓ
-monoid-iso (M , _·_ , e) (N , _∗_ , d) f = (equivFun f e ≡ d)
+monoid-iso (M , e , _·_) (N , d , _∗_) f = (equivFun f e ≡ d)
                         × ((x y : M) → equivFun f (x · y) ≡ (equivFun f x) ∗ (equivFun f y))

@@ -262,7 +262,6 @@ module _{ℓ₁ ℓ₂ ℓ₃ ℓ₄ ℓ₅ : Level}
  ι : (A B : Σ[ X ∈ (Type ℓ₁) ] (S X)) → ((A .fst) ≃ (B .fst)) → Type (ℓ-max ℓ₃ ℓ₅)
  ι (X , s₁ , s₂) (Y , t₁ , t₂) f = (ι₁ (X , s₁) (Y , t₁) f) × (ι₂ (X , s₂) (Y , t₂) f)
 
- 
  ⋆-to-×-lemma : {X Y : Type ℓ₁} {s₁ : S₁ X} {s₂ : S₂ X} {t₁ : S₁ Y} {t₂ : S₂ Y} (f : X ≃ Y)
                → (equivFun (S ⋆ f) (s₁ , s₂) ≡ (t₁ , t₂)) ≃ (equivFun (S₁ ⋆ f) s₁ ≡ t₁) × (equivFun (S₂ ⋆ f) s₂ ≡ t₂)
  ⋆-to-×-lemma {Y = Y} {s₁ = s₁} {s₂ = s₂} {t₁ = t₁} {t₂ = t₂} f = isoToEquiv (iso φ ψ η ε)
@@ -312,7 +311,30 @@ pointed-is-SNS' A B f = transportEquiv (λ i → transportRefl (equivFun f (A .s
 
 -- ∞-Magmas with SNS'
 -- need function extensionality for binary functions
+funExtBin : {A : Type ℓ} {B : A → Type ℓ'} {C : (x : A) → B x → Type ℓ''} {f g : (x : A) → (y : B x) → C x y}
+           → ((x : A) (y : B x) → f x y ≡ g x y) → f ≡ g
+funExtBin p i x y = p x y i
+module _ {ℓ ℓ' ℓ''} {A : Type ℓ} {B : A → Type ℓ'} {C : (x : A) → B x → Type ℓ''} {f g : (x : A) → (y : B x) → C x y} where
+  private
+    appl : f ≡ g → ∀ x y → f x y ≡ g x y
+    appl eq x y i = eq i x y
 
+    fib : (p : f ≡ g) → fiber funExtBin p
+    fib p = (appl p , refl)
+
+    funExtBin-fiber-isContr
+      : (p : f ≡ g)
+      → (fi : fiber funExtBin p)
+      → fib p ≡ fi
+    funExtBin-fiber-isContr p (h , eq) i = (appl (eq (~ i)) , λ j → eq (~ i ∨ j))
+
+  funExtBin-isEquiv : isEquiv funExtBin
+  equiv-proof funExtBin-isEquiv p = (fib p , funExtBin-fiber-isContr p)
+
+  funExtBinEquiv : (∀ x y → f x y ≡ g x y) ≃ (f ≡ g)
+  funExtBinEquiv = (funExtBin , funExtBin-isEquiv)
+
+-- ∞-Magmas
 ∞-magma-structure : Type ℓ → Type ℓ
 ∞-magma-structure X = X → X → X
 
@@ -322,13 +344,14 @@ pointed-is-SNS' A B f = transportEquiv (λ i → transportRefl (equivFun f (A .s
 ∞-magma-iso : (A B : ∞-Magma) → (A .fst) ≃ (B .fst) → Type ℓ
 ∞-magma-iso (X , _·_) (Y , _∗_) f = (x x' : X) → equivFun f (x · x') ≡ (equivFun f x) ∗ (equivFun f x')
 
+-- a more direct proof possible??
 ∞-magma-is-SNS' : SNS' {ℓ = ℓ} ∞-magma-structure ∞-magma-iso
 ∞-magma-is-SNS' (X , _·_) (Y , _∗_) f = SNS→SNS' ∞-magma-structure ∞-magma-iso C (X , _·_) (Y , _∗_) f
  where 
   C : {X : Type ℓ} (_·_ _∗_ : X → X → X) → (_·_ ≡ _∗_) ≃ ((x x' : X) → (x · x') ≡ (x ∗ x'))
-  C _·_ _∗_ = invEquiv {!!}
-  -- should be more or less funExt
-  -- funExtEquiv (λ x → (λ x' → x · x')) (λ x → (λ x' → x ∗ x'))
+  C _·_ _∗_ = invEquiv funExtBinEquiv
+
+
 
 -- Now we're getting serious: Monoids
 monoid-structure : Type ℓ → Type ℓ

@@ -11,7 +11,7 @@ open import Cubical.Data.Prod.Base hiding (_×_) renaming (_×Σ_ to _×_)
 
 private
  variable
-  ℓ ℓ' ℓ'' ℓ''' : Level
+  ℓ ℓ' ℓ'' ℓ''' ℓ₁ ℓ₂ ℓ₃ ℓ₄ ℓ₅ : Level
  
 -- In this file we apply the cubical machinery to Martin Hötzel-Escardó's structure identity principle
 -- https://www.cs.bham.ac.uk/~mhe/HoTT-UF-in-Agda-Lecture-Notes/HoTT-UF-Agda.html#sns
@@ -175,22 +175,54 @@ sip S ι θ A B (f , φ) i = p i , q i
 
 
 -- Now, we want to add axioms (i.e. propositions) to our Structure S
--- we use the following lemma due to Zesen Qian:
+-- we use a lemma due to Zesen Qian, which can be found in Foundations.Prelude:
 -- https://github.com/riaqn/cubical/blob/hgroup/Cubical/Data/Group/Properties.agda#L83
-PathP≡Path : ∀ {l} (P : I → Set l) (p : P i0) (q : P i1) →
-             PathP P p q ≡ Path (P i1) (transp P i0 p) q
-PathP≡Path P p q i = PathP (λ j → P (i ∨ j)) (transp (λ j → P (i ∧ j)) (~ i) p) q
+add-to-structure : (S : Type ℓ → Type ℓ')
+                   (axioms : (X : Type ℓ) → (S X) → Type ℓ''')
+                  → Type ℓ → Type (ℓ-max ℓ' ℓ''')
+add-to-structure S axioms X = Σ[ s ∈ S X ] (axioms X s)
 
-axiom-lemma : ∀ {ℓ} {B : I → Type ℓ} → ((i : I) → isProp (B i)) → (b0 : B i0) (b1 : B i1)
-             → PathP (λ i → B i) b0 b1
-axiom-lemma hB b0 b1 = toPathP (hB _ _ _)
 
-axiom-lemma-isProp : ∀ {ℓ} {B : I → Type ℓ} → ((i : I) → isProp (B i)) → (b0 : B i0) (b1 : B i1)
-             → isProp (PathP (λ i → B i) b0 b1)
-axiom-lemma-isProp {B = B} hB b0 b1 =
-  transport (λ i → isProp (PathP≡Path B b0 b1 (~ i))) (isProp→isSet (hB i1) _ _)
+add-to-iso : (S : Type ℓ → Type ℓ')
+             (ι : (A B : Σ[ X ∈ (Type ℓ) ] (S X)) → ((A .fst) ≃ (B .fst)) → Type ℓ'')
+             (axioms : (X : Type ℓ) → (S X) → Type ℓ''')
+            → (A B : Σ[ X ∈ (Type ℓ) ] (add-to-structure S axioms X)) → ((A .fst) ≃ (B .fst)) → Type ℓ''
+add-to-iso S ι axioms (X , (s , a)) (Y , (t , b)) f = ι (X , s) (Y , t) f
 
-  
+add-⋆-lemma : (S : Type ℓ → Type ℓ')
+              (axioms : (X : Type ℓ) → (S X) → Type ℓ''')
+              (axioms-are-Props : (X : Type ℓ) (s : S X) → isProp (axioms X s))
+              {X Y : Type ℓ} {s : S X} {t : S Y} {a : axioms X s} {b : axioms Y t}
+              (f : X ≃ Y) → (equivFun ((add-to-structure S axioms) ⋆ f) (s , a) ≡ (t , b)) ≃ (equivFun (S ⋆ f) s ≡ t)
+add-⋆-lemma S axioms axioms-are-Props {Y = Y} {s = s} {t = t} {a = a} {b = b} f = isoToEquiv (iso φ ψ η ε)
+      where
+       φ : (equivFun ((add-to-structure S axioms) ⋆ f) (s , a) ≡ (t , b)) → (equivFun (S ⋆ f) s ≡ t)
+       φ r i = (r i) .fst
+       
+       ψ : (equivFun (S ⋆ f) s ≡ t) → (equivFun ((add-to-structure S axioms) ⋆ f) (s , a) ≡ (t , b))
+       ψ p i = p i , isProp-PathP-I (λ j → axioms-are-Props Y (p j)) (equivFun ((add-to-structure S axioms) ⋆ f) (s , a) .snd) b i
+       
+       η : section φ ψ
+       η p = refl
+       
+       ε : retract φ ψ
+       ε r i j = r j .fst , isProp→isSet-PathP (λ k → axioms-are-Props Y (r k .fst)) _ _
+                  (λ k → isProp-PathP-I (λ j → axioms-are-Props Y (r j .fst)) (equivFun ((add-to-structure S axioms) ⋆ f) (s , a) .snd) b k)
+                  (λ k → (r k) .snd) i j
+ 
+
+add-axioms-SNS' : (S : Type ℓ → Type ℓ')
+                  (ι : (A B : Σ[ X ∈ (Type ℓ) ] (S X)) → ((A .fst) ≃ (B .fst)) → Type ℓ'')
+                  (axioms : (X : Type ℓ) → (S X) → Type ℓ''')
+                  (axioms-are-Props : (X : Type ℓ) (s : S X) → isProp (axioms X s))
+                  (θ : SNS' S ι) → SNS' (add-to-structure S axioms) (add-to-iso S ι axioms)
+
+add-axioms-SNS' S ι axioms axioms-are-Props θ (X , (s , a)) (Y , (t , b)) f =
+               equivFun ((add-to-structure S axioms) ⋆ f) (s , a) ≡ (t , b)    ≃⟨ add-⋆-lemma S axioms axioms-are-Props f ⟩
+               equivFun (S ⋆ f) s ≡ t                                          ≃⟨ θ (X , s) (Y , t) f ⟩
+               ι (X , s) (Y , t) f                                             ≃⟨ idEquiv _ ⟩
+               (add-to-iso S ι axioms) (X , (s , a)) (Y , (t , b)) f           ■
+ 
 
 module _(S : Type ℓ → Type ℓ')
         (ι : (A B : Σ[ X ∈ (Type ℓ) ] (S X)) → ((A .fst) ≃ (B .fst)) → Type ℓ'')
@@ -212,14 +244,14 @@ module _(S : Type ℓ → Type ℓ')
        φ r i = (r i) .fst
        
        ψ : (equivFun (S ⋆ f) s ≡ t) → (equivFun (S' ⋆ f) (s , a) ≡ (t , b))
-       ψ p i = p i , axiom-lemma (λ j → axioms-are-Props Y (p j)) (equivFun (S' ⋆ f) (s , a) .snd) b i
+       ψ p i = p i , isProp-PathP-I (λ j → axioms-are-Props Y (p j)) (equivFun (S' ⋆ f) (s , a) .snd) b i
        
        η : section φ ψ
        η p = refl
        
        ε : retract φ ψ
-       ε r i j = r j .fst , axiom-lemma-isProp (λ k → axioms-are-Props Y (r k .fst)) _ _
-                           (λ k → axiom-lemma (λ j → axioms-are-Props Y (r j .fst)) (equivFun (S' ⋆ f) (s , a) .snd) b k)
+       ε r i j = r j .fst , isProp→isSet-PathP (λ k → axioms-are-Props Y (r k .fst)) _ _
+                           (λ k → isProp-PathP-I (λ j → axioms-are-Props Y (r j .fst)) (equivFun (S' ⋆ f) (s , a) .snd) b k)
                            (λ k → (r k) .snd) i j
        
  
@@ -231,8 +263,8 @@ module _(S : Type ℓ → Type ℓ')
  
 
 -- Now, we want to join two structures
-technical-×-lemma : ∀ {ℓ₁ ℓ₂ ℓ₃ ℓ₄ : Level} {A : Type ℓ₁} {B : Type ℓ₂} {C : Type ℓ₃} {D : Type ℓ₄}
-                     → (A ≃ C) → (B ≃ D) → (A × B) ≃ (C × D)
+technical-×-lemma : {A : Type ℓ₁} {B : Type ℓ₂} {C : Type ℓ₃} {D : Type ℓ₄}
+                   → (A ≃ C) → (B ≃ D) → (A × B) ≃ (C × D)
 technical-×-lemma {A = A} {B = B} {C = C} {D = D} f g = isoToEquiv (iso φ ψ η ε)
  where
   φ : (A × B) → (C × D)
@@ -248,8 +280,7 @@ technical-×-lemma {A = A} {B = B} {C = C} {D = D} f g = isoToEquiv (iso φ ψ �
   ε (a , b) i = secEq f a i , secEq g b i
 
 
-module _{ℓ₁ ℓ₂ ℓ₃ ℓ₄ ℓ₅ : Level}
-        (S₁ : Type ℓ₁ → Type ℓ₂)
+module _(S₁ : Type ℓ₁ → Type ℓ₂)
         (ι₁ : (A B : Σ[ X ∈ (Type ℓ₁) ] (S₁ X)) → ((A .fst) ≃ (B .fst)) → Type ℓ₃)
         (θ₁ : SNS' S₁ ι₁)
         (S₂ : Type ℓ₁ → Type ℓ₄)
@@ -277,7 +308,7 @@ module _{ℓ₁ ℓ₂ ℓ₃ ℓ₄ ℓ₅ : Level}
     
     ε : retract φ ψ
     ε p = refl
-    
+ --  direct proof ? (λ x → φ x) , record { equiv-proof = λ y → (ψ y , refl) , {!!} }
 
  θ : SNS' S ι
  θ (X , s₁ , s₂) (Y , t₁ , t₂) f =
@@ -366,3 +397,15 @@ monoid-axioms X (e , _·_ ) = isSet X
 monoid-iso : (M N : Σ (Type ℓ) monoid-structure) → (M .fst) ≃ (N .fst) → Type ℓ
 monoid-iso (M , e , _·_) (N , d , _∗_) f = (equivFun f e ≡ d)
                         × ((x y : M) → equivFun f (x · y) ≡ (equivFun f x) ∗ (equivFun f y))
+
+-- module _(X : Set)
+--         (x : X)
+--         (α : refl {x = x} ≡ refl {x = x})
+--         (i j : I)                         where
+--  -- (sym α) i j = α (~ i) j
+--  -- (cong sym α) i j = α i (~ j)
+--  foo : (sym α) ≡ (cong sym α)
+--  foo k i j = α ((i ∧ k) ∨ ((~ i) ∧ (~ k))) {!(j ∧ (~ k)) ∨ ((~ j) ∧ k)!}
+ 
+ 
+ 

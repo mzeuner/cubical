@@ -220,46 +220,45 @@ add-axioms-SNS' : (S : Type ℓ → Type ℓ')
 add-axioms-SNS' S ι axioms axioms-are-Props θ (X , (s , a)) (Y , (t , b)) f =
                equivFun ((add-to-structure S axioms) ⋆ f) (s , a) ≡ (t , b)    ≃⟨ add-⋆-lemma S axioms axioms-are-Props f ⟩
                equivFun (S ⋆ f) s ≡ t                                          ≃⟨ θ (X , s) (Y , t) f ⟩
-               ι (X , s) (Y , t) f                                             ≃⟨ idEquiv _ ⟩
                (add-to-iso S ι axioms) (X , (s , a)) (Y , (t , b)) f           ■
  
 
-module _(S : Type ℓ → Type ℓ')
-        (ι : (A B : Σ[ X ∈ (Type ℓ) ] (S X)) → ((A .fst) ≃ (B .fst)) → Type ℓ'')
-        (axioms : (X : Type ℓ) → (S X) → Type ℓ''')
-        (axioms-are-Props : (X : Type ℓ) (s : S X) → isProp (axioms X s))
-        (θ : SNS' S ι)                                                            where
+-- module _(S : Type ℓ → Type ℓ')
+--         (ι : (A B : Σ[ X ∈ (Type ℓ) ] (S X)) → ((A .fst) ≃ (B .fst)) → Type ℓ'')
+--         (axioms : (X : Type ℓ) → (S X) → Type ℓ''')
+--         (axioms-are-Props : (X : Type ℓ) (s : S X) → isProp (axioms X s))
+--         (θ : SNS' S ι)                                                            where
 
- S' : Type ℓ → Type (ℓ-max ℓ' ℓ''')
- S' X = Σ[ s ∈ S X ] (axioms X s)
+--  S' : Type ℓ → Type (ℓ-max ℓ' ℓ''')
+--  S' X = Σ[ s ∈ S X ] (axioms X s)
  
- ι' : (A B : Σ[ X ∈ (Type ℓ) ] (S' X)) → ((A .fst) ≃ (B .fst)) → Type ℓ''
- ι' (X , (s , a)) (Y , (t , b)) f = ι (X , s) (Y , t) f
+--  ι' : (A B : Σ[ X ∈ (Type ℓ) ] (S' X)) → ((A .fst) ≃ (B .fst)) → Type ℓ''
+--  ι' (X , (s , a)) (Y , (t , b)) f = ι (X , s) (Y , t) f
 
- axiom-⋆-lemma : {X Y : Type ℓ} {s : S X} {t : S Y} {a : axioms X s} {b : axioms Y t}
-                (f : X ≃ Y) → (equivFun (S' ⋆ f) (s , a) ≡ (t , b)) ≃ (equivFun (S ⋆ f) s ≡ t)
- axiom-⋆-lemma {Y = Y} {s = s} {t = t} {a = a} {b = b} f = isoToEquiv (iso φ ψ η ε)
-      where
-       φ : (equivFun (S' ⋆ f) (s , a) ≡ (t , b)) → (equivFun (S ⋆ f) s ≡ t)
-       φ r i = (r i) .fst
+--  axiom-⋆-lemma : {X Y : Type ℓ} {s : S X} {t : S Y} {a : axioms X s} {b : axioms Y t}
+--                 (f : X ≃ Y) → (equivFun (S' ⋆ f) (s , a) ≡ (t , b)) ≃ (equivFun (S ⋆ f) s ≡ t)
+--  axiom-⋆-lemma {Y = Y} {s = s} {t = t} {a = a} {b = b} f = isoToEquiv (iso φ ψ η ε)
+--       where
+--        φ : (equivFun (S' ⋆ f) (s , a) ≡ (t , b)) → (equivFun (S ⋆ f) s ≡ t)
+--        φ r i = (r i) .fst
        
-       ψ : (equivFun (S ⋆ f) s ≡ t) → (equivFun (S' ⋆ f) (s , a) ≡ (t , b))
-       ψ p i = p i , isProp-PathP-I (λ j → axioms-are-Props Y (p j)) (equivFun (S' ⋆ f) (s , a) .snd) b i
+--        ψ : (equivFun (S ⋆ f) s ≡ t) → (equivFun (S' ⋆ f) (s , a) ≡ (t , b))
+--        ψ p i = p i , isProp-PathP-I (λ j → axioms-are-Props Y (p j)) (equivFun (S' ⋆ f) (s , a) .snd) b i
        
-       η : section φ ψ
-       η p = refl
+--        η : section φ ψ
+--        η p = refl
        
-       ε : retract φ ψ
-       ε r i j = r j .fst , isProp→isSet-PathP (λ k → axioms-are-Props Y (r k .fst)) _ _
-                           (λ k → isProp-PathP-I (λ j → axioms-are-Props Y (r j .fst)) (equivFun (S' ⋆ f) (s , a) .snd) b k)
-                           (λ k → (r k) .snd) i j
+--        ε : retract φ ψ
+--        ε r i j = r j .fst , isProp→isSet-PathP (λ k → axioms-are-Props Y (r k .fst)) _ _
+--                            (λ k → isProp-PathP-I (λ j → axioms-are-Props Y (r j .fst)) (equivFun (S' ⋆ f) (s , a) .snd) b k)
+--                            (λ k → (r k) .snd) i j
        
  
- θ' : SNS' S' ι'
- θ' (X , (s , a)) (Y , (t , b)) f = equivFun (S' ⋆ f) (s , a) ≡ (t , b) ≃⟨ axiom-⋆-lemma f ⟩
-                                    equivFun (S ⋆ f) s ≡ t              ≃⟨ θ (X , s) (Y , t) f ⟩
-                                    ι (X , s) (Y , t) f                 ≃⟨ idEquiv _ ⟩
-                                    ι' (X , (s , a)) (Y , (t , b)) f    ■
+--  θ' : SNS' S' ι'
+--  θ' (X , (s , a)) (Y , (t , b)) f = equivFun (S' ⋆ f) (s , a) ≡ (t , b) ≃⟨ axiom-⋆-lemma f ⟩
+--                                     equivFun (S ⋆ f) s ≡ t              ≃⟨ θ (X , s) (Y , t) f ⟩
+--                                     ι (X , s) (Y , t) f                 ≃⟨ idEquiv _ ⟩
+--                                     ι' (X , (s , a)) (Y , (t , b)) f    ■
  
 
 -- Now, we want to join two structures
@@ -280,27 +279,28 @@ technical-×-lemma {A = A} {B = B} {C = C} {D = D} f g = isoToEquiv (iso φ ψ �
   ε (a , b) i = secEq f a i , secEq g b i
 
 
-module _(S₁ : Type ℓ₁ → Type ℓ₂)
-        (ι₁ : (A B : Σ[ X ∈ (Type ℓ₁) ] (S₁ X)) → ((A .fst) ≃ (B .fst)) → Type ℓ₃)
-        (θ₁ : SNS' S₁ ι₁)
-        (S₂ : Type ℓ₁ → Type ℓ₄)
-        (ι₂ : (A B : Σ[ X ∈ (Type ℓ₁) ] (S₂ X)) → ((A .fst) ≃ (B .fst)) → Type ℓ₅)
-        (θ₂ : SNS' S₂ ι₂)                                                            where
+join-structure : (S₁ : Type ℓ₁ → Type ℓ₂) (S₂ : Type ℓ₁ → Type ℓ₄)
+                → Type ℓ₁ → Type (ℓ-max ℓ₂ ℓ₄)
+join-structure S₁ S₂ X = (S₁ X) × (S₂ X)
 
- S : Type ℓ₁ → Type (ℓ-max ℓ₂ ℓ₄)
- S X = (S₁ X) × (S₂ X)
- 
- ι : (A B : Σ[ X ∈ (Type ℓ₁) ] (S X)) → ((A .fst) ≃ (B .fst)) → Type (ℓ-max ℓ₃ ℓ₅)
- ι (X , s₁ , s₂) (Y , t₁ , t₂) f = (ι₁ (X , s₁) (Y , t₁) f) × (ι₂ (X , s₂) (Y , t₂) f)
 
- ⋆-to-×-lemma : {X Y : Type ℓ₁} {s₁ : S₁ X} {s₂ : S₂ X} {t₁ : S₁ Y} {t₂ : S₂ Y} (f : X ≃ Y)
-               → (equivFun (S ⋆ f) (s₁ , s₂) ≡ (t₁ , t₂)) ≃ (equivFun (S₁ ⋆ f) s₁ ≡ t₁) × (equivFun (S₂ ⋆ f) s₂ ≡ t₂)
- ⋆-to-×-lemma {Y = Y} {s₁ = s₁} {s₂ = s₂} {t₁ = t₁} {t₂ = t₂} f = isoToEquiv (iso φ ψ η ε)
+join-iso : {S₁ : Type ℓ₁ → Type ℓ₂}
+           (ι₁ : (A B : Σ[ X ∈ (Type ℓ₁) ] (S₁ X)) → ((A .fst) ≃ (B .fst)) → Type ℓ₃)
+           {S₂ : Type ℓ₁ → Type ℓ₄}
+           (ι₂ : (A B : Σ[ X ∈ (Type ℓ₁) ] (S₂ X)) → ((A .fst) ≃ (B .fst)) → Type ℓ₅)
+          → (A B : Σ[ X ∈ (Type ℓ₁) ] (join-structure S₁ S₂ X)) → ((A .fst) ≃ (B .fst)) → Type (ℓ-max ℓ₃ ℓ₅)
+join-iso ι₁ ι₂ (X , s₁ , s₂) (Y , t₁ , t₂) f = (ι₁ (X , s₁) (Y , t₁) f) × (ι₂ (X , s₂) (Y , t₂) f)
+
+
+join-⋆-lemma : (S₁ : Type ℓ₁ → Type ℓ₂) (S₂ : Type ℓ₁ → Type ℓ₄)
+               {X Y : Type ℓ₁} {s₁ : S₁ X} {s₂ : S₂ X} {t₁ : S₁ Y} {t₂ : S₂ Y} (f : X ≃ Y)
+              → (equivFun ((join-structure S₁ S₂) ⋆ f) (s₁ , s₂) ≡ (t₁ , t₂)) ≃ (equivFun (S₁ ⋆ f) s₁ ≡ t₁) × (equivFun (S₂ ⋆ f) s₂ ≡ t₂)
+join-⋆-lemma S₁ S₂ {Y = Y} {s₁ = s₁} {s₂ = s₂} {t₁ = t₁} {t₂ = t₂} f = isoToEquiv (iso φ ψ η ε)
    where
-    φ : (equivFun (S ⋆ f) (s₁ , s₂) ≡ (t₁ , t₂)) → (equivFun (S₁ ⋆ f) s₁ ≡ t₁) × (equivFun (S₂ ⋆ f) s₂ ≡ t₂)
+    φ : (equivFun ((join-structure S₁ S₂) ⋆ f) (s₁ , s₂) ≡ (t₁ , t₂)) → (equivFun (S₁ ⋆ f) s₁ ≡ t₁) × (equivFun (S₂ ⋆ f) s₂ ≡ t₂)
     φ p = (λ i → (p i) .fst) , (λ i → (p i) .snd)
     
-    ψ : (equivFun (S₁ ⋆ f) s₁ ≡ t₁) × (equivFun (S₂ ⋆ f) s₂ ≡ t₂) → (equivFun (S ⋆ f) (s₁ , s₂) ≡ (t₁ , t₂))
+    ψ : (equivFun (S₁ ⋆ f) s₁ ≡ t₁) × (equivFun (S₂ ⋆ f) s₂ ≡ t₂) → (equivFun ((join-structure S₁ S₂) ⋆ f) (s₁ , s₂) ≡ (t₁ , t₂))
     ψ (p , q) i = (p i) , (q i)
     
     η : section φ ψ
@@ -308,15 +308,57 @@ module _(S₁ : Type ℓ₁ → Type ℓ₂)
     
     ε : retract φ ψ
     ε p = refl
- --  direct proof ? (λ x → φ x) , record { equiv-proof = λ y → (ψ y , refl) , {!!} }
 
- θ : SNS' S ι
- θ (X , s₁ , s₂) (Y , t₁ , t₂) f =
+join-SNS' : (S₁ : Type ℓ₁ → Type ℓ₂)
+            (ι₁ : (A B : Σ[ X ∈ (Type ℓ₁) ] (S₁ X)) → ((A .fst) ≃ (B .fst)) → Type ℓ₃)
+            (θ₁ : SNS' S₁ ι₁)
+            (S₂ : Type ℓ₁ → Type ℓ₄)
+            (ι₂ : (A B : Σ[ X ∈ (Type ℓ₁) ] (S₂ X)) → ((A .fst) ≃ (B .fst)) → Type ℓ₅)
+            (θ₂ : SNS' S₂ ι₂)
+           → SNS' (join-structure S₁ S₂) (join-iso ι₁ ι₂)
+join-SNS' S₁ ι₁ θ₁ S₂ ι₂ θ₂ (X , s₁ , s₂) (Y , t₁ , t₂) f =
  
-  equivFun (S ⋆ f) (s₁ , s₂) ≡ (t₁ , t₂)                      ≃⟨ ⋆-to-×-lemma f ⟩
+  equivFun ((join-structure S₁ S₂) ⋆ f) (s₁ , s₂) ≡ (t₁ , t₂) ≃⟨ join-⋆-lemma S₁ S₂ f ⟩
   (equivFun (S₁ ⋆ f) s₁ ≡ t₁) × (equivFun (S₂ ⋆ f) s₂ ≡ t₂)   ≃⟨ technical-×-lemma (θ₁ (X , s₁) (Y , t₁) f) (θ₂ (X , s₂) (Y , t₂) f)  ⟩
-  (ι₁ (X , s₁) (Y , t₁) f) × (ι₂ (X , s₂) (Y , t₂) f)         ≃⟨ idEquiv _ ⟩
-  ι (X , s₁ , s₂) (Y , t₁ , t₂) f                             ■
+  (join-iso ι₁ ι₂) (X , s₁ , s₂) (Y , t₁ , t₂) f              ■
+
+-- module _(S₁ : Type ℓ₁ → Type ℓ₂)
+--         (ι₁ : (A B : Σ[ X ∈ (Type ℓ₁) ] (S₁ X)) → ((A .fst) ≃ (B .fst)) → Type ℓ₃)
+--         (θ₁ : SNS' S₁ ι₁)
+--         (S₂ : Type ℓ₁ → Type ℓ₄)
+--         (ι₂ : (A B : Σ[ X ∈ (Type ℓ₁) ] (S₂ X)) → ((A .fst) ≃ (B .fst)) → Type ℓ₅)
+--         (θ₂ : SNS' S₂ ι₂)                                                            where
+
+--  S : Type ℓ₁ → Type (ℓ-max ℓ₂ ℓ₄)
+--  S X = (S₁ X) × (S₂ X)
+ 
+--  ι : (A B : Σ[ X ∈ (Type ℓ₁) ] (S X)) → ((A .fst) ≃ (B .fst)) → Type (ℓ-max ℓ₃ ℓ₅)
+--  ι (X , s₁ , s₂) (Y , t₁ , t₂) f = (ι₁ (X , s₁) (Y , t₁) f) × (ι₂ (X , s₂) (Y , t₂) f)
+
+--  ⋆-to-×-lemma : {X Y : Type ℓ₁} {s₁ : S₁ X} {s₂ : S₂ X} {t₁ : S₁ Y} {t₂ : S₂ Y} (f : X ≃ Y)
+--                → (equivFun (S ⋆ f) (s₁ , s₂) ≡ (t₁ , t₂)) ≃ (equivFun (S₁ ⋆ f) s₁ ≡ t₁) × (equivFun (S₂ ⋆ f) s₂ ≡ t₂)
+--  ⋆-to-×-lemma {Y = Y} {s₁ = s₁} {s₂ = s₂} {t₁ = t₁} {t₂ = t₂} f = isoToEquiv (iso φ ψ η ε)
+--    where
+--     φ : (equivFun (S ⋆ f) (s₁ , s₂) ≡ (t₁ , t₂)) → (equivFun (S₁ ⋆ f) s₁ ≡ t₁) × (equivFun (S₂ ⋆ f) s₂ ≡ t₂)
+--     φ p = (λ i → (p i) .fst) , (λ i → (p i) .snd)
+    
+--     ψ : (equivFun (S₁ ⋆ f) s₁ ≡ t₁) × (equivFun (S₂ ⋆ f) s₂ ≡ t₂) → (equivFun (S ⋆ f) (s₁ , s₂) ≡ (t₁ , t₂))
+--     ψ (p , q) i = (p i) , (q i)
+    
+--     η : section φ ψ
+--     η (p , q) = refl
+    
+--     ε : retract φ ψ
+--     ε p = refl
+--  --  direct proof ? (λ x → φ x) , record { equiv-proof = λ y → (ψ y , refl) , {!!} }
+
+--  θ : SNS' S ι
+--  θ (X , s₁ , s₂) (Y , t₁ , t₂) f =
+ 
+--   equivFun (S ⋆ f) (s₁ , s₂) ≡ (t₁ , t₂)                      ≃⟨ ⋆-to-×-lemma f ⟩
+--   (equivFun (S₁ ⋆ f) s₁ ≡ t₁) × (equivFun (S₂ ⋆ f) s₂ ≡ t₂)   ≃⟨ technical-×-lemma (θ₁ (X , s₁) (Y , t₁) f) (θ₂ (X , s₂) (Y , t₂) f)  ⟩
+--   (ι₁ (X , s₁) (Y , t₁) f) × (ι₂ (X , s₂) (Y , t₂) f)         ≃⟨ idEquiv _ ⟩
+--   ι (X , s₁ , s₂) (Y , t₁ , t₂) f                             ■
  
 
 
@@ -398,14 +440,6 @@ monoid-iso : (M N : Σ (Type ℓ) monoid-structure) → (M .fst) ≃ (N .fst) �
 monoid-iso (M , e , _·_) (N , d , _∗_) f = (equivFun f e ≡ d)
                         × ((x y : M) → equivFun f (x · y) ≡ (equivFun f x) ∗ (equivFun f y))
 
--- module _(X : Set)
---         (x : X)
---         (α : refl {x = x} ≡ refl {x = x})
---         (i j : I)                         where
---  -- (sym α) i j = α (~ i) j
---  -- (cong sym α) i j = α i (~ j)
---  foo : (sym α) ≡ (cong sym α)
---  foo k i j = α ((i ∧ k) ∨ ((~ i) ∧ (~ k))) {!(j ∧ (~ k)) ∨ ((~ j) ∧ k)!}
- 
- 
- 
+Raw-Monoid-SNS' : SNS' {ℓ = ℓ} monoid-structure monoid-iso
+Raw-Monoid-SNS' = join-SNS' pointed-structure pointed-iso pointed-is-SNS' ∞-magma-structure ∞-magma-iso ∞-magma-is-SNS'
+

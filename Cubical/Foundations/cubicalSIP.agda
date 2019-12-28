@@ -157,13 +157,13 @@ sip S ι θ A B (f , φ) i = p i , q i
 
 
 -- hopefully we can prove that pis and sip are mutually inverse
--- sip∘pis-id :  (S : Type ℓ → Type ℓ')
---             → (ι : (A B : Σ[ X ∈ (Type ℓ) ] (S X)) → ((A .fst) ≃ (B .fst)) → Type ℓ'')
---             → (θ : SNS' S ι)
---             → (A B : Σ[ X ∈ (Type ℓ) ] (S X))
---             → (r : A ≡ B)
---             → sip S ι θ A B (pis S ι θ A B r) ≡ r
--- sip∘pis-id S ι θ A B r = {!!}
+sip∘pis-id :  (S : Type ℓ → Type ℓ')
+            → (ι : (A B : Σ[ X ∈ (Type ℓ) ] (S X)) → ((A .fst) ≃ (B .fst)) → Type ℓ'')
+            → (θ : SNS' S ι)
+            → (A B : Σ[ X ∈ (Type ℓ) ] (S X))
+            → (r : A ≡ B)
+            → sip S ι θ A B (pis S ι θ A B r) ≡ r
+sip∘pis-id S ι θ A B r i j = ua-lemma-2 (A .fst) (B .fst) (λ i → (r i) .fst) i j , {!!}
 
 -- pis∘sip-id :  (S : Type ℓ → Type ℓ')
 --             → (ι : (A B : Σ[ X ∈ (Type ℓ) ] (S X)) → ((A .fst) ≃ (B .fst)) → Type ℓ'')

@@ -71,16 +71,17 @@ sip : (S : Type ℓ → Type ℓ')
     → (A B : Σ[ X ∈ (Type ℓ) ] (S X))
     → (A ≃[ ι ] B)
     → Σ (A .fst ≡ B .fst) (λ p → PathP (λ i → S (p i)) (A .snd) (B .snd))
-sip S ι θ A B (e , p) = ua e , transport (λ i → lemma1 S A B e i) (λ i → glue (λ { (i = i0) → (A .snd) ; (i = i1) → (B .snd) }) ((invEquiv (θ A B e) .fst p) i))
-   -- where
-   --  q : au (cong S (ua e)) .fst (A .snd) ≡ B .snd
-   --  q = invEquiv (θ A B e) .fst p
+sip S ι θ A B (e , p) = ua e , r
+-- transport (λ i → lemma1 S A B e i) (λ i → glue (λ { (i = i0) → (A .snd) ; (i = i1) → (B .snd) }) ((invEquiv (θ A B e) .fst p) i))
+   where
+    q : au (cong S (ua e)) .fst (A .snd) ≡ B .snd
+    q = invEquiv (θ A B e) .fst p
 
-   --  q⋆ : PathP (λ i → ua (au (cong S (ua e))) i) (A .snd) (B .snd)
-   --  q⋆ i = glue (λ { (i = i0) → (A .snd) ; (i = i1) → (B .snd) }) (q i)
+    q⋆ : PathP (λ i → ua (au (cong S (ua e))) i) (A .snd) (B .snd)
+    q⋆ i = glue (λ { (i = i0) → (A .snd) ; (i = i1) → (B .snd) }) (q i)
 
-   --  r : PathP (λ i → S (ua e i)) (A .snd) (B .snd)
-   --  r = transport (λ i → lemma1 S A B e i) q⋆
+    r : PathP (λ i → S (ua e i)) (A .snd) (B .snd)
+    r = transport (λ i → lemma1 S A B e i) q⋆
 
 
 
@@ -91,21 +92,22 @@ pis : (S : Type ℓ → Type ℓ')
     → (A B : Σ[ X ∈ (Type ℓ) ] (S X))
     → (Σ (A .fst ≡ B .fst) (λ p → PathP (λ i → S (p i)) (A .snd) (B .snd)))
     → A ≃[ ι ] B
-pis S ι Θ A B (e , p) = au e ,  Θ A B (au e) .fst λ i →  unglue (i ∨ ~ i) (transport (λ i → lemma1 S A B (au e) (~ i)) (transport (λ i → lemma2 S A B e (~ i)) p) i)
-  -- where
-  -- -- This is what doesn't occur in sip, but I don't see how to modify
-  -- -- the sip so that it is there as well (but in the other direction).
-  -- foo : PathP (λ i → S (ua (au e) i)) (A .snd) (B .snd)
-  -- foo = transport (λ i → lemma2 S A B e (~ i)) p
+pis S ι Θ A B (e , p) = au e , r
+-- Θ A B (au e) .fst λ i →  unglue (i ∨ ~ i) (transport (λ i → lemma1 S A B (au e) (~ i)) (transport (λ i → lemma2 S A B e (~ i)) p) i)
+  where
+  -- This is what doesn't occur in sip, but I don't see how to modify
+  -- the sip so that it is there as well (but in the other direction).
+  foo : PathP (λ i → S (ua (au e) i)) (A .snd) (B .snd)
+  foo = transport (λ i → lemma2 S A B e (~ i)) p
 
-  -- q⋆ : PathP (λ i → ua (au (cong S (ua (au e)))) i) (A .snd) (B .snd)
-  -- q⋆ = transport (λ i → lemma1 S A B (au e) (~ i)) foo
+  q⋆ : PathP (λ i → ua (au (cong S (ua (au e)))) i) (A .snd) (B .snd)
+  q⋆ = transport (λ i → lemma1 S A B (au e) (~ i)) foo
 
-  -- q : au (cong S (ua (au e))) .fst (A .snd) ≡ B .snd
-  -- q i = unglue (i ∨ ~ i) (q⋆ i)
+  q : au (cong S (ua (au e))) .fst (A .snd) ≡ B .snd
+  q i = unglue (i ∨ ~ i) (q⋆ i)
 
-  -- r : ι A B (au e)
-  -- r = Θ A B (au e) .fst q
+  r : ι A B (au e)
+  r = Θ A B (au e) .fst q
 
 
 sip∘pis-id : (S : Type ℓ → Type ℓ')
@@ -119,9 +121,9 @@ sip∘pis-id S ι θ A B (p , q) =  sip S ι θ A B (pis S ι θ A B (p , q))
 
                      ≡⟨ refl ⟩ --unfolding the definition
 
-                                ua (au p) , transport (λ i → lemma1 S A B (au p) i) (λ i → glue (λ { (i = i0) → (A .snd) ; (i = i1) → (B .snd) })
-                                            ((invEquiv (θ A B (au p)) .fst (θ A B (au p) .fst   --this cancels out first
-                                             λ i →  unglue (i ∨ ~ i) (transport (λ i → lemma1 S A B (au p) (~ i)) (transport (λ i → lemma2 S A B p (~ i)) q) i))) i))
+                               ua (au p) ,  transport (λ i → lemma1 S A B (au p) i) (λ i → glue (λ { (i = i0) → (A .snd) ; (i = i1) → (B .snd) })
+                           ((invEquiv (θ A B (au p)) .fst (θ A B (au p) .fst   --this cancels out first
+                           λ i →  unglue (i ∨ ~ i) (transport (λ i → lemma1 S A B (au p) (~ i)) (transport (λ i → lemma2 S A B p (~ i)) q) i))) i))
 
                      ≡⟨ i ⟩  
                                  
@@ -146,11 +148,12 @@ sip∘pis-id S ι θ A B (p , q) =  sip S ι θ A B (pis S ι θ A B (p , q))
 
                                 p , q  ∎
 
-  where
-   i = {!!}
-   ii = (λ i → ua (au p) , transportTransport⁻ (lemma1 S A B (au p)) (transport (λ i → lemma2 S A B p (~ i)) q) i)
-   iii = (λ i → ua-au p i , transp (λ k →  (PathP (λ j → S (ua-au p (i ∧ k) j)) (A .snd) (B .snd))) (~ i) (transport (λ i → lemma2 S A B p (~ i)) q))
-   iv = (λ i → p , transportTransport⁻ (lemma2 S A B p) q i)
+ where
+  i = λ j → ua (au p) , transport (λ i → lemma1 S A B (au p) i) (λ i → glue (λ { (i = i0) → (A .snd) ; (i = i1) → (B .snd) }) (secEq (θ A B (au p))
+                       (λ k →  unglue (k ∨ ~ k) (transport (λ i → lemma1 S A B (au p) (~ i)) (transport (λ i → lemma2 S A B p (~ i)) q) k)) j i))
+  ii = (λ i → ua (au p) , transportTransport⁻ (lemma1 S A B (au p)) (transport (λ i → lemma2 S A B p (~ i)) q) i)
+  iii = (λ i → ua-au p i , transp (λ k →  (PathP (λ j → S (ua-au p (i ∧ k) j)) (A .snd) (B .snd))) (~ i) (transport (λ i → lemma2 S A B p (~ i)) q))
+  iv = (λ i → p , transportTransport⁻ (lemma2 S A B p) q i)
 
 
 

@@ -76,7 +76,6 @@ foo : (S : Type ℓ → Type ℓ')
     → SNS''' S ι
 foo S ι h A B f = PathP (λ i → S (ua f i)) (A .snd) (B .snd) ≃⟨ lem1 S A B f ⟩ h A B f
 
--- TODO: SNS''' <-> SNS''
 
 sip : (S : Type ℓ → Type ℓ')
     → (ι : (A B : Σ[ X ∈ (Type ℓ) ] (S X)) → ((A .fst) ≃ (B .fst)) → Type ℓ'')

@@ -52,10 +52,10 @@ SNS'' : (S : Type ℓ → Type ℓ')
 SNS''  {ℓ = ℓ} S ι = (A B : Σ[ X ∈ (Type ℓ) ] (S X)) → (f : (A .fst) ≃ (B .fst))
                   → (transport (λ i → S (ua f i)) (A .snd) ≡ (B .snd)) ≃ (ι A B f)
 
-sanitycheck : (S : Type ℓ → Type ℓ')
+SNS'≡SNS'' : (S : Type ℓ → Type ℓ')
             → (ι : (A B : Σ[ X ∈ (Type ℓ) ] (S X)) → ((A .fst) ≃ (B .fst)) → Type ℓ'')
             → SNS' S ι ≡ SNS'' S ι
-sanitycheck S ι = refl
+SNS'≡SNS'' S ι = refl
 
 SNS''' : (S : Type ℓ → Type ℓ')
      → ((A B : Σ[ X ∈ (Type ℓ) ] (S X)) → ((A .fst) ≃ (B .fst)) → Type ℓ'')
@@ -63,35 +63,39 @@ SNS''' : (S : Type ℓ → Type ℓ')
 SNS'''  {ℓ = ℓ} S ι = (A B : Σ[ X ∈ (Type ℓ) ] (S X)) → (f : (A .fst) ≃ (B .fst))
                   → (PathP (λ i → S (ua f i)) (A .snd) (B .snd)) ≃ (ι A B f)
 
+SNS''→SNS''' : (S : Type ℓ → Type ℓ')
+             → (ι : (A B : Σ[ X ∈ (Type ℓ) ] (S X)) → ((A .fst) ≃ (B .fst)) → Type ℓ'')
+             → SNS'' S ι
+             → SNS''' S ι
+SNS''→SNS''' S ι h A B f =  PathP (λ i → S (ua f i)) (A .snd) (B .snd)
+                         ≃⟨ PathP≃Path (λ i → S (ua f i)) (A .snd) (B .snd) ⟩
+                            h A B f
 
-lem1 : (S : Type ℓ → Type ℓ')
-     → (A B : Σ[ X ∈ (Type ℓ) ] (S X)) → (f : (A .fst) ≃ (B .fst))
-     → PathP (λ i → S (ua f i)) (A .snd) (B .snd) 
-     ≃ (transport (λ i → S (ua f i)) (A .snd) ≡ (B .snd))
-lem1 S A B f = PathP≃Path (λ i → S (ua f i)) (A .snd) (B .snd)
-
-foo : (S : Type ℓ → Type ℓ')
-    → (ι : (A B : Σ[ X ∈ (Type ℓ) ] (S X)) → ((A .fst) ≃ (B .fst)) → Type ℓ'')
-    → SNS'' S ι
-    → SNS''' S ι
-foo S ι h A B f = PathP (λ i → S (ua f i)) (A .snd) (B .snd) ≃⟨ lem1 S A B f ⟩ h A B f
+SNS'''→SNS'' : (S : Type ℓ → Type ℓ')
+             → (ι : (A B : Σ[ X ∈ (Type ℓ) ] (S X)) → ((A .fst) ≃ (B .fst)) → Type ℓ'')
+             → SNS''' S ι
+             → SNS'' S ι
+SNS'''→SNS'' S ι h A B f =  transport (λ i → S (ua f i)) (A .snd) ≡ (B .snd)
+                         ≃⟨ invEquiv (PathP≃Path (λ i → S (ua f i)) (A .snd) (B .snd)) ⟩
+                            h A B f
 
 
-sip : (S : Type ℓ → Type ℓ')
-    → (ι : (A B : Σ[ X ∈ (Type ℓ) ] (S X)) → ((A .fst) ≃ (B .fst)) → Type ℓ'')
-    → (θ : SNS''' S ι)
-    → (A B : Σ[ X ∈ (Type ℓ) ] (S X))
-    → (A ≃[ ι ] B)
-    → A ≡ B
-sip S ι θ A B (e , p) i = (ua e i) , invEquiv (θ A B e) .fst p i
+-- SIP expressed using Path
+sipPath : (S : Type ℓ → Type ℓ')
+        → (ι : (A B : Σ[ X ∈ (Type ℓ) ] (S X)) → ((A .fst) ≃ (B .fst)) → Type ℓ'')
+        → (θ : SNS''' S ι)
+        → (A B : Σ[ X ∈ (Type ℓ) ] (S X))
+        → A ≃[ ι ] B
+        → A ≡ B
+sipPath S ι θ A B (e , p) i = ua e i , invEq (θ A B e) p i
 
-pis : (S : Type ℓ → Type ℓ')
-    → (ι : (A B : Σ[ X ∈ (Type ℓ) ] (S X)) → ((A .fst) ≃ (B .fst)) → Type ℓ'')
-    → (θ : SNS''' S ι)
-    → (A B : Σ[ X ∈ (Type ℓ) ] (S X))
-    → A ≡ B
-    → A ≃[ ι ] B
-pis S ι θ A B p = au e , θ A B (au e) .fst q
+pisPath : (S : Type ℓ → Type ℓ')
+        → (ι : (A B : Σ[ X ∈ (Type ℓ) ] (S X)) → ((A .fst) ≃ (B .fst)) → Type ℓ'')
+        → (θ : SNS''' S ι)
+        → (A B : Σ[ X ∈ (Type ℓ) ] (S X))
+        → A ≡ B
+        → A ≃[ ι ] B
+pisPath S ι θ A B p = au e , θ A B (au e) .fst q
   where
   e : A .fst ≡ B .fst
   e = λ i → p i .fst
@@ -105,25 +109,65 @@ pis S ι θ A B p = au e , θ A B (au e) .fst q
   q : PathP (λ i → S (ua (au e) i)) (A .snd) (B .snd)
   q = transport eq r
 
+lemma2 : (S : Type ℓ → Type ℓ')
+         (A B : Σ[ X ∈ (Type ℓ) ] (S X))
+         (e : A .fst ≡ B .fst)
+       → PathP (λ i → S (ua (au e) i)) (A .snd) (B .snd) ≡
+         PathP (λ i → S (e i)) (A .snd) (B .snd)
+lemma2 S A B e i = PathP (λ j → S (ua-au e i j)) (A .snd) (B .snd)
+
+-- SIP expressed using Σ-type instead (easier to work with?)
+sip : (S : Type ℓ → Type ℓ')
+    → (ι : (A B : Σ[ X ∈ (Type ℓ) ] (S X)) → ((A .fst) ≃ (B .fst)) → Type ℓ'')
+    → (θ : SNS''' S ι)
+    → (A B : Σ[ X ∈ (Type ℓ) ] (S X))
+    → A ≃[ ι ] B
+    → Σ (A .fst ≡ B .fst) (λ p → PathP (λ i → S (p i)) (A .snd) (B .snd))
+sip S ι θ A B (e , p) = ua e , invEq (θ A B e) p
+
+pis : (S : Type ℓ → Type ℓ')
+    → (ι : (A B : Σ[ X ∈ (Type ℓ) ] (S X)) → ((A .fst) ≃ (B .fst)) → Type ℓ'')
+    → (θ : SNS''' S ι)
+    → (A B : Σ[ X ∈ (Type ℓ) ] (S X))
+    → Σ (A .fst ≡ B .fst) (λ p → PathP (λ i → S (p i)) (A .snd) (B .snd))
+    → A ≃[ ι ] B
+pis S ι θ A B (e , r) = au e , θ A B (au e) .fst q
+  where
+  q : PathP (λ i → S (ua (au e) i)) (A .snd) (B .snd)
+  q = transport (λ i → lemma2 S A B e (~ i)) r
+
 -- These should now be more feasible:
 
 sip∘pis-id : (S : Type ℓ → Type ℓ')
            → (ι : (A B : Σ[ X ∈ (Type ℓ) ] (S X)) → ((A .fst) ≃ (B .fst)) → Type ℓ'')
            → (θ : SNS''' S ι)
            → (A B : Σ[ X ∈ (Type ℓ) ] (S X))
-           → (r : A ≡ B)
+           → (r : Σ (A .fst ≡ B .fst) (λ p → PathP (λ i → S (p i)) (A .snd) (B .snd)))
            → sip S ι θ A B (pis S ι θ A B r) ≡ r
-sip∘pis-id S ι θ A B r = {!!}
+sip∘pis-id S ι θ A B (p , q) =
+    sip S ι θ A B (pis S ι θ A B (p , q))
+  ≡⟨ refl ⟩
+    ua (au p) , invEq (θ A B (au p)) (θ A B (au p) .fst (transport (λ i → lemma2 S A B p (~ i)) q))
+  ≡⟨ (λ i → ua (au p) , secEq (θ A B (au p)) (transport (λ i → lemma2 S A B p (~ i)) q) i) ⟩
+    ua (au p) , transport (λ i → lemma2 S A B p (~ i)) q
+  ≡⟨ (λ i → ua-au p i , transp (λ k →  (PathP (λ j → S (ua-au p (i ∧ k) j)) (A .snd) (B .snd))) (~ i) (transport (λ i → lemma2 S A B p (~ i)) q)) ⟩
+    p , transport (λ i → lemma2 S A B p i) (transport (λ i → lemma2 S A B p (~ i)) q)
+  ≡⟨ (λ i → p , transportTransport⁻ (lemma2 S A B p) q i) ⟩
+    p , q ∎
 
--- This is the one I really need. It says that A ≃[ ι ] B is a retract
--- of A ≡ B, which should be sufficient to prove that sip is an
--- equivalence. But if one can prove both directly then that's the
--- best.
 pis∘sip-id : (S : Type ℓ → Type ℓ')
            → (ι : (A B : Σ[ X ∈ (Type ℓ) ] (S X)) → ((A .fst) ≃ (B .fst)) → Type ℓ'')
            → (θ : SNS''' S ι)
            → (A B : Σ[ X ∈ (Type ℓ) ] (S X))
            → (r : A ≃[ ι ] B)
            → pis S ι θ A B (sip S ι θ A B r) ≡ r
-pis∘sip-id S ι θ A B (f , φ) i = au-ua f i , {!!}
-
+pis∘sip-id S ι θ A B (e , p) =
+    pis S ι θ A B (sip S ι θ A B (e , p))
+  ≡⟨ refl ⟩
+    au (ua e) , θ A B (au (ua e)) .fst (transport (λ i → lemma2 S A B (ua e) (~ i)) (invEq (θ A B e) p))
+  ≡⟨ (λ i → au-ua e i , θ A B (au-ua e i) .fst (transp (λ k → PathP (λ j → S {!!}) (A .snd) (B .snd)) (~ i) (transport (λ i → lemma2 S A B (ua e) (~ i)) (invEq (θ A B e) p)))) ⟩
+    e , θ A B e .fst (transport (λ i → lemma2 S A B (ua e) i) (transport (λ i → lemma2 S A B (ua e) (~ i)) (invEq (θ A B e) p)))
+  ≡⟨ (λ i → e , θ A B e .fst (transportTransport⁻ (lemma2 S A B (ua e)) (invEq (θ A B e) p) i)) ⟩
+    e , θ A B e .fst (invEq (θ A B e) p)
+  ≡⟨ (λ i → e , (retEq (θ A B e) p i)) ⟩
+    e , p ∎

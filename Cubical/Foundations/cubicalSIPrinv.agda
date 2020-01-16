@@ -1,5 +1,5 @@
 {-# OPTIONS --cubical --safe #-}
-module Cubical.Foundations.cubicalSIPtest where
+module Cubical.Foundations.cubicalSIPrinv where
 
 open import Cubical.Core.Everything
 open import Cubical.Foundations.Everything

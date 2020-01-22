@@ -70,11 +70,40 @@ lem1 : (S : Type ℓ → Type ℓ')
      ≃ (transport (λ i → S (ua f i)) (A .snd) ≡ (B .snd))
 lem1 S A B f = PathP≃Path (λ i → S (ua f i)) (A .snd) (B .snd)
 
+-- an alternative proof of lem1 uses lemma1 from cubicalSIPrinv
+
+lemma1 : (S : Type ℓ → Type ℓ')
+         (A B : Σ[ X ∈ (Type ℓ) ] (S X))
+         (e : A .fst ≃ B .fst)
+       → PathP (λ i → ua (au (cong S (ua e))) i) (A .snd) (B .snd) ≡
+         PathP (λ i → S (ua e i)) (A .snd) (B .snd)
+lemma1 S A B e i = PathP (λ j → ua-au (cong S (ua e)) i j) (A .snd) (B .snd)
+
+module _(S : Type ℓ → Type ℓ')
+        (A B : Σ[ X ∈ (Type ℓ) ] (S X))
+        (f : (A .fst) ≃ (B .fst))           where
+
+ φ : PathP (λ i → S (ua f i)) (A .snd) (B .snd) → (transport (λ i → S (ua f i)) (A .snd) ≡ (B .snd))
+ φ q i = unglue (i ∨ ~ i) ((transport (λ j → lemma1 S A B f (~ j)) q) i)
+
+ ψ : (transport (λ i → S (ua f i)) (A .snd) ≡ (B .snd)) → PathP (λ i → S (ua f i)) (A .snd) (B .snd)
+ ψ p = transport (lemma1 S A B f) (λ i → glue (λ { (i = i0) → (A .snd) ; (i = i1) → (B .snd) }) (p i))
+
+ η : (p : (transport (λ i → S (ua f i)) (A .snd) ≡ (B .snd))) → φ (ψ p) ≡ p
+ η p j i = unglue (i ∨ ~ i) ((transport⁻Transport (lemma1 S A B f)  (λ i → glue (λ { (i = i0) → (A .snd) ; (i = i1) → (B .snd) }) (p i)) j) i)
+       
+ ε : (q : PathP (λ i → S (ua f i)) (A .snd) (B .snd)) → ψ (φ q) ≡ q
+ ε q = transportTransport⁻ (lemma1 S A B f) q
+
+ lem1' : PathP (λ i → S (ua f i)) (A .snd) (B .snd) ≃ (transport (λ i → S (ua f i)) (A .snd) ≡ (B .snd))
+ lem1' = isoToEquiv (iso φ ψ η ε)
+ 
+
 foo : (S : Type ℓ → Type ℓ')
     → (ι : (A B : Σ[ X ∈ (Type ℓ) ] (S X)) → ((A .fst) ≃ (B .fst)) → Type ℓ'')
     → SNS'' S ι
     → SNS''' S ι
-foo S ι h A B f = PathP (λ i → S (ua f i)) (A .snd) (B .snd) ≃⟨ lem1 S A B f ⟩ h A B f
+foo S ι h A B f = PathP (λ i → S (ua f i)) (A .snd) (B .snd) ≃⟨ lem1' S A B f ⟩ h A B f
 
 -- TODO: SNS''' <-> SNS''
 
@@ -107,24 +136,24 @@ pis S ι θ A B p = au e , θ A B (au e) .fst q
   q = transport eq r
 
 -- These should now be more feasible:
-
-sip∘pis-id : (S : Type ℓ → Type ℓ')
-           → (ι : (A B : Σ[ X ∈ (Type ℓ) ] (S X)) → ((A .fst) ≃ (B .fst)) → Type ℓ'')
-           → (θ : SNS''' S ι)
-           → (A B : Σ[ X ∈ (Type ℓ) ] (S X))
-           → (r : A ≡ B)
-           → sip S ι θ A B (pis S ι θ A B r) ≡ r
-sip∘pis-id S ι θ A B r = {!!}
+-- Done in cubicalSIPrinv.agda
+-- sip∘pis-id : (S : Type ℓ → Type ℓ')
+--            → (ι : (A B : Σ[ X ∈ (Type ℓ) ] (S X)) → ((A .fst) ≃ (B .fst)) → Type ℓ'')
+--            → (θ : SNS''' S ι)
+--            → (A B : Σ[ X ∈ (Type ℓ) ] (S X))
+--            → (r : A ≡ B)
+--            → sip S ι θ A B (pis S ι θ A B r) ≡ r
+-- sip∘pis-id S ι θ A B r = {!!}
 
 -- This is the one I really need. It says that A ≃[ ι ] B is a retract
 -- of A ≡ B, which should be sufficient to prove that sip is an
 -- equivalence. But if one can prove both directly then that's the
 -- best.
-pis∘sip-id : (S : Type ℓ → Type ℓ')
-           → (ι : (A B : Σ[ X ∈ (Type ℓ) ] (S X)) → ((A .fst) ≃ (B .fst)) → Type ℓ'')
-           → (θ : SNS''' S ι)
-           → (A B : Σ[ X ∈ (Type ℓ) ] (S X))
-           → (r : A ≃[ ι ] B)
-           → pis S ι θ A B (sip S ι θ A B r) ≡ r
-pis∘sip-id S ι θ A B (f , φ) i = au-ua f i , {!!}
+-- pis∘sip-id : (S : Type ℓ → Type ℓ')
+--            → (ι : (A B : Σ[ X ∈ (Type ℓ) ] (S X)) → ((A .fst) ≃ (B .fst)) → Type ℓ'')
+--            → (θ : SNS''' S ι)
+--            → (A B : Σ[ X ∈ (Type ℓ) ] (S X))
+--            → (r : A ≃[ ι ] B)
+--            → pis S ι θ A B (sip S ι θ A B r) ≡ r
+-- pis∘sip-id S ι θ A B (f , φ) i = au-ua f i , {!!}
 

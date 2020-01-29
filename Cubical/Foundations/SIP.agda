@@ -120,10 +120,10 @@ SNS'→SNS S ι θ {X = X} s t = subst (λ x → (equivFun x s ≡ t) ≃ ι (X 
   where
    θ-id = θ (X , s) (X , t) (idEquiv X)
 
-SNS→SNS' : (S : Type ℓ → Type ℓ')
-         → (ι : (A B : Σ[ X ∈ (Type ℓ) ] (S X)) → A .fst ≃ B .fst → Type ℓ'')
+SNS→SNS' : {S : Type ℓ → Type ℓ'}
+         → {ι : (A B : Σ[ X ∈ (Type ℓ) ] (S X)) → A .fst ≃ B .fst → Type ℓ''}
          → SNS S ι → SNS' S ι
-SNS→SNS' S ι θ A B f = EquivJ P C (B .fst) (A .fst) f (B .snd) (A .snd)
+SNS→SNS' {S = S} {ι = ι} θ A B f = EquivJ P C (B .fst) (A .fst) f (B .snd) (A .snd)
   where
    P : (X Y : Type _) → Y ≃ X → Type _
    P X Y g = (s : S X) (t : S Y) → (equivFun (S ⋆ g) t ≡ s) ≃ ι (Y , t) (X , s) g
@@ -420,6 +420,23 @@ pointed-is-SNS' : SNS' {ℓ = ℓ} pointed-structure pointed-iso
 pointed-is-SNS' A B f = transportEquiv (λ i → transportRefl (equivFun f (A .snd)) i ≡ B .snd)
 
 
+-- A structure that consists of just a function
+function-structure : Type ℓ → Type ℓ
+function-structure X = X → X
+
+Type-with-function : Type (ℓ-suc ℓ)
+Type-with-function {ℓ = ℓ} = Σ (Type ℓ) (λ X → function-structure X)
+
+function-iso : (A B : Type-with-function) → (A .fst) ≃ (B .fst) → Type ℓ
+function-iso (X , f) (Y , g) e = ∀ x → fst e (f x) ≡ g (fst e x)
+
+function-is-SNS : SNS {ℓ = ℓ} function-structure function-iso
+function-is-SNS f g = invEquiv funExtEquiv
+
+function-is-SNS' : SNS' {ℓ = ℓ} function-structure function-iso
+function-is-SNS' = SNS→SNS' function-is-SNS
+
+
 -- ∞-Magmas with SNS'
 -- We need function extensionality for binary functions.
 -- TODO: upstream
@@ -457,7 +474,7 @@ module _ {ℓ ℓ' ℓ''} {A : Type ℓ} {B : A → Type ℓ'} {C : (x : A) → 
 ∞-magma-iso (X , _·_) (Y , _∗_) f = (x x' : X) → equivFun f (x · x') ≡ (equivFun f x) ∗ (equivFun f x')
 
 ∞-magma-is-SNS' : SNS' {ℓ = ℓ} ∞-magma-structure ∞-magma-iso
-∞-magma-is-SNS' (X , _·_) (Y , _∗_) f = SNS→SNS' ∞-magma-structure ∞-magma-iso C (X , _·_) (Y , _∗_) f
+∞-magma-is-SNS' (X , _·_) (Y , _∗_) f = SNS→SNS' {ι = ∞-magma-iso} C (X , _·_) (Y , _∗_) f
  where
   C : {X : Type ℓ} (_·_ _∗_ : X → X → X) → (_·_ ≡ _∗_) ≃ ((x x' : X) → (x · x') ≡ (x ∗ x'))
   C _·_ _∗_ = invEquiv funExtBinEquiv

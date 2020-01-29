@@ -65,10 +65,12 @@ open import Cubical.Foundations.Prelude
 open import Cubical.Foundations.Equiv
 open import Cubical.Foundations.Univalence
 open import Cubical.Foundations.Isomorphism
+open import Cubical.Foundations.SIP
 
 open import Cubical.Data.Nat
 open import Cubical.Data.Bool
 open import Cubical.Data.Empty
+open import Cubical.Data.Prod.Base hiding (_×_)  renaming (_×Σ_ to _×_)
 
 open import Cubical.Relation.Nullary
 
@@ -307,6 +309,38 @@ s (NatImplℕ≡Binℕ i) =
   transport (λ i → (m n : Binℕ≡ℕ (~ i))
                  → addp i m (NatImplℕ≡Binℕ i .s n) ≡ NatImplℕ≡Binℕ i .s (addp i m n)) +-suc
 
+
+
+
+
+-- We now want to redo this whole part using the SIP
+Nat-structure : Type₀ → Type₀
+Nat-structure A = A × (A → A)
+
+NatImpl' = Σ Type₀ (λ A → Nat-structure A)
+
+-- the two instances of NatImpl'
+NatImpl'ℕ : NatImpl'
+NatImpl'ℕ = ℕ , zero , suc
+
+NatImpl'Binℕ : NatImpl' 
+NatImpl'Binℕ = Binℕ , binℕ0 , sucBinℕ
+
+
+Nat-iso : (X Y : NatImpl') → (X .fst) ≃ (Y .fst) → Type₀
+Nat-iso (A , z , s) (B , z' , s') e =   (fst e z ≡ z')
+                                      × (∀ a → fst e (s a) ≡ s' (fst e a))
+
+NatImpl'-is-SNS' : SNS' Nat-structure Nat-iso
+NatImpl'-is-SNS' = join-SNS' pointed-structure pointed-iso pointed-is-SNS'
+                             function-structure function-iso function-is-SNS'
+
+NatImpl'Path : (X Y : NatImpl') → (X ≃[ Nat-iso ] Y) ≃ (X ≡ Y)
+NatImpl'Path X Y = SIP Nat-structure Nat-iso (SNS''→SNS''' NatImpl'-is-SNS') X Y
+
+NatImpl'ℕ≡Binℕ : NatImpl'Binℕ ≡ NatImpl'ℕ
+NatImpl'ℕ≡Binℕ = fst (NatImpl'Path  NatImpl'Binℕ NatImpl'ℕ)
+                     (Binℕ≃ℕ , refl , λ a → cong suc (Binℕ⇒Pos⇒ℕ a)) 
 
 
 -- Doubling experiment: we define a notion of "doubling structure" and

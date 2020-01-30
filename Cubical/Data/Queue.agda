@@ -22,10 +22,15 @@ map⃗ : {A : Type ℓ} {B : Type ℓ'} (f : A ≃ B)
 map⃗ f g b = fst f (g (fst (invEquiv f) b))
 -- Do we need that map-→ f is an equivalence?
 
--- map-× 
+map-× : {A B C D : Type ℓ} → (A → B) → (C → D) → (A × C) → (B × D)
+map-× f g (a , c) = f a , g c
 
 queue-structure : Type ℓ → Type (ℓ-suc ℓ)
-queue-structure {ℓ = ℓ} A = Σ (Type ℓ) λ Q →   Q
-                                            × A → Q → Q
-                                            × Q → (Unit ⊎ (Q × A))
+queue-structure {ℓ = ℓ} A = Σ (Type ℓ) (λ Q →     Q
+                                            × (A → Q → Q)
+                                            × (Q → (Unit ⊎ (Q × A))))
+Queue : Type (ℓ-max ℓ (ℓ-suc ℓ))
+Queue {ℓ = ℓ} = Σ (Type ℓ) λ A → queue-structure A
 
+-- queue-iso : (X Y : Queue) → (fst X) ≃ (fst Y) → Type ℓ
+-- queue-iso {ℓ = ℓ} X Y e = {!!}

@@ -2,6 +2,7 @@
 module Cubical.Data.Queue where
 
 open import Cubical.Foundations.Everything
+open import Cubical.Foundations.SIP
 
 open import Cubical.Data.Unit
 open import Cubical.Data.Empty
@@ -16,21 +17,27 @@ open import Cubical.Data.Prod.Base hiding (_×_ ; map-×) renaming (_×Σ_ to _�
 variable
  ℓ ℓ' : Level
 
--- Two necessary result to define a queue isomorphism
-map⃗ : {A : Type ℓ} {B : Type ℓ'} (f : A ≃ B)
-       → (A → A) → (B → B)
-map⃗ f g b = fst f (g (fst (invEquiv f) b))
--- Do we need that map-→ f is an equivalence?
+-- necessary result to define a queue isomorphism
 
 map-× : {A B C D : Type ℓ} → (A → B) → (C → D) → (A × C) → (B × D)
 map-× f g (a , c) = f a , g c
 
 queue-structure : Type ℓ → Type (ℓ-suc ℓ)
-queue-structure {ℓ = ℓ} A = Σ (Type ℓ) (λ Q →     Q
-                                            × (A → Q → Q)
-                                            × (Q → (Unit ⊎ (Q × A))))
+queue-structure {ℓ = ℓ} A = Σ[ Q ∈ Type ℓ ] (   Q
+                                            × (A × Q → Q)
+                                            × (Q → Unit ⊎ (Q × A)))
+
+
 Queue : Type (ℓ-max ℓ (ℓ-suc ℓ))
 Queue {ℓ = ℓ} = Σ (Type ℓ) λ A → queue-structure A
 
--- queue-iso : (X Y : Queue) → (fst X) ≃ (fst Y) → Type ℓ
--- queue-iso {ℓ = ℓ} X Y e = {!!}
+
+queue-iso : (X Y : Queue {ℓ = ℓ}) → (fst X) ≃ (fst Y) → Type ℓ
+queue-iso (A , Q₁ , emp₁ , push₁ , pop₁) (B , Q₂ , emp₂ , push₂ , pop₂) e =
+ Σ[ f ∈ (Q₁ ≃ Q₂) ] (  (fst f emp₁ ≡ emp₂)
+                     × (∀ aq → f .fst (push₁ aq) ≡ push₂ (map-× (e .fst) (f .fst) aq))
+                     × (∀ q → map-⊎ (idfun Unit) (map-× (fst f) (fst e)) (pop₁ q) ≡ pop₂ (fst f q)))
+
+
+Queue-is-SNS : SNS {ℓ = ℓ} queue-structure queue-iso
+Queue-is-SNS  (Q₁ , emp₁ , push₁ , pop₁) (Q₂ , emp₂ , push₂ , pop₂) = {!!}

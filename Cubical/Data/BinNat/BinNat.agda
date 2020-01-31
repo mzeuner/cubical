@@ -343,6 +343,12 @@ NatImpl'ℕ≡Binℕ = fst (NatImpl'Path  NatImpl'Binℕ NatImpl'ℕ)
                      (Binℕ≃ℕ , refl , λ a → cong suc (Binℕ⇒Pos⇒ℕ a)) 
 
 
+-- We then use this to transport +-suc from unary to binary numbers
++Binℕ-suc' : ∀ m n → m +Binℕ sucBinℕ n ≡ sucBinℕ (m +Binℕ n)
++Binℕ-suc' =
+  transport (λ i → (m n : Binℕ≡ℕ (~ i))
+                 → addp i m (NatImpl'ℕ≡Binℕ (~ i) .snd .snd n) ≡ NatImpl'ℕ≡Binℕ (~ i) .snd .snd (addp i m n)) +-suc
+
 -- Doubling experiment: we define a notion of "doubling structure" and
 -- transport a proof that is proved directly using refl for binary
 -- numbers to unary numbers. This is an example of program/data
@@ -350,7 +356,7 @@ NatImpl'ℕ≡Binℕ = fst (NatImpl'Path  NatImpl'Binℕ NatImpl'ℕ)
 -- inefficient data-structures using efficient ones.
 
 -- Doubling structures
-record Double {ℓ} (A : Type ℓ) : Type (ℓ-suc ℓ) where
+record Double {ℓ} (A : Type ℓ) : Type ℓ where
   field
     -- doubling function computing 2 * x
     double : A → A

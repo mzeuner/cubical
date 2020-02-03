@@ -24,6 +24,9 @@ variable
 map-× : {A B C D : Type ℓ} → (A → B) → (C → D) → (A × C) → (B × D)
 map-× f g (a , c) = f a , g c
 
+-- how even stating the needed lemmas
+-- transport-×-lemma : {X Y : Type ℓ} (p : X ≡ Y)
+
 queue-structure : Type ℓ → Type (ℓ-suc ℓ)
 queue-structure {ℓ = ℓ} A = Σ[ Q ∈ Type ℓ ] (   Q
                                             × (A × Q → Q)

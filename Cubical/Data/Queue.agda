@@ -24,6 +24,27 @@ variable
 map-× : {A B C D : Type ℓ} → (A → B) → (C → D) → (A × C) → (B × D)
 map-× f g (a , c) = f a , g c
 
+
+transport-×-lemma : {X : Type ℓ} {A B : X → Type ℓ'} {x y : X} (p : x ≡ y) (u : A x × B x) (v : A y × B y)
+                    →    (transport (λ i → A (p i) × B (p i)) u ≡ v)
+                     ≡   (transport (λ i → A (p i)) (u .fst) ≡ (v .fst))
+                       × (transport (λ i → B (p i)) (u .snd) ≡ (v .snd))
+transport-×-lemma {A = A} {B = B} {y = y} p u v = transport P α 
+  where
+   q : transport (λ i → B y) (transport (λ i → B (p i)) (u .snd)) ≡ transport (λ i → B (p i)) (u .snd)
+   q = transportRefl (transport (λ i → B (p i)) (u .snd))
+
+   P :  ((transport (λ i → A (p i) × B (p i)) u ≡ v) ≡
+         (transport (λ i → A (p i) × B (p i)) u Σ≡T v))
+      ≡
+        ((transport (λ i → A (p i) × B (p i)) u ≡ v) ≡
+         (transport (λ i → A (p i)) (u .fst) ≡ v .fst) ×
+         (transport (λ i → B (p i)) (u .snd) ≡ v .snd))
+   P j = ((transp (λ i → Σ (A (p i)) (λ _ → B (p i))) i0 u ≡ v) ≡
+        Σ (transp (λ i → A (p i)) i0 (fst u) ≡ fst v) (λ _ → q j ≡ snd v))
+
+   α = (pathSigma≡sigmaPath (transport (λ i → A (p i) × B (p i)) u) v)
+   
 -- how even stating the needed lemmas
 -- transport-×-lemma : {X Y : Type ℓ} (p : X ≡ Y)
 

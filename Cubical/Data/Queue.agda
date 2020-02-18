@@ -66,8 +66,8 @@ queue'-iso (A , Q₁ , emp₁ , push₁ , pop₁) (B , Q₂ , emp₂ , push₂ ,
                      × (∀ q → map-⊎ (idfun Unit) (map-× (fst f) (fst e)) (pop₁ q) ≡ pop₂ (fst f q)))
 
 
-Queue'-is-SNS : SNS {ℓ = ℓ} queue'-structure queue'-iso
-Queue'-is-SNS  {X = X} (Q₁ , emp₁ , push₁ , pop₁) (Q₂ , emp₂ , push₂ , pop₂) = {!!}
+-- Queue'-is-SNS : SNS {ℓ = ℓ} queue'-structure queue'-iso
+-- Queue'-is-SNS  {X = X} (Q₁ , emp₁ , push₁ , pop₁) (Q₂ , emp₂ , push₂ , pop₂) = {!!}
 
    --          (Q₁ , emp₁ , push₁ , pop₁) ≡ (Q₂ , emp₂ , push₂ , pop₂)
             
@@ -192,7 +192,8 @@ module Queues-on (A : Type ℓ) (Aset : isSet A) where
 
  -- Should we add further axioms for Queues? Some suggestions:
  queue-axioms : (Q : Type ℓ) → queue-structure Q → Type ℓ
- queue-axioms Q (emp , push , pop) = pop emp ≡ inl tt -- etc.
+ queue-axioms Q (emp , push , pop) =   (isSet Q)
+                                     × (pop emp ≡ inl tt) -- etc.
                                     
 
 

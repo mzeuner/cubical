@@ -5,7 +5,7 @@ open import Cubical.HITs.AssocList.Base as AL
 open import Cubical.Foundations.Everything
 open import Cubical.Foundations.SIP
 open import Cubical.HITs.FiniteMultiset as FMS
-open import Cubical.Data.Nat   using (ℕ; zero; suc; _+_; +-assoc; isSetℕ)
+open import Cubical.Data.Nat   -- using (ℕ; zero; suc; _+_; _-_; +-assoc; isSetℕ)
 open import Cubical.Structures.MultiSet
 open import Cubical.Relation.Nullary
 open import Cubical.Relation.Nullary.DecidableEq
@@ -183,3 +183,28 @@ module _(discA : Discrete A) where
                                 (Multi-Set-is-SNS A setA)
                                 (FMS-with-str discA) AL-with-str
                                 .fst (FMSet≃AssocList , FMS→AL-isIso)
+
+
+
+-- Next we define intersection and union of association lists
+ _-_ : ℕ → ℕ → ℕ
+ zero - m = zero
+ suc n - zero = suc n
+ suc n - suc m = n - m
+ 
+ min : ℕ → ℕ → ℕ
+ min zero m = zero
+ min (suc n) zero = zero
+ min (suc n) (suc m) = suc (min n m)
+
+ 
+ _∩_ : AssocList A → AssocList A → AssocList A
+ ⟨⟩ ∩ ys = ⟨⟩
+ (⟨ a , n ⟩∷ xs) ∩ ys = ⟨ a , min n (ALmember a ys - ALmember a (xs ∩ ys)) ⟩∷ (xs ∩ ys)
+ per a b xs i ∩ ys = {!!} --multiPer a b {!!} {!!} (xs ∩ ys) i
+ agg a m n xs i ∩ ys = {!agg a m n (xs ∩ ys) i!}
+ del a xs i ∩ ys = del a (xs ∩ ys) i
+ trunc xs xs₁ x y i i₁ ∩ ys = {!!}
+
+-- multiPer : (a b : A) (m n : ℕ) (xs : AssocList A)
+--           → ⟨ a , m ⟩∷ ⟨ b , n ⟩∷ xs ≡ ⟨ b , n ⟩∷ ⟨ a , m ⟩∷ xs

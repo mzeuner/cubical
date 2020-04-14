@@ -198,13 +198,14 @@ module _(discA : Discrete A) where
  min (suc n) (suc m) = suc (min n m)
 
  
- _∩_ : AssocList A → AssocList A → AssocList A
- ⟨⟩ ∩ ys = ⟨⟩
- (⟨ a , n ⟩∷ xs) ∩ ys = ⟨ a , min n (ALmember a ys - ALmember a (xs ∩ ys)) ⟩∷ (xs ∩ ys)
- per a b xs i ∩ ys = {!!} --multiPer a b {!!} {!!} (xs ∩ ys) i
- agg a m n xs i ∩ ys = {!agg a m n (xs ∩ ys) i!}
- del a xs i ∩ ys = del a (xs ∩ ys) i
- trunc xs xs₁ x y i i₁ ∩ ys = {!!}
-
--- multiPer : (a b : A) (m n : ℕ) (xs : AssocList A)
---           → ⟨ a , m ⟩∷ ⟨ b , n ⟩∷ xs ≡ ⟨ b , n ⟩∷ ⟨ a , m ⟩∷ xs
+ -- _∩_ : AssocList A → AssocList A → AssocList A
+ -- ⟨⟩ ∩ ys = ⟨⟩
+ -- (⟨ a , n ⟩∷ xs) ∩ ys = ⟨ a , min n (ALmember a ys - ALmember a (xs ∩ ys)) ⟩∷ (xs ∩ ys)
+ -- per a b xs i ∩ ys = {!!} --multiPer a b {!!} {!!} (xs ∩ ys) i
+ -- agg a m n xs i ∩ ys = {!agg a m n (xs ∩ ys) i!}
+ -- del a xs i ∩ ys = del a (xs ∩ ys) i
+ -- trunc xs xs₁ p q i j ∩ ys =  trunc (xs ∩ ys) (xs₁ ∩ ys) (cong (λ zs → zs ∩ ys) p) (cong (λ zs → zs ∩ ys) q) i j
+ 
+ -- probably better to define this for finite multisets and proof:
+ --     (⟨ a , n ⟩∷ xs) ∩ ys = ⟨ a , min n (ALmember a ys - ALmember a (xs ∩ ys)) ⟩∷ (xs ∩ ys)
+ -- where _∩_ for AssocList is the transported opertaion

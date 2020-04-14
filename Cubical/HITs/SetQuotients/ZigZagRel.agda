@@ -30,8 +30,13 @@ isBisimulation R f g =  isZigZagComplete R
 module CarlosThm (A B : Type ℓ) (R : A → B → Type ℓ) (f : A → B) (g : B → A) (isBisRfg : isBisimulation R f g) where
  zigzag : isZigZagComplete R
  zigzag = isBisRfg .fst
- η' = isBisRfg .snd .fst
- ε' = isBisRfg .snd .snd
+ 
+ α : ∀ a → R a (f a)
+ α = isBisRfg .snd .fst
+ 
+ β : ∀ b → R (g b) b
+ β = isBisRfg .snd .snd
+
 
  Rᴬ : A → A → Type ℓ
  Rᴬ a a' = Σ[ b ∈ B ] (R a b × R a' b)
@@ -39,6 +44,28 @@ module CarlosThm (A B : Type ℓ) (R : A → B → Type ℓ) (f : A → B) (g : 
  Rᴮ : B → B → Type ℓ
  Rᴮ b b' = Σ[ a ∈ A ] (R a b × R a b')
 
+ -- Rᴬ and Rᴮ are equivalence relations
+ Rᴬ-reflexive : ∀ a → Rᴬ a a
+ Rᴬ-reflexive a = f a , α a , α a
+ 
+ Rᴬ-symmetric : ∀ a a' → Rᴬ a a' → Rᴬ a' a
+ Rᴬ-symmetric a a' (b , r , s) = b , s , r
+ 
+ Rᴬ-transitive : ∀ a a' a'' → Rᴬ a a' → Rᴬ a' a'' → Rᴬ a a''
+ Rᴬ-transitive a a' a'' (b , r , s) (b' , r' , s') = b' , zigzag r s r' , s'
+
+
+ Rᴮ-reflexive : ∀ b → Rᴮ b b
+ Rᴮ-reflexive b = g b , β b , β b
+ 
+ Rᴮ-symmetric : ∀ b b' → Rᴮ b b' → Rᴮ b' b
+ Rᴮ-symmetric b b' (a , r , s) = a , s , r
+ 
+ Rᴮ-transitive : ∀ b b' b'' → Rᴮ b b' → Rᴮ b' b'' → Rᴮ b b''
+ Rᴮ-transitive b b' b'' (a , r , s) (a' , r' , s') = a , r , zigzag s r' s'
+
+
+ -- Now for the proof of A / Rᴬ ≃ B / Rᴮ
  X = A / Rᴬ
  Y = B / Rᴮ
 
@@ -47,7 +74,7 @@ module CarlosThm (A B : Type ℓ) (R : A → B → Type ℓ) (f : A → B) (g : 
  φ (eq/ a a' r i) = eq/ (f a) (f a') s i
    where
    s : Rᴮ (f a) (f a')
-   s = a , η' a , zigzag (r .snd .fst) (r .snd .snd) (η' a')
+   s = a , α a , zigzag (r .snd .fst) (r .snd .snd) (α a')
  φ (squash/ x x₁ p q i j) = squash/ (φ x) (φ x₁) (cong φ p) (cong φ q) i j
 
  ψ : Y → X
@@ -55,14 +82,14 @@ module CarlosThm (A B : Type ℓ) (R : A → B → Type ℓ) (f : A → B) (g : 
  ψ (eq/ b b' s i) = eq/ (g b) (g b') r i
   where
   r : Rᴬ (g b) (g b')
-  r = b' , zigzag (ε' b) (s .snd .fst) (s .snd .snd) , ε' b'
+  r = b' , zigzag (β b) (s .snd .fst) (s .snd .snd) , β b'
  ψ (squash/ y y₁ p q i j) =  squash/ (ψ y) (ψ y₁) (cong ψ p) (cong ψ q) i j
 
  η : section φ ψ
- η y = elimProp (λ y → squash/ (φ (ψ y)) y) (λ b → eq/ (f (g b)) b (g b , η' (g b) , ε' b)) y
+ η y = elimProp (λ y → squash/ (φ (ψ y)) y) (λ b → eq/ (f (g b)) b (g b , α (g b) , β b)) y
 
  ε : retract φ ψ
- ε x = elimProp (λ x → squash/ (ψ (φ x)) x) (λ a → eq/ (g (f a)) a (f a , ε' (f a) , η' a)) x
+ ε x = elimProp (λ x → squash/ (ψ (φ x)) x) (λ a → eq/ (g (f a)) a (f a , β (f a) , α a)) x
 
  Thm3 : X ≃ Y
  Thm3 = isoToEquiv (iso φ ψ η ε)

@@ -197,24 +197,28 @@ We have already established that the vertical arrows are equivalences
 
  infixr 5 _∷/_
 
- lem1 : (x x' : X) → (∀ a → s a x ≡ s a x') → _/_.[ x ] ≡ _/_.[ x' ]
- lem1 x x' α = eq/ x x' β
-  where
-  β : Rˣ x x'
-  β = {!!} , {!!} , {!!}
- 
- μ : FMSet A → X/Rˣ
- μ = FMS.Rec.f squash/ _/_.[ [] ] _∷/_ γ
-  where
-  γ : ∀ a b [xs] → a ∷/ b ∷/ [xs] ≡ b ∷/ a ∷/ [xs]
-  γ a b = elimProp (λ [xs] → squash/ (a ∷/ b ∷/ [xs]) (b ∷/ a ∷/ [xs])) f
-   where
-   f : ∀ xs → _/_.[ a ∷ b ∷ xs ] ≡ _/_.[ b ∷ a ∷ xs ]
-   f xs = eq/ (a ∷ b ∷ xs) (b ∷ a ∷ xs) (ys , η (a ∷ b ∷ xs) , {!ε ys!})
-    where
-    ys : Y
-    ys = ⟨ a , 1 ⟩∷ ⟨ b , 1 ⟩∷ φ xs
 
+ μ : FMSet A → X/Rˣ
+ μ = FMS.Rec.f squash/ _/_.[ [] ] _∷/_ α
+  where
+  α : ∀ a b [xs] → a ∷/ b ∷/ [xs] ≡ b ∷/ a ∷/ [xs]
+  α a b = elimProp (λ [xs] → squash/ (a ∷/ b ∷/ [xs]) (b ∷/ a ∷/ [xs])) β
+   where
+   β : ∀ xs → _/_.[ a ∷ b ∷ xs ] ≡ _/_.[ b ∷ a ∷ xs ]
+   β xs = eq/ (a ∷ b ∷ xs) (b ∷ a ∷ xs) γ
+    where
+     γ : Rˣ (a ∷ b ∷ xs) (b ∷ a ∷ xs)
+     γ = φ (a ∷ b ∷ xs) , η (a ∷ b ∷ xs) , λ c → δ c ⁻¹ ∙ η (a ∷ b ∷ xs) c
+      where
+      δ : ∀ c → s c (a ∷ b ∷ xs) ≡ s c (b ∷ a ∷ xs)
+      δ c with (discA c a)
+      δ c | (yes c≡a)      with (discA c b)
+      δ c | (yes c≡a)      | (yes c≡b) = refl
+      δ c | (yes c≡a)      | (no  c≢b) = refl
+      δ c | (no  c≢a)      with (discA c b)
+      δ c | (no  c≢a)      | (yes c≡b) = refl
+      δ c | (no  c≢a)      | (no  c≢b) = refl
+      
 
 
  -- ν : X/Rˣ → FMSet A

@@ -20,7 +20,7 @@ private
   
 
 isZigZagComplete : {A B : Type ℓ} (R : A → B → Type ℓ) → Type ℓ
-isZigZagComplete R = ∀ {a b a' b'} → R a b → R a' b → R a' b' → R a b'
+isZigZagComplete R = ∀ a b a' b' → R a b → R a' b → R a' b' → R a b'
 
 isBisimulation : {A B : Type ℓ} (R : A → B → Type ℓ) (f : A → B) (g : B → A) → Type ℓ
 isBisimulation R f g =  isZigZagComplete R
@@ -52,7 +52,7 @@ module CarlosThm (A B : Type ℓ) (R : A → B → Type ℓ) (f : A → B) (g : 
  Rᴬ-symmetric a a' (b , r , s) = b , s , r
  
  Rᴬ-transitive : ∀ a a' a'' → Rᴬ a a' → Rᴬ a' a'' → Rᴬ a a''
- Rᴬ-transitive a a' a'' (b , r , s) (b' , r' , s') = b' , zigzag r s r' , s'
+ Rᴬ-transitive a a' a'' (b , r , s) (b' , r' , s') = b' , zigzag _ _ _ _ r s r' , s'
 
 
  Rᴮ-reflexive : ∀ b → Rᴮ b b
@@ -62,7 +62,7 @@ module CarlosThm (A B : Type ℓ) (R : A → B → Type ℓ) (f : A → B) (g : 
  Rᴮ-symmetric b b' (a , r , s) = a , s , r
  
  Rᴮ-transitive : ∀ b b' b'' → Rᴮ b b' → Rᴮ b' b'' → Rᴮ b b''
- Rᴮ-transitive b b' b'' (a , r , s) (a' , r' , s') = a , r , zigzag s r' s'
+ Rᴮ-transitive b b' b'' (a , r , s) (a' , r' , s') = a , r , zigzag _ _ _ _ s r' s'
 
 
  -- Now for the proof of A / Rᴬ ≃ B / Rᴮ
@@ -74,7 +74,7 @@ module CarlosThm (A B : Type ℓ) (R : A → B → Type ℓ) (f : A → B) (g : 
  φ (eq/ a a' r i) = eq/ (f a) (f a') s i
    where
    s : Rᴮ (f a) (f a')
-   s = a , α a , zigzag (r .snd .fst) (r .snd .snd) (α a')
+   s = a , α a , zigzag _ _ _ _ (r .snd .fst) (r .snd .snd) (α a')
  φ (squash/ x x₁ p q i j) = squash/ (φ x) (φ x₁) (cong φ p) (cong φ q) i j
 
  ψ : Y → X
@@ -82,7 +82,7 @@ module CarlosThm (A B : Type ℓ) (R : A → B → Type ℓ) (f : A → B) (g : 
  ψ (eq/ b b' s i) = eq/ (g b) (g b') r i
   where
   r : Rᴬ (g b) (g b')
-  r = b' , zigzag (β b) (s .snd .fst) (s .snd .snd) , β b'
+  r = b' , zigzag _ _ _ _ (β b) (s .snd .fst) (s .snd .snd) , β b'
  ψ (squash/ y y₁ p q i j) =  squash/ (ψ y) (ψ y₁) (cong ψ p) (cong ψ q) i j
 
  η : section φ ψ
@@ -136,15 +136,86 @@ module _(A : Type₀) (discA : Discrete A) where
  η : ∀ x → R {X , s} {Y , t} x (φ x)
  η [] a = refl
  η (x ∷ xs) a  with (discA a x)
- ...           | (yes a≡x) = cong ℕ.suc (η xs a)
- ...           | (no  a≢x) = η xs a 
+ ...           | yes a≡x = cong ℕ.suc (η xs a)
+ ...           | no  a≢x = η xs a 
 
+
+-- for the other direction we need little helper function
  ε : ∀ y → R {X , s} {Y , t} (ψ y) y
+ ε' : (x : A) (n : ℕ) (xs : AssocList A) (a : A) → s a (ψ (⟨ x , n ⟩∷ xs)) ≡ t a (⟨ x , n ⟩∷ xs)
+
  ε ⟨⟩ a = refl
- ε (⟨ x , ℕ.zero ⟩∷ xs) a = ε xs a
- ε (⟨ x , ℕ.suc n ⟩∷ xs) a = {!!} --aux-aux a x (discA a x)
+ ε (⟨ x , n ⟩∷ xs) a = ε' x n xs a
+
+ ε' x ℕ.zero xs a = ε xs a
+ ε' x (ℕ.suc n) xs a with discA a x
+ ...                 | yes a≡x = cong ℕ.suc (ε' x n xs a)
+ ...                 | no  a≢x = ε' x n xs a
+
+
+ zigzagR : isZigZagComplete (R {X , s} {Y , t})
+ zigzagR _ _ _ _ r r' r'' a = (r a) ∙ (r' a) ⁻¹ ∙ (r'' a)
+ 
+ -- Now apply thm 3 
+ Rˣ = CarlosThm.Rᴬ X Y (R {X , s} {Y , t}) φ ψ (zigzagR , η , ε)
+ Rʸ = CarlosThm.Rᴮ X Y (R {X , s} {Y , t}) φ ψ (zigzagR , η , ε)
+
+ X/Rˣ = CarlosThm.X X Y (R {X , s} {Y , t}) φ ψ (zigzagR , η , ε)
+ Y/Rʸ = CarlosThm.Y X Y (R {X , s} {Y , t}) φ ψ (zigzagR , η , ε)
+
+ check1 : X/Rˣ ≡ (X / Rˣ)
+ check1 = refl
+
+ check2 : Y/Rʸ ≡ (Y / Rʸ)
+ check2 = refl
+
+{- 
+We want a commutative square
+
+               ≃
+    X/Rˣ  ----------->  Y/Rʸ
+     
+     |                   |
+   ≃ |                   | ≃
+     |                   |
+     ∨                   ∨
+               ≃
+  FMSet A  -------->  AList A
+
+We have already established that the vertical arrows are equivalences 
+-}
+
+ _∷/_ : A → X/Rˣ → X/Rˣ
+ a ∷/ _/_.[ xs ] = _/_.[ a ∷ xs ]
+ a ∷/ eq/ xs xs' r i = eq/ (a ∷ xs) (a ∷ xs') r' i
   where
-   aux-aux : (a x : A) → (p : Dec (a ≡ x))
-            → aux a x p (s a (ψ (⟨ x , n ⟩∷ xs))) ≡ aux a x p (t a (⟨ x , n ⟩∷ xs))
-   aux-aux a x (yes a≡x) = cong ℕ.suc (ε (⟨ x , n ⟩∷ xs) a)
-   aux-aux a x (no  a≢x) = ε (⟨ x , n ⟩∷ xs) a
+  r' : Rˣ (a ∷ xs) (a ∷ xs')
+  r' =  ⟨ a , 1 ⟩∷ (r .fst)
+      , (λ a' → cong (λ n →  aux a' a (discA a' a) n) (r .snd .fst a'))
+      , (λ a' → cong (λ n →  aux a' a (discA a' a) n) (r .snd .snd a'))
+ a ∷/ squash/ xs xs₁ p q i j = squash/ (a ∷/ xs) (a ∷/ xs₁) (cong (a ∷/_) p) (cong (a ∷/_) q) i j
+
+ infixr 5 _∷/_
+
+ μ : FMSet A → X/Rˣ
+ μ = FMS.Rec.f squash/ _/_.[ [] ] _∷/_ γ
+  where
+  γ : ∀ a b [xs] → a ∷/ b ∷/ [xs] ≡ b ∷/ a ∷/ [xs]
+  γ a b = elimProp (λ [xs] → squash/ (a ∷/ b ∷/ [xs]) (b ∷/ a ∷/ [xs])) f
+   where
+   f : ∀ xs → _/_.[ a ∷ b ∷ xs ] ≡ _/_.[ b ∷ a ∷ xs ]
+   f xs = eq/ (a ∷ b ∷ xs) (b ∷ a ∷ xs) (ys , η (a ∷ b ∷ xs) , {!ε ys!})
+    where
+    ys : Y
+    ys = ⟨ a , 1 ⟩∷ ⟨ b , 1 ⟩∷ φ xs
+
+
+
+ ν : X/Rˣ → FMSet A
+ ν _/_.[ [] ] = []
+ ν _/_.[ x ∷ xs ] = x ∷ ν _/_.[ xs ]
+ ν (eq/ xs xs' r i) = {!!}
+  where
+   ρ : ∀ a → s a xs ≡ s a xs'
+   ρ = λ a → (r .snd .fst a) ∙ (r .snd .snd a) ⁻¹
+ ν (squash/ xs/ xs/' p q i j) = trunc (ν xs/) (ν xs/') (cong ν p) (cong ν q) i j

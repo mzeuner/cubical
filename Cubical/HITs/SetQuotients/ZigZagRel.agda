@@ -197,6 +197,12 @@ We have already established that the vertical arrows are equivalences
 
  infixr 5 _∷/_
 
+ lem1 : (x x' : X) → (∀ a → s a x ≡ s a x') → _/_.[ x ] ≡ _/_.[ x' ]
+ lem1 x x' α = eq/ x x' β
+  where
+  β : Rˣ x x'
+  β = {!!} , {!!} , {!!}
+ 
  μ : FMSet A → X/Rˣ
  μ = FMS.Rec.f squash/ _/_.[ [] ] _∷/_ γ
   where
@@ -211,11 +217,11 @@ We have already established that the vertical arrows are equivalences
 
 
 
- ν : X/Rˣ → FMSet A
- ν _/_.[ [] ] = []
- ν _/_.[ x ∷ xs ] = x ∷ ν _/_.[ xs ]
- ν (eq/ xs xs' r i) = {!!}
-  where
-   ρ : ∀ a → s a xs ≡ s a xs'
-   ρ = λ a → (r .snd .fst a) ∙ (r .snd .snd a) ⁻¹
- ν (squash/ xs/ xs/' p q i j) = trunc (ν xs/) (ν xs/') (cong ν p) (cong ν q) i j
+ -- ν : X/Rˣ → FMSet A
+ -- ν _/_.[ [] ] = []
+ -- ν _/_.[ x ∷ xs ] = x ∷ ν _/_.[ xs ]
+ -- ν (eq/ xs xs' r i) = {!!}
+ --  where
+ --   ρ : ∀ a → s a xs ≡ s a xs'
+ --   ρ = λ a → (r .snd .fst a) ∙ (r .snd .snd a) ⁻¹
+ -- ν (squash/ xs/ xs/' p q i j) = trunc (ν xs/) (ν xs/') (cong ν p) (cong ν q) i j

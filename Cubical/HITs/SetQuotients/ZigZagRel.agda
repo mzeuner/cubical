@@ -86,10 +86,10 @@ module CarlosThm (A B : Type ℓ) (R : A → B → Type ℓ) (f : A → B) (g : 
  ψ (squash/ y y₁ p q i j) =  squash/ (ψ y) (ψ y₁) (cong ψ p) (cong ψ q) i j
 
  η : section φ ψ
- η y = elimProp (λ y → squash/ (φ (ψ y)) y) (λ b → eq/ (f (g b)) b (g b , α (g b) , β b)) y
+ η y = elimProp (λ y → squash/ (φ (ψ y)) y) (λ b → eq/ _ _ (g b , α (g b) , β b)) y
 
  ε : retract φ ψ
- ε x = elimProp (λ x → squash/ (ψ (φ x)) x) (λ a → eq/ (g (f a)) a (f a , β (f a) , α a)) x
+ ε x = elimProp (λ x → squash/ (ψ (φ x)) x) (λ a → eq/ _ _ (f a , β (f a) , α a)) x
 
  Thm3 : X ≃ Y
  Thm3 = isoToEquiv (iso φ ψ η ε)
@@ -142,7 +142,8 @@ module _(A : Type₀) (discA : Discrete A) where
 
 -- for the other direction we need little helper function
  ε : ∀ y → R {X , s} {Y , t} (ψ y) y
- ε' : (x : A) (n : ℕ) (xs : AssocList A) (a : A) → s a (ψ (⟨ x , n ⟩∷ xs)) ≡ t a (⟨ x , n ⟩∷ xs)
+ ε' : (x : A) (n : ℕ) (xs : AssocList A) (a : A)
+    → s a (ψ (⟨ x , n ⟩∷ xs)) ≡ t a (⟨ x , n ⟩∷ xs)
 
  ε ⟨⟩ a = refl
  ε (⟨ x , n ⟩∷ xs) a = ε' x n xs a
@@ -154,7 +155,7 @@ module _(A : Type₀) (discA : Discrete A) where
 
 
  zigzagR : isZigZagComplete (R {X , s} {Y , t})
- zigzagR _ _ _ _ r r' r'' a = (r a) ∙ (r' a) ⁻¹ ∙ (r'' a)
+ zigzagR _ _ _ _ r r' r'' a = (r a) ∙∙ (r' a) ⁻¹ ∙∙ (r'' a)
  
  -- Now apply thm 3 
  Rˣ = CarlosThm.Rᴬ X Y (R {X , s} {Y , t}) φ ψ (zigzagR , η , ε)
@@ -182,7 +183,7 @@ We want a commutative square
                ≃
   FMSet A  -------->  AList A
 
-We have already established that the vertical arrows are equivalences 
+We have already established that the horizontal arrows are equivalences 
 -}
 
  _∷/_ : A → X/Rˣ → X/Rˣ
@@ -202,30 +203,25 @@ We have already established that the vertical arrows are equivalences
  μ = FMS.Rec.f squash/ _/_.[ [] ] _∷/_ α
   where
   α : ∀ a b [xs] → a ∷/ b ∷/ [xs] ≡ b ∷/ a ∷/ [xs]
-  α a b = elimProp (λ [xs] → squash/ (a ∷/ b ∷/ [xs]) (b ∷/ a ∷/ [xs])) β
+  α a b = elimProp (λ _ → squash/ _ _) (λ xs → eq/ _ _ (γ xs))
    where
-   β : ∀ xs → _/_.[ a ∷ b ∷ xs ] ≡ _/_.[ b ∷ a ∷ xs ]
-   β xs = eq/ (a ∷ b ∷ xs) (b ∷ a ∷ xs) γ
-    where
-     γ : Rˣ (a ∷ b ∷ xs) (b ∷ a ∷ xs)
-     γ = φ (a ∷ b ∷ xs) , η (a ∷ b ∷ xs) , λ c → δ c ⁻¹ ∙ η (a ∷ b ∷ xs) c
+     γ : ∀ xs → Rˣ (a ∷ b ∷ xs) (b ∷ a ∷ xs)
+     γ xs = φ (a ∷ b ∷ xs) , η (a ∷ b ∷ xs) , λ c → δ c ⁻¹ ∙ η (a ∷ b ∷ xs) c
       where
       δ : ∀ c → s c (a ∷ b ∷ xs) ≡ s c (b ∷ a ∷ xs)
-      δ c with (discA c a)
-      δ c | (yes c≡a)      with (discA c b)
-      δ c | (yes c≡a)      | (yes c≡b) = refl
-      δ c | (yes c≡a)      | (no  c≢b) = refl
-      δ c | (no  c≢a)      with (discA c b)
-      δ c | (no  c≢a)      | (yes c≡b) = refl
-      δ c | (no  c≢a)      | (no  c≢b) = refl
+      δ c with discA c a | discA c b
+      δ c | yes _        | yes _ = refl
+      δ c | yes _        | no  _ = refl
+      δ c | no  _        | yes _ = refl
+      δ c | no  _        | no  _ = refl
       
 
 
- -- ν : X/Rˣ → FMSet A
- -- ν _/_.[ [] ] = []
- -- ν _/_.[ x ∷ xs ] = x ∷ ν _/_.[ xs ]
- -- ν (eq/ xs xs' r i) = {!!}
- --  where
- --   ρ : ∀ a → s a xs ≡ s a xs'
- --   ρ = λ a → (r .snd .fst a) ∙ (r .snd .snd a) ⁻¹
- -- ν (squash/ xs/ xs/' p q i j) = trunc (ν xs/) (ν xs/') (cong ν p) (cong ν q) i j
+ ν : X/Rˣ → FMSet A
+ ν _/_.[ [] ] = []
+ ν _/_.[ x ∷ xs ] = x ∷ ν _/_.[ xs ]
+ ν (eq/ xs xs' r i) = {!!}
+  where
+   ρ : ∀ a → s a xs ≡ s a xs'
+   ρ = λ a → (r .snd .fst a) ∙ (r .snd .snd a) ⁻¹
+ ν (squash/ xs/ xs/' p q i j) = trunc (ν xs/) (ν xs/') (cong ν p) (cong ν q) i j

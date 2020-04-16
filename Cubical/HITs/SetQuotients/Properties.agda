@@ -45,9 +45,10 @@ elimEq/ {B = B} Bprop {x = x} =
   J (λ y eq → ∀ bx by → PathP (λ i → B (eq i)) bx by) (λ bx by → Bprop x bx by)
 
 
-elimProp : ((x : A / R ) → isProp (B x)) →
-                       (f : (a : A) → B ( [ a ])) →
-                       (x : A / R) → B x
+elimProp : (Bprop : (x : A / R ) → isProp (B x))
+           (f : (a : A) → B [ a ])
+           (x : A / R)
+         → B x
 elimProp Bprop f [ x ] = f x
 elimProp Bprop f (squash/ x y p q i j) =
   isOfHLevel→isOfHLevelDep 2 (λ x → isProp→isSet (Bprop x))
@@ -73,7 +74,7 @@ elim Bset f feq (squash/ x y p q i j) =
               (g x) (g y) (cong g p) (cong g q) (squash/ x y p q) i j
     where
       g = elim Bset f feq
-
+-- TODO non-dependent Rec
 
 setQuotUniversal : {B : Type ℓ} (Bset : isSet B) →
                    (A / R → B) ≃ (Σ[ f ∈ (A → B) ] ((a b : A) → R a b → f a ≡ f b))

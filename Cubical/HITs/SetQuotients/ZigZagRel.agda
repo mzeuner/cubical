@@ -248,6 +248,11 @@ We have already established that the horizontal arrows are equivalences
  -- for that we have to prove that every association list is determined by the of ALmember
  count = ALmember discA
 
+ lem : (a : A) (n : ℕ) (xs : AList A) → count a (⟨ a , n ⟩∷ xs) ≡ n + count a xs
+ lem a n xs with discA a a
+ lem a n xs | yes _  = refl
+ lem a n xs | no a≢a = ⊥.rec (a≢a refl)
+
  lemma : (xs : AList A) → (∀ a → count a xs ≡ 0) → xs ≡ ⟨⟩
  lemma = AL.ElimProp.f (λ {xs} → isPropΠ λ _ → AL.trunc xs ⟨⟩) (λ _ → refl) (λ b n {xs} → ρ b n xs)
   where
@@ -255,23 +260,16 @@ We have already established that the horizontal arrows are equivalences
                → (∀ a → count a (⟨ b , n ⟩∷ xs) ≡ 0) → (⟨ b , n ⟩∷ xs) ≡ AL.⟨⟩
   ρ b zero xs β γ = del b xs ∙ β δ
    where
-    δ : ∀ a → count a xs ≡ 0
-    δ a = cong (count a) (del b xs ⁻¹) ∙ γ a
-  ρ b (suc n) xs β γ = ⊥.rec (znots (γ b ⁻¹ ∙ p (suc n)))
-   where
-    p : ∀ n → count b (⟨ b , n ⟩∷ xs) ≡ n + count b xs
-    p n with discA b b
-    p n | yes _  = refl
-    p n | no b≢b = ⊥.rec (b≢b refl)
+   δ : ∀ a → count a xs ≡ 0
+   δ a = cong (count a) (del b xs ⁻¹) ∙ γ a
+  ρ b (suc n) xs β γ = ⊥.rec (znots (γ b ⁻¹ ∙ lem b (suc n) xs))
 
- T :  (a : A) (xs : AList A) → Type₀
+
+ T : A → AList A → Type₀
  T a xs = Σ[ ys ∈ AList A ] (count a ys ≡ 0) × (xs ≡ (⟨ a , count a xs ⟩∷ ys))
 
 
  Thm1 : (a : A) (xs : AList A) → isContr (T a xs)
- Thm2 : (xs' xs : AList A) → (∀ a → count a xs' ≡ count a xs) → xs' ≡ xs
-
-
  Thm1 a = AL.ElimProp.f isPropIsContr (α , α≡) λ b n {xs} κ → ρ b n xs κ
   where
   α : T a ⟨⟩
@@ -287,24 +285,46 @@ We have already established that the horizontal arrows are equivalences
    γ : T a (⟨ b , n ⟩∷ xs)
    γ with discA a b
    γ | yes a≡b = ys , p , (cong (⟨ b , n ⟩∷_) q)
-                        ∙∙ subst (λ c → ⟨ b , n ⟩∷ ⟨ a , (count a xs) ⟩∷ ys ≡ ⟨ c , n ⟩∷ ⟨ a , (count a xs) ⟩∷ ys) (a≡b ⁻¹) refl
+                        ∙∙ subst (λ c → ⟨ b , n ⟩∷ ⟨ a , (count a xs) ⟩∷ ys ≡ ⟨ c , n ⟩∷ ⟨ a , (count a xs) ⟩∷ ys)
+                                 (a≡b ⁻¹) refl
                         ∙∙ agg a n (count a xs) ys
-   γ | no  a≢b = ⟨ b , n ⟩∷ ys , path ∙ p , (cong (⟨ b , n ⟩∷_) q) ∙ multiPer b a n (count a xs) ys
+   γ | no a≢b = ⟨ b , n ⟩∷ ys , eq ∙ p , (cong (⟨ b , n ⟩∷_) q) ∙ multiPer b a n (count a xs) ys
     where
-    path : count a (⟨ b , n ⟩∷ ys) ≡ count a ys
-    path = {!!}
-
- -- ALmember-⟨,⟩∷* : A → A → ℕ → ℕ → ℕ
- -- ALmember-⟨,⟩∷* a x n xs = ALmember-⟨,⟩∷*-aux a x (discA a x) n xs
+    eq : count a (⟨ b , n ⟩∷ ys) ≡ count a ys
+    eq with discA a b
+    eq | yes a≡b = ⊥.rec (a≢b a≡b)
+    eq | no _ = refl
 
    γ≡ : (β : T a (⟨ b , n ⟩∷ xs)) → γ ≡ β
-   γ≡ β = ΣProp≡ (λ _ → isProp× (isSetℕ _ _) (AL.trunc _ _)) (Thm2 (γ .fst) (β .fst) h)
-    where
-    h : ∀ c → count c (γ .fst) ≡ count c (β .fst)
-    h c = {!!}
+   γ≡ β = ΣProp≡ (λ _ → isProp× (isSetℕ _ _) (AL.trunc _ _)) {!!}
 
 
-
- Thm2 xs' = AL.ElimProp.f (λ {xs} → isPropΠ λ _ → AL.trunc xs' xs) (lemma xs') {!!}
+ Thm2 : (xs' xs : AList A) → (∀ a → count a xs' ≡ count a xs) → xs' ≡ xs
+ Thm2 xs' = AL.ElimProp.f (λ {xs} → isPropΠ λ _ → AL.trunc xs' xs) (lemma xs') λ b n {xs} no h → ρ b n xs no h
   where
-  -- ρ : (b : A) (n : ℕ) (xs
+  ρ : (b : A) (n : ℕ) (xs : AList A)
+    → ((∀ a → count a xs' ≡ count a xs) → xs' ≡ xs)
+    → (∀ a → count a xs' ≡ count a (⟨ b , n ⟩∷ xs))
+    → xs' ≡ ⟨ b , n ⟩∷ xs
+  ρ b n xs _ κ = xs'                               ≡⟨ q' ⟩
+                 ⟨ b , count b xs' ⟩∷ ys'          ≡⟨ (λ i → ⟨ b , count b xs' ⟩∷ (eq i)) ⟩
+                 ⟨ b , count b xs' ⟩∷ ys           ≡⟨ (λ i → ⟨ b , (foo i) ⟩∷ ys) ⟩
+                 ⟨ b , n + count b xs ⟩∷ ys        ≡⟨ agg b n (count b xs) ys ⁻¹ ⟩
+                 ⟨ b , n ⟩∷ ⟨ b , count b xs ⟩∷ ys ≡⟨ cong (⟨ b , n ⟩∷_) (q ⁻¹) ⟩
+                 ⟨ b , n ⟩∷ xs                     ∎
+   where
+   α = Thm1 b xs .fst
+   ys = α .fst
+   p = α .snd .fst
+   q = α .snd .snd
+
+   β = Thm1 b xs' .fst
+   ys' = β .fst
+   p' = β .snd .fst
+   q' = β .snd .snd
+
+   foo : count b xs' ≡ n + count b xs
+   foo = κ b ∙ lem b n xs
+
+   eq : ys' ≡ ys
+   eq = {!!} --Thm2 ys' ys ? makes termination check fail

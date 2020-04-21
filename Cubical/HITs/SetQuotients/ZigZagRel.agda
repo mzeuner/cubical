@@ -99,10 +99,10 @@ module CarlosThm (A B : Type ℓ) (R : A → B → Type ℓ) (f : A → B) (g : 
 -- Now for the applications:
 -- defining association lists without higher constructors
 data AssocList (A : Type₀) : Type₀ where
- ⟨⟩ : AssocList A
- ⟨_,_⟩∷_ : A → ℕ → AssocList A → AssocList A
+ ⟪⟫ : AssocList A
+ ⟪_,_⟫∷_ : A → ℕ → AssocList A → AssocList A
 
-infixr 5 ⟨_,_⟩∷_
+infixr 5 ⟪_,_⟫∷_
 
 module _(A : Type₀) (discA : Discrete A) where
  -- the relation we're interested in
@@ -121,18 +121,18 @@ module _(A : Type₀) (discA : Discrete A) where
 
  Y = AssocList A
  t : S A (Discrete→isSet discA) Y
- t a ⟨⟩ = zero
- t a (⟨ x , zero ⟩∷ xs) = t a xs
- t a (⟨ x , suc n ⟩∷ xs) = aux a x (discA a x) (t a (⟨ x , n ⟩∷ xs))
+ t a ⟪⟫ = zero
+ t a (⟪ x , zero ⟫∷ xs) = t a xs
+ t a (⟪ x , suc n ⟫∷ xs) = aux a x (discA a x) (t a (⟪ x , n ⟫∷ xs))
 
  φ : X → Y
- φ [] = ⟨⟩
- φ (x ∷ xs) = ⟨ x , 1 ⟩∷ φ xs
+ φ [] = ⟪⟫
+ φ (x ∷ xs) = ⟪ x , 1 ⟫∷ φ xs
 
  ψ : Y → X
- ψ ⟨⟩ = []
- ψ (⟨ x , zero ⟩∷ xs) = ψ xs
- ψ (⟨ x , suc n ⟩∷ xs) = x ∷ ψ (⟨ x , n ⟩∷ xs)
+ ψ ⟪⟫ = []
+ ψ (⟪ x , zero ⟫∷ xs) = ψ xs
+ ψ (⟪ x , suc n ⟫∷ xs) = x ∷ ψ (⟪ x , n ⟫∷ xs)
 
  η : ∀ x → R {X , s} {Y , t} x (φ x)
  η [] a = refl
@@ -144,10 +144,10 @@ module _(A : Type₀) (discA : Discrete A) where
 -- for the other direction we need little helper function
  ε : ∀ y → R {X , s} {Y , t} (ψ y) y
  ε' : (x : A) (n : ℕ) (xs : AssocList A) (a : A)
-    → s a (ψ (⟨ x , n ⟩∷ xs)) ≡ t a (⟨ x , n ⟩∷ xs)
+    → s a (ψ (⟪ x , n ⟫∷ xs)) ≡ t a (⟪ x , n ⟫∷ xs)
 
- ε ⟨⟩ a = refl
- ε (⟨ x , n ⟩∷ xs) a = ε' x n xs a
+ ε ⟪⟫ a = refl
+ ε (⟪ x , n ⟫∷ xs) a = ε' x n xs a
 
  ε' x zero xs a = ε xs a
  ε' x (suc n) xs a with discA a x
@@ -192,7 +192,7 @@ We have already established that the horizontal arrows are equivalences
  a ∷/ eq/ xs xs' r i = eq/ (a ∷ xs) (a ∷ xs') r' i
   where
   r' : Rˣ (a ∷ xs) (a ∷ xs')
-  r' =  ⟨ a , 1 ⟩∷ (r .fst)
+  r' =  ⟪ a , 1 ⟫∷ (r .fst)
       , (λ a' → cong (λ n →  aux a' a (discA a' a) n) (r .snd .fst a'))
       , (λ a' → cong (λ n →  aux a' a (discA a' a) n) (r .snd .snd a'))
  a ∷/ squash/ xs xs₁ p q i j = squash/ (a ∷/ xs) (a ∷/ xs₁) (cong (a ∷/_) p) (cong (a ∷/_) q) i j
@@ -264,31 +264,43 @@ We have already established that the horizontal arrows are equivalences
    δ a = cong (count a) (del b xs ⁻¹) ∙ γ a
   ρ b (suc n) xs β γ = ⊥.rec (znots (γ b ⁻¹ ∙ lem b (suc n) xs))
 
+ cancel-lemma1 : (a : A) (xs ys : AList A) → ⟨ a , 1 ⟩∷ xs ≡ ⟨ a , 1 ⟩∷ ys → xs ≡ ys
+ cancel-lemma1 a xs ys p = {!!}
+-- cons-inj₁ : ∀ {x y : A} {xs ys} → x ∷ xs ≡ y ∷ ys → x ≡ y
+-- does not hold
+
+ cancel-lemma : (a : A) (n : ℕ) (xs ys : AList A) → ⟨ a , n ⟩∷ xs ≡ ⟨ a , n ⟩∷ ys
+                                                  → xs ≡ ys
+ cancel-lemma a zero xs ys p = del a xs ⁻¹ ∙∙ p ∙∙ del a ys
+ cancel-lemma a (suc n) xs ys p = cancel-lemma a n xs ys
+                                 (cancel-lemma1 a (⟨ a , n ⟩∷ xs) (⟨ a , n ⟩∷ ys) (agg a 1 n xs ∙∙ p ∙∙ agg a 1 n ys ⁻¹))
+
+
 
  T : A → AList A → Type₀
- T a xs = Σ[ ys ∈ AList A ] (count a ys ≡ 0) × (xs ≡ (⟨ a , count a xs ⟩∷ ys))
+ T a xs = Σ[ ys ∈ AList A ] xs ≡ ⟨ a , count a xs ⟩∷ ys
 
 
  Thm1 : (a : A) (xs : AList A) → isContr (T a xs)
  Thm1 a = AL.ElimProp.f isPropIsContr (α , α≡) λ b n {xs} κ → ρ b n xs κ
   where
   α : T a ⟨⟩
-  α = ⟨⟩ , refl , del a ⟨⟩ ⁻¹
+  α = ⟨⟩ , del a ⟨⟩ ⁻¹
 
   α≡ : (β : T a ⟨⟩) → α ≡ β
-  α≡ β = ΣProp≡ (λ _ → isProp× (isSetℕ _ _) (AL.trunc _ _)) (β .snd .snd ∙ del a (β .fst))
+  α≡ β = ΣProp≡ (λ _ → AL.trunc _ _) (β .snd ∙ del a (β .fst))
 
   ρ : (b : A) (n : ℕ) (xs : AList A) → isContr (T a xs)
                                      → isContr (T a (⟨ b , n ⟩∷ xs))
-  ρ b n xs ((ys , p , q) , r)= γ , γ≡
+  ρ b n xs ((ys , p) , r) = γ , γ≡
    where
    γ : T a (⟨ b , n ⟩∷ xs)
    γ with discA a b
-   γ | yes a≡b = ys , p , (cong (⟨ b , n ⟩∷_) q)
-                        ∙∙ subst (λ c → ⟨ b , n ⟩∷ ⟨ a , (count a xs) ⟩∷ ys ≡ ⟨ c , n ⟩∷ ⟨ a , (count a xs) ⟩∷ ys)
-                                 (a≡b ⁻¹) refl
-                        ∙∙ agg a n (count a xs) ys
-   γ | no a≢b = ⟨ b , n ⟩∷ ys , eq ∙ p , (cong (⟨ b , n ⟩∷_) q) ∙ multiPer b a n (count a xs) ys
+   γ | yes a≡b = ys , (cong (⟨ b , n ⟩∷_) p)
+                    ∙∙ subst (λ c → ⟨ b , n ⟩∷ ⟨ a , (count a xs) ⟩∷ ys ≡ ⟨ c , n ⟩∷ ⟨ a , (count a xs) ⟩∷ ys)
+                             (a≡b ⁻¹) refl
+                    ∙∙ agg a n (count a xs) ys
+   γ | no a≢b = ⟨ b , n ⟩∷ ys , (cong (⟨ b , n ⟩∷_) p) ∙ multiPer b a n (count a xs) ys
     where
     eq : count a (⟨ b , n ⟩∷ ys) ≡ count a ys
     eq with discA a b
@@ -296,35 +308,36 @@ We have already established that the horizontal arrows are equivalences
     eq | no _ = refl
 
    γ≡ : (β : T a (⟨ b , n ⟩∷ xs)) → γ ≡ β
-   γ≡ β = ΣProp≡ (λ _ → isProp× (isSetℕ _ _) (AL.trunc _ _)) {!!}
+   γ≡ β = ΣProp≡ (λ _ → AL.trunc _ _) (cancel-lemma a (count a (⟨ b , n ⟩∷ xs)) (γ .fst) (β .fst) (γ .snd ⁻¹ ∙ β .snd))
+   -- can we do without cancel-lemma?
 
 
- Thm2 : (xs' xs : AList A) → (∀ a → count a xs' ≡ count a xs) → xs' ≡ xs
- Thm2 xs' = AL.ElimProp.f (λ {xs} → isPropΠ λ _ → AL.trunc xs' xs) (lemma xs') λ b n {xs} no h → ρ b n xs no h
-  where
-  ρ : (b : A) (n : ℕ) (xs : AList A)
-    → ((∀ a → count a xs' ≡ count a xs) → xs' ≡ xs)
-    → (∀ a → count a xs' ≡ count a (⟨ b , n ⟩∷ xs))
-    → xs' ≡ ⟨ b , n ⟩∷ xs
-  ρ b n xs _ κ = xs'                               ≡⟨ q' ⟩
-                 ⟨ b , count b xs' ⟩∷ ys'          ≡⟨ (λ i → ⟨ b , count b xs' ⟩∷ (eq i)) ⟩
-                 ⟨ b , count b xs' ⟩∷ ys           ≡⟨ (λ i → ⟨ b , (foo i) ⟩∷ ys) ⟩
-                 ⟨ b , n + count b xs ⟩∷ ys        ≡⟨ agg b n (count b xs) ys ⁻¹ ⟩
-                 ⟨ b , n ⟩∷ ⟨ b , count b xs ⟩∷ ys ≡⟨ cong (⟨ b , n ⟩∷_) (q ⁻¹) ⟩
-                 ⟨ b , n ⟩∷ xs                     ∎
-   where
-   α = Thm1 b xs .fst
-   ys = α .fst
-   p = α .snd .fst
-   q = α .snd .snd
+ -- Thm2 : (xs' xs : AList A) → (∀ a → count a xs' ≡ count a xs) → xs' ≡ xs
+ -- Thm2 xs' = AL.ElimProp.f (λ {xs} → isPropΠ λ _ → AL.trunc xs' xs) (lemma xs') λ b n {xs} no h → ρ b n xs no h
+ --  where
+ --  ρ : (b : A) (n : ℕ) (xs : AList A)
+ --    → ((∀ a → count a xs' ≡ count a xs) → xs' ≡ xs)
+ --    → (∀ a → count a xs' ≡ count a (⟨ b , n ⟩∷ xs))
+ --    → xs' ≡ ⟨ b , n ⟩∷ xs
+ --  ρ b n xs _ κ = xs'                               ≡⟨ q' ⟩
+ --                 ⟨ b , count b xs' ⟩∷ ys'          ≡⟨ (λ i → ⟨ b , count b xs' ⟩∷ (eq i)) ⟩
+ --                 ⟨ b , count b xs' ⟩∷ ys           ≡⟨ (λ i → ⟨ b , (foo i) ⟩∷ ys) ⟩
+ --                 ⟨ b , n + count b xs ⟩∷ ys        ≡⟨ agg b n (count b xs) ys ⁻¹ ⟩
+ --                 ⟨ b , n ⟩∷ ⟨ b , count b xs ⟩∷ ys ≡⟨ cong (⟨ b , n ⟩∷_) (q ⁻¹) ⟩
+ --                 ⟨ b , n ⟩∷ xs                     ∎
+ --   where
+ --   α = Thm1 b xs .fst
+ --   ys = α .fst
+ --   p = α .snd .fst
+ --   q = α .snd .snd
 
-   β = Thm1 b xs' .fst
-   ys' = β .fst
-   p' = β .snd .fst
-   q' = β .snd .snd
+ --   β = Thm1 b xs' .fst
+ --   ys' = β .fst
+ --   p' = β .snd .fst
+ --   q' = β .snd .snd
 
-   foo : count b xs' ≡ n + count b xs
-   foo = κ b ∙ lem b n xs
+ --   foo : count b xs' ≡ n + count b xs
+ --   foo = κ b ∙ lem b n xs
 
-   eq : ys' ≡ ys
-   eq = {!!} --Thm2 ys' ys ? makes termination check fail
+ --   eq : ys' ≡ ys
+ --   eq = {!!} --Thm2 ys' ys ? makes termination check fail

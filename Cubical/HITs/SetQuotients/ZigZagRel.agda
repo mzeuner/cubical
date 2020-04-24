@@ -218,15 +218,26 @@ We have already established that the horizontal arrows are equivalences
 
 
 
- -- for the inverse we need some lemmas
- -- count : A → FMSet A → ℕ
- -- count = FMSmember discA
+ --for the inverse we need some lemmas
+ FMScount : A → FMSet A → ℕ
+ FMScount = FMSmember discA
 
- -- lemma : ∀ a n xs → count a xs ≡ suc n → Σ[ ys ∈ FMSet A ] (count a ys ≡ n) × (xs ≡ a ∷ xs)
- -- lemma a n xs = FMS.Rec.f {!!} {!!} {!!} {!!} xs
+ remove : A → FMSet A → FMSet A
+ remove a [] = []
+ remove a (x ∷ xs) with (discA a x)
+ ...               | yes _ = xs
+ ...               | no _ = x ∷ remove a xs
+ remove a (comm x y xs i) = {!!}
+ remove a (trunc xs ys p q i j) = {!!}
 
- -- Lemma : ∀ xs xs' → (∀ a → count a xs ≡ count a xs') → xs ≡ xs'
- -- Lemma xs = FMS.ElimProp.f (isPropΠ2 λ xs' _ → FMSet.trunc xs xs') {!!} {!!} xs
+ lem-remove : ∀ a xs → FMScount a (remove a xs) ≡ predℕ (FMScount a xs)
+ lem-remove = {!!}
+ 
+ lemma' : ∀ a n xs → FMScount a xs ≡ suc n → Σ[ ys ∈ FMSet A ] (FMScount a ys ≡ n) × (xs ≡ a ∷ ys)
+ lemma' a n xs p = remove a xs , {!!} , {!!}
+
+ FMScountExt : ∀ xs xs' → (∀ a → FMScount a xs ≡ FMScount a xs') → xs ≡ xs'
+ FMScountExt xs = FMS.ElimProp.f {!!} {!!} {!!}
 
 
 
@@ -264,16 +275,26 @@ We have already established that the horizontal arrows are equivalences
    δ a = cong (count a) (del b xs ⁻¹) ∙ γ a
   ρ b (suc n) xs β γ = ⊥.rec (znots (γ b ⁻¹ ∙ lem b (suc n) xs))
 
- cancel-lemma1 : (a : A) (xs ys : AList A) → ⟨ a , 1 ⟩∷ xs ≡ ⟨ a , 1 ⟩∷ ys → xs ≡ ys
- cancel-lemma1 a xs ys p = {!!}
--- cons-inj₁ : ∀ {x y : A} {xs ys} → x ∷ xs ≡ y ∷ ys → x ≡ y
--- does not hold
+ -- AL-safetail : AList A → AList A
+ -- AL-safetail = AL.Rec.f AL.trunc ⟨⟩ (λ _ _ xs → xs) (λ _ _ _ → refl) (λ _ _ _ _ → refl) λ _ _ → refl
+
+ -- AL-safetail-lem : ∀ a n xs → AL-safetail (⟨ a , n ⟩∷ xs) ≡ xs
+ -- AL-safetail-lem a n xs = {!refl!} -- AL.ElimProp.f (λ {xs} → AL.trunc _ _) refl λ b m {xs} → ρ b m xs
+ --  -- where
+ --  -- ρ : ∀ b m xs → AL-safetail (⟨ a , n ⟩∷ xs) ≡ xs
+ --  --              → AL-safetail (⟨ a , n ⟩∷ ⟨ b , m ⟩∷ xs) ≡ ⟨ b , m ⟩∷ xs
+ --  -- ρ b m xs p = {!!}
+  
+ 
+ cancel-lemma1 : {a : A} {xs ys : AList A} → ⟨ a , 1 ⟩∷ xs ≡ ⟨ a , 1 ⟩∷ ys → xs ≡ ys
+ cancel-lemma1 {a} {xs} {ys} p = {!!}
+ --AL-safetail-lem a 1 xs ⁻¹ ∙∙ cong AL-safetail p ∙∙ AL-safetail-lem a 1 ys
 
  cancel-lemma : (a : A) (n : ℕ) (xs ys : AList A) → ⟨ a , n ⟩∷ xs ≡ ⟨ a , n ⟩∷ ys
                                                   → xs ≡ ys
  cancel-lemma a zero xs ys p = del a xs ⁻¹ ∙∙ p ∙∙ del a ys
  cancel-lemma a (suc n) xs ys p = cancel-lemma a n xs ys
-                                 (cancel-lemma1 a (⟨ a , n ⟩∷ xs) (⟨ a , n ⟩∷ ys) (agg a 1 n xs ∙∙ p ∙∙ agg a 1 n ys ⁻¹))
+                                 (cancel-lemma1 (agg a 1 n xs ∙∙ p ∙∙ agg a 1 n ys ⁻¹))
 
 
 

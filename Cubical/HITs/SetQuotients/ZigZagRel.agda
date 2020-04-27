@@ -222,20 +222,68 @@ We have already established that the horizontal arrows are equivalences
  FMScount : A → FMSet A → ℕ
  FMScount = FMSmember discA
 
- remove : A → FMSet A → FMSet A
- remove a [] = []
- remove a (x ∷ xs) with (discA a x)
- ...               | yes _ = xs
- ...               | no _ = x ∷ remove a xs
- remove a (comm x y xs i) = {!!}
- remove a (trunc xs ys p q i j) = {!!}
+ -- removes a completely...
+ remove : A → FMSet A → FMSet A 
+ remove a = FMS.Rec.f FMS.trunc [] remove-a-aux ρ
+  where
+  remove-a-aux : A → FMSet A → FMSet A
+  remove-a-aux x xs with (discA a x)
+  ...               | yes _ = xs
+  ...               | no  _ = x ∷ xs
+  ρ : (x y : A) (xs : FMSet A)
+    → remove-a-aux x (remove-a-aux y xs)
+    ≡ remove-a-aux y (remove-a-aux x xs)
+  ρ x y xs with discA a x with discA a y
+  ...      | yes _        | yes _ = refl
+  ...      | yes _        | no  _ = refl
+  ...      | no  _        | yes _ = refl
+  ...      | no  _        | no  _ = comm x y xs
 
- lem-remove : ∀ a xs → FMScount a (remove a xs) ≡ predℕ (FMScount a xs)
- lem-remove = {!!}
+ -- for removing a once
+ -- remove1 : A → FMSet A → FMSet A
+ -- remove1 a [] = []
+ -- remove1 a (x ∷ xs) with (discA a x)
+ -- ...               | yes _ = xs
+ -- ...               | no  _ = x ∷ remove1 a xs
+ -- remove1 a (comm x y xs i) = path i
+ --  where
+ --  path : remove1 a (x ∷ y ∷ xs) ≡ remove1 a (y ∷ x ∷ xs)
+ --  path with discA a x with discA a y
+ --  ...  | yes _        | yes _ = {!!}
+ --  ...  | yes _        | no  _ = {!!}
+ --  ...  | no  _        | yes _ = {!!}
+ --  ...  | no  a≢x      | no  a≢y = p ∙∙ (comm x y (remove1 a xs)) ∙∙ q ⁻¹
+ --   where
+ --   p : x ∷ remove1 a (y ∷ xs) ≡ x ∷ y ∷ (remove1 a xs)
+ --   p = {!!}
+ --   q : y ∷ remove1 a (x ∷ xs) ≡ y ∷ x ∷ (remove1 a xs)
+ --   q = {!!}
+ -- remove1 a (trunc xs ys p q i j) = trunc (remove1 a xs) (remove1 a ys) (cong (remove1 a) p) (cong (remove1 a) q) i j
+
+ -- lem-remove1 : ∀ a xs → FMScount a (remove1 a xs) ≡ predℕ (FMScount a xs)
+ -- lem-remove1 = {!!}
  
- lemma' : ∀ a n xs → FMScount a xs ≡ suc n → Σ[ ys ∈ FMSet A ] (FMScount a ys ≡ n) × (xs ≡ a ∷ ys)
- lemma' a n xs p = remove a xs , {!!} , {!!}
+ -- lemma' : ∀ a n xs → FMScount a xs ≡ suc n → Σ[ ys ∈ FMSet A ] (xs ≡ a ∷ ys)
+ -- lemma' a n xs p = remove1 a xs , {!!}
 
+ remove-lemma : ∀ a xs → FMScount a (remove a xs) ≡ zero
+ remove-lemma a = FMS.ElimProp.f (isSetℕ _ _) refl λ x {xs} → ρ x xs
+  where
+  ρ : ∀ x xs → FMScount a (remove a xs) ≡ zero
+             → FMScount a (remove a (x ∷ xs)) ≡ zero
+  ρ x xs = {!!} -- with (discA a x)
+  -- ρ x | yes _ = ?
+  -- ρ x | no  _ = ?
+
+ remove-lemma2 : ∀ a xs → xs ≡ multi-∷ a (FMScount a xs) (remove a xs)
+ remove-lemma2 a = FMS.ElimProp.f (FMS.trunc _ _) refl {!!}
+  where
+  ρ : ∀ x xs → xs ≡ multi-∷ a (FMScount a xs) (remove a xs)
+             → x ∷ xs ≡ multi-∷ a (FMScount a (x ∷ xs)) (remove a (x ∷ xs))
+  ρ x xs = {!!} --  with (discA a x)
+  -- ρ x xs | yes _ = ?
+  -- ρ x xs | no  _ = ?
+ 
  FMScountExt : ∀ xs xs' → (∀ a → FMScount a xs ≡ FMScount a xs') → xs ≡ xs'
  FMScountExt xs = FMS.ElimProp.f {!!} {!!} {!!}
 

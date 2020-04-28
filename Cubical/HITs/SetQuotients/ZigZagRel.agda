@@ -223,22 +223,30 @@ We have already established that the horizontal arrows are equivalences
  FMScount = FMSmember discA
 
  -- removes a completely...
- remove : A → FMSet A → FMSet A 
- remove a = FMS.Rec.f FMS.trunc [] remove-a-aux ρ
-  where
-  remove-a-aux : A → FMSet A → FMSet A
-  remove-a-aux x xs with (discA a x)
-  ...               | yes _ = xs
-  ...               | no  _ = x ∷ xs
-  ρ : (x y : A) (xs : FMSet A)
-    → remove-a-aux x (remove-a-aux y xs)
-    ≡ remove-a-aux y (remove-a-aux x xs)
-  ρ x y xs with discA a x with discA a y
-  ...      | yes _        | yes _ = refl
-  ...      | yes _        | no  _ = refl
-  ...      | no  _        | yes _ = refl
-  ...      | no  _        | no  _ = comm x y xs
+ remove-aux : (a x : A) → FMSet A → Dec (a ≡ x) → FMSet A
+ remove-aux a x xs (yes _) = xs
+ remove-aux a x xs (no  _) = x ∷ xs
 
+ remove-∷* : (a x : A) → FMSet A → FMSet A
+ remove-∷* a x xs = remove-aux a x xs (discA a x)
+
+ remove-comm*-aux : (a x y : A) (xs : FMSet A)
+                    (p : Dec (a ≡ x)) (q : Dec (a ≡ y))
+                  → remove-aux a x (remove-aux a y xs q) p
+                  ≡ remove-aux a y (remove-aux a x xs p) q
+ remove-comm*-aux a x y xs (yes _) (yes _) = refl
+ remove-comm*-aux a x y xs (yes _) (no  _) = refl
+ remove-comm*-aux a x y xs (no  _) (yes _) = refl
+ remove-comm*-aux a x y xs (no  _) (no  _) = comm x y xs
+
+ remove-comm* : (a x y : A) (xs : FMSet A)
+              → remove-∷* a x (remove-∷* a y xs)
+              ≡ remove-∷* a y (remove-∷* a x xs)
+ remove-comm* a x y xs = remove-comm*-aux a x y xs (discA a x) (discA a y)
+ 
+ remove : A → FMSet A → FMSet A 
+ remove a = FMS.Rec.f FMS.trunc [] (remove-∷* a) (remove-comm* a)
+ 
  -- for removing a once
  -- remove1 : A → FMSet A → FMSet A
  -- remove1 a [] = []
@@ -267,25 +275,45 @@ We have already established that the horizontal arrows are equivalences
  -- lemma' a n xs p = remove1 a xs , {!!}
 
  remove-lemma : ∀ a xs → FMScount a (remove a xs) ≡ zero
- remove-lemma a = FMS.ElimProp.f (isSetℕ _ _) refl λ x {xs} → ρ x xs
+ remove-lemma a = FMS.ElimProp.f (isSetℕ _ _) refl θ
   where
-  ρ : ∀ x xs → FMScount a (remove a xs) ≡ zero
-             → FMScount a (remove a (x ∷ xs)) ≡ zero
-  ρ x xs = {!!} -- with (discA a x)
-  -- ρ x | yes _ = ?
-  -- ρ x | no  _ = ?
+  ρ : (x : A) (xs : FMSet A) (p : Dec (a ≡ x))
+    → FMScount a xs ≡ zero
+    → FMScount a (remove-aux a x xs p) ≡ zero
+  ρ x xs (yes _)  q = q
+  ρ x xs (no a≢x) q with (discA a x)
+  ...              | yes a≡x = ⊥.rec (a≢x a≡x)
+  ...              | no _    = q
+  -- can't use with in def of θ for some reason
+  θ : (x : A) {xs : FMSet A}
+    → FMScount a (remove a xs) ≡ zero
+    → FMScount a (remove a (x ∷ xs)) ≡ zero
+  θ x {xs} q = ρ x (remove a xs) (discA a x) q
+  
 
  remove-lemma2 : ∀ a xs → xs ≡ multi-∷ a (FMScount a xs) (remove a xs)
- remove-lemma2 a = FMS.ElimProp.f (FMS.trunc _ _) refl {!!}
+ remove-lemma2 a = FMS.ElimProp.f (FMS.trunc _ _) refl θ
   where
-  ρ : ∀ x xs → xs ≡ multi-∷ a (FMScount a xs) (remove a xs)
-             → x ∷ xs ≡ multi-∷ a (FMScount a (x ∷ xs)) (remove a (x ∷ xs))
-  ρ x xs = {!!} --  with (discA a x)
-  -- ρ x xs | yes _ = ?
-  -- ρ x xs | no  _ = ?
+  ρ : (x : A) (xs ys : FMSet A) (p : Dec (a ≡ x))
+    → ys ≡ multi-∷ a (FMScount a ys) xs
+    → x ∷ ys ≡ multi-∷ a (FMScount a (x ∷ ys)) (remove-aux a x xs p)
+  ρ x xs ys (yes a≡x) q with discA a x
+  ρ x xs ys (yes a≡x) q | yes _   = cong (_∷ ys) a≡x ⁻¹ ∙ cong (a ∷_) q
+  ρ x xs ys (yes a≡x) q | no  a≢x = ⊥.rec (a≢x a≡x)
+  ρ x xs ys (no  a≢x) q with discA a x
+  ρ x xs ys (no  a≢x) q | yes a≡x = ⊥.rec (a≢x a≡x)
+  ρ x xs ys (no  a≢x) q | no  _   = cong (x ∷_) q ∙ eq x a (FMScount a ys) xs
+   where
+   eq : ∀ x y n xs → x ∷ multi-∷ y n xs ≡ multi-∷ y n (x ∷ xs)
+   eq x y zero xs = refl
+   eq x y (suc n) xs = comm x y (multi-∷ y n xs) ∙ cong (y ∷_) (eq x y n xs)
+  -- can't use with in def of θ for some reason
+  θ : ∀ x {xs} → xs ≡ multi-∷ a (FMScount a xs) (remove a xs)
+               → x ∷ xs ≡ multi-∷ a (FMScount a (x ∷ xs)) (remove a (x ∷ xs))
+  θ x {xs} q = ρ x (remove a xs) xs (discA a x) q
  
  FMScountExt : ∀ xs xs' → (∀ a → FMScount a xs ≡ FMScount a xs') → xs ≡ xs'
- FMScountExt xs = FMS.ElimProp.f {!!} {!!} {!!}
+ FMScountExt xs = {!!}
 
 
 

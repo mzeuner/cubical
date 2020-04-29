@@ -243,36 +243,9 @@ We have already established that the horizontal arrows are equivalences
               → remove-∷* a x (remove-∷* a y xs)
               ≡ remove-∷* a y (remove-∷* a x xs)
  remove-comm* a x y xs = remove-comm*-aux a x y xs (discA a x) (discA a y)
- 
- remove : A → FMSet A → FMSet A 
- remove a = FMS.Rec.f FMS.trunc [] (remove-∷* a) (remove-comm* a)
- 
- -- for removing a once
- -- remove1 : A → FMSet A → FMSet A
- -- remove1 a [] = []
- -- remove1 a (x ∷ xs) with (discA a x)
- -- ...               | yes _ = xs
- -- ...               | no  _ = x ∷ remove1 a xs
- -- remove1 a (comm x y xs i) = path i
- --  where
- --  path : remove1 a (x ∷ y ∷ xs) ≡ remove1 a (y ∷ x ∷ xs)
- --  path with discA a x with discA a y
- --  ...  | yes _        | yes _ = {!!}
- --  ...  | yes _        | no  _ = {!!}
- --  ...  | no  _        | yes _ = {!!}
- --  ...  | no  a≢x      | no  a≢y = p ∙∙ (comm x y (remove1 a xs)) ∙∙ q ⁻¹
- --   where
- --   p : x ∷ remove1 a (y ∷ xs) ≡ x ∷ y ∷ (remove1 a xs)
- --   p = {!!}
- --   q : y ∷ remove1 a (x ∷ xs) ≡ y ∷ x ∷ (remove1 a xs)
- --   q = {!!}
- -- remove1 a (trunc xs ys p q i j) = trunc (remove1 a xs) (remove1 a ys) (cong (remove1 a) p) (cong (remove1 a) q) i j
 
- -- lem-remove1 : ∀ a xs → FMScount a (remove1 a xs) ≡ predℕ (FMScount a xs)
- -- lem-remove1 = {!!}
- 
- -- lemma' : ∀ a n xs → FMScount a xs ≡ suc n → Σ[ ys ∈ FMSet A ] (xs ≡ a ∷ ys)
- -- lemma' a n xs p = remove1 a xs , {!!}
+ remove : A → FMSet A → FMSet A
+ remove a = FMS.Rec.f FMS.trunc [] (remove-∷* a) (remove-comm* a)
 
  remove-lemma : ∀ a xs → FMScount a (remove a xs) ≡ zero
  remove-lemma a = FMS.ElimProp.f (isSetℕ _ _) refl θ
@@ -289,7 +262,7 @@ We have already established that the horizontal arrows are equivalences
     → FMScount a (remove a xs) ≡ zero
     → FMScount a (remove a (x ∷ xs)) ≡ zero
   θ x {xs} q = ρ x (remove a xs) (discA a x) q
-  
+
 
  remove-lemma2 : ∀ a xs → xs ≡ multi-∷ a (FMScount a xs) (remove a xs)
  remove-lemma2 a = FMS.ElimProp.f (FMS.trunc _ _) refl θ
@@ -311,7 +284,89 @@ We have already established that the horizontal arrows are equivalences
   θ : ∀ x {xs} → xs ≡ multi-∷ a (FMScount a xs) (remove a xs)
                → x ∷ xs ≡ multi-∷ a (FMScount a (x ∷ xs)) (remove a (x ∷ xs))
   θ x {xs} q = ρ x (remove a xs) xs (discA a x) q
- 
+
+
+
+
+ -- for removing a once
+ remove1 : A → FMSet A → FMSet A
+ remove1 a [] = []
+ remove1 a (x ∷ xs) with (discA a x)
+ ...               | yes _ = xs
+ ...               | no  _ = x ∷ remove1 a xs
+ remove1 a (comm x y xs i) = path i
+  where
+  path : remove1 a (x ∷ y ∷ xs) ≡ remove1 a (y ∷ x ∷ xs)
+  path with discA a x with discA a y
+  path | yes a≡x      | yes a≡y = λ i → ((a≡y ⁻¹ ∙ a≡x) i) ∷ xs
+  path | yes a≡x      | no  _   = λ i → y ∷ (eq i)
+   where
+   eq : xs ≡ remove1 a (x ∷ xs)
+   eq with discA a x
+   eq | yes _   = refl
+   eq | no  a≢x = ⊥.rec (a≢x a≡x)
+
+  path | no  _        | yes a≡y = λ i → x ∷ (eq i)
+   where
+   eq : remove1 a (y ∷ xs) ≡ xs
+   eq with discA a y
+   eq | yes _   = refl
+   eq | no  a≢y = ⊥.rec (a≢y a≡y)
+
+  path | no  a≢x      | no  a≢y = (λ i → x ∷ (p i)) ∙∙ comm x y (remove1 a xs) ∙∙ (λ i → y ∷ (sym q i))
+   where
+   p : remove1 a (y ∷ xs) ≡ y ∷ (remove1 a xs)
+   p with discA a y
+   p | yes a≡y = ⊥.rec (a≢y a≡y)
+   p | no  _   = refl
+
+   q : remove1 a (x ∷ xs) ≡ x ∷ (remove1 a xs)
+   q with discA a x
+   q | yes a≡x = ⊥.rec (a≢x a≡x)
+   q | no  _   = refl
+
+ remove1 a (trunc xs ys p q i j) = trunc (remove1 a xs) (remove1 a ys) (cong (remove1 a) p) (cong (remove1 a) q) i j
+
+
+
+ lem-remove1 : ∀ a xs → FMScount a (remove1 a xs) ≡ predℕ (FMScount a xs)
+ lem-remove1 a = FMS.ElimProp.f (isSetℕ _ _) refl θ
+  where
+  θ : ∀ x {xs} → FMScount a (remove1 a xs) ≡ predℕ (FMScount a xs)
+               → FMScount a (remove1 a (x ∷ xs)) ≡ predℕ (FMScount a (x ∷ xs))
+  θ x {xs} p with discA a x
+  ...        | yes a≡x = refl
+  ...        | no  a≢x = path ∙ p
+   where
+   path : FMScount a (x ∷ (remove1 a xs)) ≡ FMScount a (remove1 a xs)
+   path with discA a x
+   path | yes a≡x = ⊥.rec (a≢x a≡x)
+   path | no  a≢x = refl
+
+
+
+ remove1-lemma : ∀ a n xs → FMScount a xs ≡ suc n → xs ≡ a ∷ (remove1 a xs)
+ remove1-lemma a n = FMS.ElimProp.f (isPropΠ λ _ → FMS.trunc _ _) (λ p → ⊥.rec (znots p)) θ
+  where
+  θ : ∀ x {xs} → (FMScount a xs ≡ suc n → xs ≡ a ∷ (remove1 a xs))
+               → FMScount a (x ∷ xs) ≡ suc n → x ∷ xs ≡ a ∷ (remove1 a (x ∷ xs))
+  θ x {xs} hyp p with discA a x
+  ...            | yes a≡x = (λ i → (sym a≡x i) ∷ xs) ∙ (λ i → a ∷ (path i))
+   where
+   path : xs ≡ remove1 a (x ∷ xs)
+   path with discA a x
+   path | yes _   = refl
+   path | no  a≢x = ⊥.rec (a≢x a≡x)
+
+  ...            | no  a≢x = cong (x ∷_) (hyp p) ∙∙ comm x a (remove1 a xs) ∙∙ (λ i → a ∷ (path i))
+   where
+   path : x ∷ (remove1 a xs) ≡ remove1 a (x ∷ xs)
+   path with discA a x
+   path | yes a≡x = ⊥.rec (a≢x a≡x)
+   path | no  _   = refl
+
+
+
  FMScountExt : ∀ xs xs' → (∀ a → FMScount a xs ≡ FMScount a xs') → xs ≡ xs'
  FMScountExt xs = {!!}
 
@@ -360,8 +415,8 @@ We have already established that the horizontal arrows are equivalences
  --  -- ρ : ∀ b m xs → AL-safetail (⟨ a , n ⟩∷ xs) ≡ xs
  --  --              → AL-safetail (⟨ a , n ⟩∷ ⟨ b , m ⟩∷ xs) ≡ ⟨ b , m ⟩∷ xs
  --  -- ρ b m xs p = {!!}
-  
- 
+
+
  cancel-lemma1 : {a : A} {xs ys : AList A} → ⟨ a , 1 ⟩∷ xs ≡ ⟨ a , 1 ⟩∷ ys → xs ≡ ys
  cancel-lemma1 {a} {xs} {ys} p = {!!}
  --AL-safetail-lem a 1 xs ⁻¹ ∙∙ cong AL-safetail p ∙∙ AL-safetail-lem a 1 ys

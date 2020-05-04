@@ -242,6 +242,7 @@ We have already established that the horizontal arrows are equivalences
                → ((∀ a → FMScount a (x ∷ xs) ≡ 0) → (x FMS.∷ xs) ≡ [])
   θ x {xs} _ p = ⊥.rec (snotz (path ∙ p x))
    where
+   -- extra lemma?
    path : suc (FMScount x xs) ≡ FMScount x (x ∷ xs)
    path with discA x x
    path | yes _ = refl
@@ -412,7 +413,7 @@ We have already established that the horizontal arrows are equivalences
  ≼-refl : ∀ xs → xs ≼ xs
  ≼-refl xs a  = ≤-refl
 
- -- Where to move this? Has to come after definition of FMSmember!
+ --Where to move this? Has to come after definition of FMSmember!
  -- FMS-≼-ElimPropf : ∀ {ℓ} {B : FMSet A → Type ℓ}
  --                 → (∀ {xs} → isProp (B xs))
  --                 → B []
@@ -422,7 +423,18 @@ We have already established that the horizontal arrows are equivalences
  -- FMS-≼-ElimPropf {ℓ = ℓ} {B = B} Bprop b₀ hyp = FMS.ElimProp.f Bprop b₀ θ
  --  where
  --  θ : ∀ x {xs} → B xs → B (x ∷ xs)
- --  θ x {xs} b = hyp x xs {!!}
+ --  θ x {xs} b = hyp x xs (foo xs b)
+ --   where
+ --   foo : ∀ xs → B xs → (ys : FMSet A) → ys ≼ xs → B ys
+ --   foo = FMS.ElimProp.f {!!} {!!} baz
+ --    where
+ --    baz : (y : A) {ys : FMSet A} → (B ys → (zs : FMSet A) → zs ≼ ys → B zs)
+ --          → B (y ∷ ys) → (zs : FMSet A) → zs ≼ (y ∷ ys) → B zs
+ --    baz y {ys} h₁ bʸ zs h₂ = {!!}
+ --  --(FMS.ElimProp.f (isPropΠ (λ _ → Bprop)) (λ _ → b₀) λ y {ys} → foo y ys)
+ --   -- where
+ --   -- foo : (y : A) (ys : FMSet A) → (ys ≼ xs → B ys) → (y ∷ ys) ≼ xs → B (y ∷ ys)
+ --   -- foo y ys h₁ h₂ = hyp y ys {!!}
 
  -- prove that later, looks correct
  postulate
@@ -433,6 +445,22 @@ We have already established that the horizontal arrows are equivalences
                     → (∀ x y xs ys → (∀ vs ws → vs ≼ xs → ws ≼ ys → B vs ws) → B (x ∷ xs) (y ∷ ys))
                     -------------------------------------------------------------------------------
                     → (∀ xs ys → B xs ys)
+                    
+  -- FMS-≼-ElimPropBin' :  ∀ {ℓ} {B : FMSet A → FMSet A → Type ℓ}
+  --                   → (∀ {xs} {ys} → isProp (B xs ys))
+  --                   → (B [] [])
+  --                   → (∀ x xs ys → (∀ zs → zs ≼ xs → B zs ys) → B (x ∷ xs) ys)
+  --                   → (∀ x xs ys → (∀ zs → zs ≼ ys → B xs zs) → B xs (x ∷ ys))                    
+  --                   -------------------------------------------------------------------------------
+  --                   → (∀ xs ys → B xs ys)
+
+  -- FMS-ElimPropBin' :  ∀ {ℓ} {B : FMSet A → FMSet A → Type ℓ}
+  --                   → (∀ {xs} {ys} → isProp (B xs ys))
+  --                   → (B [] [])
+  --                   → (∀ x xs ys → B xs ys → B (x ∷ xs) ys)
+  --                   → (∀ x xs ys → B xs ys → B xs (x ∷ ys))                    
+  --                   -------------------------------------------------------------------------------
+  --                   → (∀ xs ys → B xs ys)
 
 
 --- some results about ℕ, move that for PR ------------------------------------------------------------------------------
@@ -624,6 +652,8 @@ We have already established that the horizontal arrows are equivalences
 
 
 
+ -- FMScountExt' : (xs ys : FMSet A) → ys ≼ xs → xs ≼ ys → xs ≡ ys
+ -- FMScountExt' = FMS-ElimPropBin' {!!} (λ _ _ → refl) (λ x xs ys x₁ x₂ x₃ → {!!}) {!!}
 
 
  -- ν : X/Rˣ → FMSet A

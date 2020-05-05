@@ -417,11 +417,35 @@ We have already established that the horizontal arrows are equivalences
  ≼-trans : ∀ xs ys zs → xs ≼ ys → ys ≼ zs → xs ≼ zs
  ≼-trans xs ys zs xs≼ys ys≼zs a = ≤-trans (xs≼ys a) (ys≼zs a)
 
- -- move that to Nat.Order later!!!
+--- move that to Nat.Order later!!!
+--- some results about ℕ, move that for PR ------------------------------------------------------------------------------
+ ≤-predℕ : ∀ n → predℕ n ≤ n
+ ≤-predℕ zero = ≤-refl
+ ≤-predℕ (suc n) = ≤-suc ≤-refl
+
+ suc-predℕ : ∀ n → ¬ n ≡ 0 → n ≡ suc (predℕ n)
+ suc-predℕ zero p = ⊥.rec (p refl)
+ suc-predℕ (suc n) p = refl
+
  ≤0→≡0 : ∀ n → n ≤ 0 → n ≡ 0
  ≤0→≡0 zero ineq = refl
  ≤0→≡0 (suc n) ineq = ⊥.rec (¬-<-zero ineq)
- 
+
+ ≤-split : ∀ m n → m ≤ suc n → ¬ (m ≡ suc n) → m ≤ n
+ ≤-split zero zero ineq ¬p = ≤-refl
+ ≤-split zero (suc n) ineq ¬p = zero-≤
+ ≤-split (suc m) zero ineq ¬p = ⊥.rec (¬p (subst (λ k → k + suc m ≡ 1) path (ineq .snd)))
+  where
+  path : ineq .fst ≡ 0
+  path = {!!}
+ ≤-split (suc m) (suc n) ineq ¬p = pred-≤-pred {!!}
+ -- with discreteℕ (ineq .fst) 0
+ -- ...                 | yes q = ⊥.rec (¬p (cong (_+ m) (q ⁻¹) ∙ ineq .snd))
+ -- ...                 | no ¬q = predℕ (ineq .fst) , {!!}
+ --  where
+------------------------------------------------------------------------------------------------------------------------
+
+
  ≼[]→≡[] : ∀ xs → xs ≼ [] → xs ≡ []
  ≼[]→≡[] xs xs≼[] = FMScount-0-lemma xs λ a → ≤0→≡0 (FMScount a xs) (xs≼[] a)
 
@@ -431,8 +455,21 @@ We have already established that the horizontal arrows are equivalences
  -- ...                               | no  a≢x = {!!}
  
  ≼-Dichotomy : ∀ x xs ys → ys ≼ (x ∷ xs) → (ys ≼ xs) ⊎ (ys ≡ x ∷ (remove1 x ys))
- ≼-Dichotomy x xs ys ys≼x∷xs = {!!}
- 
+ ≼-Dichotomy x xs ys ys≼x∷xs with discreteℕ (FMScount x ys) (suc (FMScount x xs))
+ ...                         | yes p = inr (remove1-lemma-suc x (FMScount x xs) ys p)
+ ...                         | no ¬p = inl ys≼xs 
+  where
+  ys≼xs : ys ≼ xs
+  ys≼xs a with discA a x
+  ...     | yes a≡x = {!!}
+  ...     | no  a≢x = ≤-trans (ys≼x∷xs a) (subst (λ n → FMScount a (x ∷ xs) ≤ n) path ≤-refl)
+   where
+   path : FMScount a (x ∷ xs) ≡ FMScount a xs
+   path with discA a x
+   ...  | yes a≡x = ⊥.rec (a≢x a≡x)
+   ...  | no  a≢x = refl
+
+
  module FMS-≼-ElimProp {ℓ} {B : FMSet A → Type ℓ}
                        (BisProp : ∀ {xs} → isProp (B xs)) (b₀ : B [])
                        (B-≼-hyp : ∀ x xs → (∀ ys → ys ≼ xs → B ys) → B (x ∷ xs)) where
@@ -501,16 +538,6 @@ We have already established that the horizontal arrows are equivalences
   --                   -------------------------------------------------------------------------------
   --                   → (∀ xs ys → B xs ys)
 
-
---- some results about ℕ, move that for PR ------------------------------------------------------------------------------
- ≤-predℕ : ∀ n → predℕ n ≤ n
- ≤-predℕ zero = ≤-refl
- ≤-predℕ (suc n) = ≤-suc ≤-refl
-
- suc-predℕ : ∀ n → ¬ n ≡ 0 → n ≡ suc (predℕ n)
- suc-predℕ zero p = ⊥.rec (p refl)
- suc-predℕ (suc n) p = refl
-------------------------------------------------------------------------------------------------------------------------
 
 
  ≼-remove1 : ∀ a xs → remove1 a xs ≼ xs

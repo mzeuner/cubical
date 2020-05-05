@@ -426,9 +426,9 @@ We have already established that the horizontal arrows are equivalences
  ≼[]→≡[] xs xs≼[] = FMScount-0-lemma xs λ a → ≤0→≡0 (FMScount a xs) (xs≼[] a)
 
  ≼-remove1-lemma : ∀ x xs ys → ys ≼ (x ∷ xs) → (remove1 x ys) ≼ xs
- ≼-remove1-lemma x xs ys ys≼x∷xs a with discA a x
- ...                               | yes a≡x = {!!}
- ...                               | no  a≢x = {!!}
+ ≼-remove1-lemma x xs ys ys≼x∷xs a = {!!} -- with discA a x
+ -- ...                               | yes a≡x = {!!}
+ -- ...                               | no  a≢x = {!!}
  
  ≼-Dichotomy : ∀ x xs ys → ys ≼ (x ∷ xs) → (ys ≼ xs) ⊎ (ys ≡ x ∷ (remove1 x ys))
  ≼-Dichotomy x xs ys ys≼x∷xs = {!!}
@@ -465,15 +465,26 @@ We have already established that the horizontal arrows are equivalences
 
  
  -- prove that later, looks correct
- postulate
-  FMS-≼-ElimPropBin :  ∀ {ℓ} {B : FMSet A → FMSet A → Type ℓ}
+ --postulate
+ FMS-≼-ElimPropBin :  ∀ {ℓ} {B : FMSet A → FMSet A → Type ℓ}
                     → (∀ {xs} {ys} → isProp (B xs ys))
                     → (∀ xs → B xs [])
                     → (∀ ys → B [] ys)
                     → (∀ x y xs ys → (∀ vs ws → vs ≼ xs → ws ≼ ys → B vs ws) → B (x ∷ xs) (y ∷ ys))
                     -------------------------------------------------------------------------------
                     → (∀ xs ys → B xs ys)
-                    
+ FMS-≼-ElimPropBin {B = B} BisProp B-[]-right B-[]-left ≼-double-hyp = FMS-≼-ElimProp.f (isPropΠ (λ _ → BisProp)) B-[]-left θ
+  where
+  θ : ∀ x xs → (∀ ys → ys ≼ xs → (∀ zs → B ys zs)) → (∀ ys → B (x ∷ xs) ys)
+  θ x xs hyp = FMS-≼-ElimProp.f BisProp (B-[]-right _) χ
+   where
+   χ : ∀ y ys → (∀ zs → zs ≼ ys → B (x ∷ xs) zs) → B (x ∷ xs) (y ∷ ys)
+   χ y ys _ = ≼-double-hyp x y xs ys τ
+    where
+    τ : ∀ vs ws → vs ≼ xs → ws ≼ ys → B vs ws
+    τ vs ws vs≼xs _ = hyp vs vs≼xs ws
+
+
   -- FMS-≼-ElimPropBin' :  ∀ {ℓ} {B : FMSet A → FMSet A → Type ℓ}
   --                   → (∀ {xs} {ys} → isProp (B xs ys))
   --                   → (B [] [])

@@ -8,6 +8,7 @@ open import Cubical.Data.Nat.Order
 open import Cubical.Data.Sigma using (_×_; ΣProp≡)
 open import Cubical.Data.List hiding ([_])
 open import Cubical.Data.Empty as ⊥
+open import Cubical.Data.Sum
 open import Cubical.Structures.MultiSet renaming (member-structure to S; member-iso to ι; Member-is-SNS to SNS[S,ι])
 open import Cubical.HITs.SetQuotients.Base
 open import Cubical.HITs.SetQuotients.Properties
@@ -412,30 +413,57 @@ We have already established that the horizontal arrows are equivalences
 
  ≼-refl : ∀ xs → xs ≼ xs
  ≼-refl xs a  = ≤-refl
+ 
+ ≼-trans : ∀ xs ys zs → xs ≼ ys → ys ≼ zs → xs ≼ zs
+ ≼-trans xs ys zs xs≼ys ys≼zs a = ≤-trans (xs≼ys a) (ys≼zs a)
 
- --Where to move this? Has to come after definition of FMSmember!
- -- FMS-≼-ElimPropf : ∀ {ℓ} {B : FMSet A → Type ℓ}
- --                 → (∀ {xs} → isProp (B xs))
- --                 → B []
- --                 → (∀ x xs → (∀ ys → ys ≼ xs → B ys) → B (x ∷ xs))
- --                 ---------------------------------------------------
- --                 → (∀ xs → B xs)
- -- FMS-≼-ElimPropf {ℓ = ℓ} {B = B} Bprop b₀ hyp = FMS.ElimProp.f Bprop b₀ θ
- --  where
- --  θ : ∀ x {xs} → B xs → B (x ∷ xs)
- --  θ x {xs} b = hyp x xs (foo xs b)
- --   where
- --   foo : ∀ xs → B xs → (ys : FMSet A) → ys ≼ xs → B ys
- --   foo = FMS.ElimProp.f {!!} {!!} baz
- --    where
- --    baz : (y : A) {ys : FMSet A} → (B ys → (zs : FMSet A) → zs ≼ ys → B zs)
- --          → B (y ∷ ys) → (zs : FMSet A) → zs ≼ (y ∷ ys) → B zs
- --    baz y {ys} h₁ bʸ zs h₂ = {!!}
- --  --(FMS.ElimProp.f (isPropΠ (λ _ → Bprop)) (λ _ → b₀) λ y {ys} → foo y ys)
- --   -- where
- --   -- foo : (y : A) (ys : FMSet A) → (ys ≼ xs → B ys) → (y ∷ ys) ≼ xs → B (y ∷ ys)
- --   -- foo y ys h₁ h₂ = hyp y ys {!!}
+ -- move that to Nat.Order later!!!
+ ≤0→≡0 : ∀ n → n ≤ 0 → n ≡ 0
+ ≤0→≡0 zero ineq = refl
+ ≤0→≡0 (suc n) ineq = ⊥.rec (¬-<-zero ineq)
+ 
+ ≼[]→≡[] : ∀ xs → xs ≼ [] → xs ≡ []
+ ≼[]→≡[] xs xs≼[] = FMScount-0-lemma xs λ a → ≤0→≡0 (FMScount a xs) (xs≼[] a)
 
+ ≼-remove1-lemma : ∀ x xs ys → ys ≼ (x ∷ xs) → (remove1 x ys) ≼ xs
+ ≼-remove1-lemma x xs ys ys≼x∷xs a with discA a x
+ ...                               | yes a≡x = {!!}
+ ...                               | no  a≢x = {!!}
+ 
+ ≼-Dichotomy : ∀ x xs ys → ys ≼ (x ∷ xs) → (ys ≼ xs) ⊎ (ys ≡ x ∷ (remove1 x ys))
+ ≼-Dichotomy x xs ys ys≼x∷xs = {!!}
+ 
+ module FMS-≼-ElimProp {ℓ} {B : FMSet A → Type ℓ}
+                       (BisProp : ∀ {xs} → isProp (B xs)) (b₀ : B [])
+                       (B-≼-hyp : ∀ x xs → (∀ ys → ys ≼ xs → B ys) → B (x ∷ xs)) where
+
+  C : FMSet A → Type ℓ
+  C xs = ∀ ys → ys ≼ xs → B ys
+
+  obs : (∀ xs → C xs) → (∀ xs → B xs)
+  obs C-hyp xs = C-hyp xs xs (≼-refl xs)
+
+  g : ∀ xs → C xs
+  g = FMS.ElimProp.f (isPropΠ2 (λ _ _ → BisProp)) c₀ θ
+   where
+   c₀ : C []
+   c₀ ys ys≼[] = subst B (≼[]→≡[] ys ys≼[] ⁻¹) b₀
+
+   θ : ∀ x {xs} → C xs → C (x ∷ xs)
+   θ x {xs} hyp ys ys≼x∷xs with ≼-Dichotomy x xs ys ys≼x∷xs
+   ...                     | inl ys≼xs   = hyp ys ys≼xs
+   ...                     | inr ys≡x∷zs = subst B (ys≡x∷zs ⁻¹) (B-≼-hyp x zs χ)
+    where
+    zs = remove1 x ys
+    χ : ∀ vs → vs ≼ zs → B vs
+    χ vs vs≼zs = hyp vs (≼-trans vs zs xs vs≼zs (≼-remove1-lemma x xs ys ys≼x∷xs))
+
+  f : ∀ xs → B xs
+  f = obs g
+
+
+
+ 
  -- prove that later, looks correct
  postulate
   FMS-≼-ElimPropBin :  ∀ {ℓ} {B : FMSet A → FMSet A → Type ℓ}

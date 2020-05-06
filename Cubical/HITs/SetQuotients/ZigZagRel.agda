@@ -426,48 +426,94 @@ We have already established that the horizontal arrows are equivalences
  suc-predℕ : ∀ n → ¬ n ≡ 0 → n ≡ suc (predℕ n)
  suc-predℕ zero p = ⊥.rec (p refl)
  suc-predℕ (suc n) p = refl
-
+ 
  ≤0→≡0 : ∀ n → n ≤ 0 → n ≡ 0
  ≤0→≡0 zero ineq = refl
  ≤0→≡0 (suc n) ineq = ⊥.rec (¬-<-zero ineq)
-
- ≤-split : ∀ m n → m ≤ suc n → ¬ (m ≡ suc n) → m ≤ n
- ≤-split zero zero ineq ¬p = ≤-refl
- ≤-split zero (suc n) ineq ¬p = zero-≤
- ≤-split (suc m) zero ineq ¬p = ⊥.rec (¬p (subst (λ k → k + suc m ≡ 1) path (ineq .snd)))
-  where
-  path : ineq .fst ≡ 0
-  path = {!!}
- ≤-split (suc m) (suc n) ineq ¬p = pred-≤-pred {!!}
- -- with discreteℕ (ineq .fst) 0
- -- ...                 | yes q = ⊥.rec (¬p (cong (_+ m) (q ⁻¹) ∙ ineq .snd))
- -- ...                 | no ¬q = predℕ (ineq .fst) , {!!}
- --  where
+ 
+ -- pred-≤-pred : suc m ≤ suc n → m ≤ n
+ predℕ-≤-predℕ : {m n : ℕ} → m ≤ n → (predℕ m) ≤ (predℕ n)
+ predℕ-≤-predℕ {zero} {zero}   ineq = ≤-refl
+ predℕ-≤-predℕ {zero} {suc n}  ineq = zero-≤
+ predℕ-≤-predℕ {suc m} {zero}  ineq = ⊥.rec (¬-<-zero ineq)
+ predℕ-≤-predℕ {suc m} {suc n} ineq = pred-≤-pred ineq
 ------------------------------------------------------------------------------------------------------------------------
 
 
  ≼[]→≡[] : ∀ xs → xs ≼ [] → xs ≡ []
  ≼[]→≡[] xs xs≼[] = FMScount-0-lemma xs λ a → ≤0→≡0 (FMScount a xs) (xs≼[] a)
 
+
+ ≼-remove1 : ∀ a xs → remove1 a xs ≼ xs
+ ≼-remove1 a xs b with discA a b
+ ...              | yes a≡b = subst (λ n → n ≤ FMScount b xs) (path ⁻¹) (≤-predℕ (FMScount b xs))
+  where
+  path : FMScount b (remove1 a xs) ≡ predℕ (FMScount b xs)
+  path = cong (λ c → FMScount b (remove1 c xs)) a≡b ∙ lem-remove1 b xs
+ ...              | no  a≢b = subst (λ n → n ≤ FMScount b xs) (path ⁻¹) ≤-refl
+  where
+  path : FMScount b (remove1 a xs) ≡ FMScount b xs
+  path with discreteℕ (FMScount a xs) zero
+  path | yes p = cong (FMScount b) (remove1-lemma-zero a xs p ⁻¹)
+  path | no ¬p = eq₁ (remove1 a xs) ∙ cong (FMScount b) eq₂
+   where
+   eq₁ : ∀ ys → FMScount b ys ≡ FMScount b (a ∷ ys)
+   eq₁ ys with discA b a
+   ...    | yes b≡a = ⊥.rec (a≢b (b≡a ⁻¹))
+   ...    | no  _   = refl
+   eq₂ : (a ∷ remove1 a xs) ≡ xs
+   eq₂ = remove1-lemma-suc a (predℕ (FMScount a xs)) xs (suc-predℕ (FMScount a xs) ¬p) ⁻¹
+
+
  ≼-remove1-lemma : ∀ x xs ys → ys ≼ (x ∷ xs) → (remove1 x ys) ≼ xs
- ≼-remove1-lemma x xs ys ys≼x∷xs a = {!!} -- with discA a x
- -- ...                               | yes a≡x = {!!}
- -- ...                               | no  a≢x = {!!}
- 
+ ≼-remove1-lemma x xs ys ys≼x∷xs a with discA a x
+ ...                               | yes a≡x = ≤-trans (≤-trans (0 , p₁) (predℕ-≤-predℕ (ys≼x∷xs a))) (0 , cong predℕ p₂)
+  where
+  p₁ : FMScount a (remove1 x ys) ≡ predℕ (FMScount a ys)
+  p₁ = subst (λ b →  FMScount a (remove1 b ys) ≡ predℕ (FMScount a ys)) a≡x (lem-remove1 a ys)
+  p₂ : FMScount a (x ∷ xs) ≡ suc (FMScount a xs)
+  p₂ with discA a x
+  p₂ | yes _  = refl
+  p₂ | no a≢x = ⊥.rec (a≢x a≡x)
+ ...                               | no  a≢x = ≤-trans (≤-trans (0 , p₁) (ys≼x∷xs a)) (0 , p₂) -- extra lemma ≡→≤?
+  where
+  p₁ : FMScount a (remove1 x ys) ≡ FMScount a ys
+  p₁ with discreteℕ (FMScount x ys) zero
+  p₁ | yes p = cong (FMScount a) (remove1-lemma-zero x ys p ⁻¹)
+  p₁ | no ¬p = eq₁ (remove1 x ys) ∙ cong (FMScount a) eq₂
+   where
+   eq₁ : ∀ ys → FMScount a ys ≡ FMScount a (x ∷ ys)
+   eq₁ ys with discA a x
+   ...    | yes a≡x = ⊥.rec (a≢x a≡x)
+   ...    | no  _   = refl
+   eq₂ : (x ∷ remove1 x ys) ≡ ys
+   eq₂ = remove1-lemma-suc x (predℕ (FMScount x ys)) ys (suc-predℕ (FMScount x ys) ¬p) ⁻¹
+  p₂ : FMScount a (x ∷ xs) ≡ FMScount a xs
+  p₂ with discA a x
+  p₂ | yes a≡x = ⊥.rec (a≢x a≡x)
+  p₂ | no  a≢x = refl
+
+
  ≼-Dichotomy : ∀ x xs ys → ys ≼ (x ∷ xs) → (ys ≼ xs) ⊎ (ys ≡ x ∷ (remove1 x ys))
- ≼-Dichotomy x xs ys ys≼x∷xs with discreteℕ (FMScount x ys) (suc (FMScount x xs))
- ...                         | yes p = inr (remove1-lemma-suc x (FMScount x xs) ys p)
- ...                         | no ¬p = inl ys≼xs 
+ ≼-Dichotomy x xs ys ys≼x∷xs with (FMScount x ys) ≟ suc (FMScount x xs)
+ ...                         | lt <suc = inl ys≼xs
   where
   ys≼xs : ys ≼ xs
   ys≼xs a with discA a x
-  ...     | yes a≡x = {!!}
+  ...     | yes a≡x = pred-≤-pred (subst (λ b → (FMScount b ys) < suc (FMScount b xs)) (a≡x ⁻¹) <suc)
   ...     | no  a≢x = ≤-trans (ys≼x∷xs a) (subst (λ n → FMScount a (x ∷ xs) ≤ n) path ≤-refl)
    where
    path : FMScount a (x ∷ xs) ≡ FMScount a xs
    path with discA a x
    ...  | yes a≡x = ⊥.rec (a≢x a≡x)
    ...  | no  a≢x = refl
+ ...                         | eq ≡suc = inr (remove1-lemma-suc x (FMScount x xs) ys ≡suc)
+ ...                         | gt >suc = ⊥.rec (¬m<m strict-ineq)
+  where
+  strict-ineq : suc (FMScount x xs) < suc (FMScount x xs)
+  strict-ineq =  <≤-trans (<≤-trans >suc (ys≼x∷xs x)) (0 , FMScount-lemma x xs)
+
+
 
 
  module FMS-≼-ElimProp {ℓ} {B : FMSet A → Type ℓ}
@@ -501,220 +547,257 @@ We have already established that the horizontal arrows are equivalences
 
 
  
- -- prove that later, looks correct
- --postulate
- FMS-≼-ElimPropBin :  ∀ {ℓ} {B : FMSet A → FMSet A → Type ℓ}
+ 
+ -- FMS-≼-ElimPropBin :  ∀ {ℓ} {B : FMSet A → FMSet A → Type ℓ}
+ --                    → (∀ {xs} {ys} → isProp (B xs ys))
+ --                    → (∀ xs → B xs [])
+ --                    → (∀ ys → B [] ys)
+ --                    → (∀ x y xs ys → (∀ vs ws → vs ≼ xs → ws ≼ ys → B vs ws) → B (x ∷ xs) (y ∷ ys))
+ --                    -------------------------------------------------------------------------------
+ --                    → (∀ xs ys → B xs ys)
+ -- FMS-≼-ElimPropBin {B = B} BisProp B-[]-right B-[]-left ≼-double-hyp = FMS-≼-ElimProp.f (isPropΠ (λ _ → BisProp)) B-[]-left θ
+ --  where
+ --  θ : ∀ x xs → (∀ ys → ys ≼ xs → (∀ zs → B ys zs)) → (∀ ys → B (x ∷ xs) ys)
+ --  θ x xs hyp = FMS-≼-ElimProp.f BisProp (B-[]-right _) χ
+ --   where
+ --   χ : ∀ y ys → (∀ zs → zs ≼ ys → B (x ∷ xs) zs) → B (x ∷ xs) (y ∷ ys)
+ --   χ y ys _ = ≼-double-hyp x y xs ys τ
+ --    where
+ --    τ : ∀ vs ws → vs ≼ xs → ws ≼ ys → B vs ws
+ --    τ vs ws vs≼xs _ = hyp vs vs≼xs ws
+
+
+ FMS-≼-ElimPropBin' :  ∀ {ℓ} {B : FMSet A → FMSet A → Type ℓ}
                     → (∀ {xs} {ys} → isProp (B xs ys))
-                    → (∀ xs → B xs [])
-                    → (∀ ys → B [] ys)
-                    → (∀ x y xs ys → (∀ vs ws → vs ≼ xs → ws ≼ ys → B vs ws) → B (x ∷ xs) (y ∷ ys))
+                    → (B [] [])
+                    → (∀ x xs ys → (∀ vs ws → vs ≼ xs → ws ≼ ys → B vs ws) → B (x ∷ xs) ys)
+                    → (∀ x xs ys → (∀ vs ws → vs ≼ xs → ws ≼ ys → B vs ws) → B xs (x ∷ ys))                    
                     -------------------------------------------------------------------------------
                     → (∀ xs ys → B xs ys)
- FMS-≼-ElimPropBin {B = B} BisProp B-[]-right B-[]-left ≼-double-hyp = FMS-≼-ElimProp.f (isPropΠ (λ _ → BisProp)) B-[]-left θ
+ FMS-≼-ElimPropBin' {B = B} BisProp b₀₀ left-hyp right-hyp = FMS-≼-ElimProp.f (isPropΠ (λ _ → BisProp)) θ χ
   where
-  θ : ∀ x xs → (∀ ys → ys ≼ xs → (∀ zs → B ys zs)) → (∀ ys → B (x ∷ xs) ys)
-  θ x xs hyp = FMS-≼-ElimProp.f BisProp (B-[]-right _) χ
+  θ : ∀ ys → B [] ys
+  θ = FMS-≼-ElimProp.f BisProp b₀₀ h₁ --right-hyp x [] ys)
    where
-   χ : ∀ y ys → (∀ zs → zs ≼ ys → B (x ∷ xs) zs) → B (x ∷ xs) (y ∷ ys)
-   χ y ys _ = ≼-double-hyp x y xs ys τ
+   h₁ : ∀ x ys → (∀ ws → ws ≼ ys → B [] ws) → B [] (x ∷ ys)
+   h₁ x ys mini-h = right-hyp x [] ys h₂
     where
-    τ : ∀ vs ws → vs ≼ xs → ws ≼ ys → B vs ws
-    τ vs ws vs≼xs _ = hyp vs vs≼xs ws
+    h₂ : ∀ vs ws → vs ≼ [] → ws ≼ ys → B vs ws
+    h₂ vs ws vs≼[] ws≼ys = subst (λ zs → B zs ws) (≼[]→≡[] vs vs≼[] ⁻¹) (mini-h ws ws≼ys)
+  
+  χ : ∀ x xs → (∀ zs → zs ≼ xs → (∀ ys → B zs ys)) → ∀ ys → B (x ∷ xs) ys
+  χ x xs h ys = left-hyp x xs ys λ vs ws vs≼xs _ → h vs vs≼xs ws
 
 
-  -- FMS-≼-ElimPropBin' :  ∀ {ℓ} {B : FMSet A → FMSet A → Type ℓ}
-  --                   → (∀ {xs} {ys} → isProp (B xs ys))
-  --                   → (B [] [])
-  --                   → (∀ x xs ys → (∀ zs → zs ≼ xs → B zs ys) → B (x ∷ xs) ys)
-  --                   → (∀ x xs ys → (∀ zs → zs ≼ ys → B xs zs) → B xs (x ∷ ys))                    
-  --                   -------------------------------------------------------------------------------
-  --                   → (∀ xs ys → B xs ys)
-
-  -- FMS-ElimPropBin' :  ∀ {ℓ} {B : FMSet A → FMSet A → Type ℓ}
-  --                   → (∀ {xs} {ys} → isProp (B xs ys))
-  --                   → (B [] [])
-  --                   → (∀ x xs ys → B xs ys → B (x ∷ xs) ys)
-  --                   → (∀ x xs ys → B xs ys → B xs (x ∷ ys))                    
-  --                   -------------------------------------------------------------------------------
-  --                   → (∀ xs ys → B xs ys)
-
-
-
- ≼-remove1 : ∀ a xs → remove1 a xs ≼ xs
- ≼-remove1 a xs b with discA a b
- ...              | yes a≡b = subst (λ n → n ≤ FMScount b xs) (path ⁻¹) (≤-predℕ (FMScount b xs))
+ FMS-≼-ElimPropBinSym :  ∀ {ℓ} {B : FMSet A → FMSet A → Type ℓ}
+                      → (∀ {xs} {ys} → isProp (B xs ys))
+                      → (∀ {xs} {ys} → B xs ys → B ys xs)
+                      → (B [] [])
+                      → (∀ x xs ys → (∀ vs ws → vs ≼ xs → ws ≼ ys → B vs ws) → B (x ∷ xs) ys)
+                      ----------------------------------------------------------------------------
+                      → (∀ xs ys → B xs ys)
+ FMS-≼-ElimPropBinSym {B = B} BisProp BisSym b₀₀ left-hyp = FMS-≼-ElimPropBin' BisProp b₀₀ left-hyp right-hyp
   where
-  path : FMScount b (remove1 a xs) ≡ predℕ (FMScount b xs)
-  path = cong (λ c → FMScount b (remove1 c xs)) a≡b ∙ lem-remove1 b xs
- ...              | no  a≢b = subst (λ n → n ≤ FMScount b xs) (path ⁻¹) ≤-refl
-  where
-  path : FMScount b (remove1 a xs) ≡ FMScount b xs
-  path with discreteℕ (FMScount a xs) zero
-  path | yes p = cong (FMScount b) (remove1-lemma-zero a xs p ⁻¹)
-  path | no ¬p = eq₁ (remove1 a xs) ∙ cong (FMScount b) eq₂
+  right-hyp : ∀ x xs ys → (∀ vs ws → vs ≼ xs → ws ≼ ys → B vs ws) → B xs (x ∷ ys)
+  right-hyp x xs ys h₁ = BisSym (left-hyp x ys xs (λ vs ws vs≼ys ws≼xs → BisSym (h₁ ws vs ws≼xs vs≼ys)))
+
+
+
+
+ module FMScountExt where
+  B : FMSet A → FMSet A → Type₀
+  B xs ys = (∀ a → FMScount a xs ≡ FMScount a ys) → xs ≡ ys
+
+  BisProp : ∀ {xs} {ys} → isProp (B xs ys)
+  BisProp = isPropΠ λ _ → FMS.trunc _ _
+
+  BisSym : ∀ {xs} {ys} → B xs ys → B ys xs
+  BisSym {xs} {ys} b h = sym (b (λ a → sym (h a)))
+
+  b₀₀ : B [] []
+  b₀₀ _ = refl
+
+  left-hyp : ∀ x xs ys → (∀ vs ws → vs ≼ xs → ws ≼ ys → B vs ws) → B (x ∷ xs) ys
+  left-hyp x xs ys hyp h₁ = (λ i → x ∷ (hyp-path i)) ∙ path ⁻¹
    where
-   eq₁ : ∀ ys → FMScount b ys ≡ FMScount b (a ∷ ys)
-   eq₁ ys with discA b a
-   ...    | yes b≡a = ⊥.rec (a≢b (b≡a ⁻¹))
-   ...    | no  _   = refl
-   eq₂ : (a ∷ remove1 a xs) ≡ xs
-   eq₂ = remove1-lemma-suc a (predℕ (FMScount a xs)) xs (suc-predℕ (FMScount a xs) ¬p) ⁻¹
+   eq₁ : FMScount x ys ≡ suc (FMScount x xs)
+   eq₁ = (h₁ x) ⁻¹ ∙ FMScount-lemma x xs
 
+   path : ys ≡ x ∷ (remove1 x ys)
+   path = remove1-lemma-suc x (FMScount x xs) ys eq₁
 
- -----------------------------------------------------------------------------------------------------
- -- The main result:
- FMScountExt : ∀ xs ys → (∀ a → FMScount a xs ≡ FMScount a ys) → xs ≡ ys
- FMScountExt = FMS-≼-ElimPropBin (isPropΠ λ _ → FMS.trunc _ _) FMScount-0-lemma FMScount-0-lemma-sym θ
-  where
-  θ :  ∀ x y xs ys
-    → (∀ vs ws → vs ≼ xs → ws ≼ ys → (∀ a → FMScount a vs ≡ FMScount a ws) → vs ≡ ws)
-    → (∀ a → FMScount a (x ∷ xs) ≡ FMScount a (y ∷ ys))
-    ---------------------------------------------------------------------------------
-    → x FMS.∷ xs ≡ y FMS.∷ ys
-  θ x y xs ys ≼-hyp count-hyp with discA x y
-  -- in the case that x≡y we apply the induction hypothesis on xs and ys
-  ...                         | yes x≡y = cong (_∷ xs) x≡y ∙ (λ i → y ∷ path i)
-   where
-   path : xs ≡ ys
-   path = ≼-hyp xs ys (≼-refl xs) (≼-refl ys) count-eq
-       where
-       count-eq : ∀ a → FMScount a xs ≡ FMScount a ys
-       count-eq a with discA a x with discA a y
-       ...        | yes a≡x      | yes a≡y = cong predℕ (eq₁ ∙∙ (count-hyp a) ∙∙ eq₂ ⁻¹)
-        where
-        eq₁ : suc (FMScount a xs) ≡ FMScount a (x ∷ xs)
-        eq₁ with discA a x
-        eq₁ | yes _   = refl
-        eq₁ | no  a≢x = ⊥.rec (a≢x a≡x)
-
-        eq₂ : suc (FMScount a ys) ≡ FMScount a (y ∷ ys)
-        eq₂ with discA a y
-        eq₂ | yes _    = refl
-        eq₂ | no  a≢y  = ⊥.rec (a≢y a≡y)
-       ...        | yes a≡x      | no  a≢y = ⊥.rec (a≢y (a≡x ∙ x≡y))
-       ...        | no  a≢x      | yes a≡y = ⊥.rec (a≢x (a≡y ∙ x≡y ⁻¹))
-       ...        | no  a≢x      | no  a≢y = eq₁ ∙∙ (count-hyp a) ∙∙ eq₂ ⁻¹
-        where
-        eq₁ : FMScount a xs ≡ FMScount a (x ∷ xs)
-        eq₁ with discA a x
-        eq₁ | yes a≡x = ⊥.rec (a≢x a≡x)
-        eq₁ | no  _   = refl
-
-        eq₂ : FMScount a ys ≡ FMScount a (y ∷ ys)
-        eq₂ with discA a y
-        eq₂ | yes a≡y = ⊥.rec (a≢y a≡y)
-        eq₂ | no  _   = refl
-
-  -- in the case that x≢y we apply the induction hypothesis on (remove1 y xs) and (remove1 x ys)
-  ...                         | no  x≢y = x ∷ xs                 ≡⟨ cong (x ∷_) path₁ ⟩
-                                          x ∷ y ∷ (remove1 y xs) ≡⟨ (λ i → x ∷ y ∷ (hyp-path i)) ⟩
-                                          x ∷ y ∷ (remove1 x ys) ≡⟨ comm x y (remove1 x ys) ⟩
-                                          y ∷ x ∷ (remove1 x ys) ≡⟨ cong (y ∷_) path₂ ⁻¹ ⟩
-                                          y ∷ ys                 ∎
-   where
-   eq₁ : FMScount y xs ≡ suc (FMScount y ys)
-   eq₁ = p ∙∙ count-hyp y ∙∙ FMScount-lemma y ys
+   hyp-path : xs ≡ remove1 x ys
+   hyp-path = hyp xs (remove1 x ys) (≼-refl xs) (≼-remove1 x ys) θ
     where
-    p : FMScount y xs ≡ FMScount y (x ∷ xs)
-    p with discA y x
-    p | yes y≡x = ⊥.rec (x≢y (y≡x ⁻¹))
-    p | no  _   = refl
-
-   eq₂ : FMScount x ys ≡ suc (FMScount x xs)
-   eq₂ = p ∙∙ count-hyp x ⁻¹ ∙∙ FMScount-lemma x xs
-    where
-    p : FMScount x ys ≡ FMScount x (y ∷ ys)
-    p with discA x y
-    p | yes x≡y = ⊥.rec (x≢y x≡y)
-    p | no  _   = refl
-
-   path₁ : xs ≡ y ∷ (remove1 y xs)
-   path₁ = remove1-lemma-suc y (FMScount y ys) xs eq₁
-
-   path₂ : ys ≡ x ∷ (remove1 x ys)
-   path₂ = remove1-lemma-suc x (FMScount x xs) ys eq₂
-
-   vs = remove1 y xs
-   ws = remove1 x ys
-
-   hyp-path : vs ≡ ws
-   hyp-path = ≼-hyp vs ws (≼-remove1 y xs) (≼-remove1 x ys) χ
-    where
-    χ : ∀ a → FMScount a vs ≡ FMScount a ws
-    χ a with discA a x with discA a y
-    ... | yes a≡x      | yes a≡y = ⊥.rec (x≢y (a≡x ⁻¹ ∙ a≡y))
-    ... | yes a≡x      | no  a≢y = FMScount a vs               ≡⟨ [i] ∙ cong (FMScount a) (path₁ ⁻¹) ⟩
-                                   FMScount a xs               ≡⟨ cong predℕ [ii] ⟩
-                                   predℕ (FMScount a (x ∷ xs)) ≡⟨ cong predℕ (count-hyp a) ⟩
-                                   predℕ (FMScount a (y ∷ ys)) ≡⟨ cong predℕ [iii] ⟩
-                                   predℕ (FMScount a ys)       ≡⟨ cong predℕ (cong (FMScount a) path₂ ∙ [iv]) ⟩
-                                   FMScount a ws               ∎
-     where
-     [i] : FMScount a vs ≡ FMScount a (y ∷ vs)
-     [i] with discA a y
-     ...   | yes a≡y = ⊥.rec (a≢y a≡y)
-     ...   | no  _   = refl
-     [ii] : suc (FMScount a xs) ≡ FMScount a (x ∷ xs)
-     [ii] with discA a x
-     ...  | yes _   = refl
-     ...  | no  a≢x = ⊥.rec (a≢x a≡x)
-     [iii] : FMScount a (y ∷ ys) ≡ FMScount a ys
-     [iii] with discA a y
-     ...   | yes a≡y = ⊥.rec (a≢y a≡y)
-     ...   | no  _   = refl
-     [iv] : FMScount a (x ∷ ws) ≡ suc (FMScount a ws)
-     [iv] with discA a x
-     ...  | yes _   = refl
-     ...  | no  a≢x = ⊥.rec (a≢x a≡x)
+    θ : ∀ a → FMScount a xs ≡ FMScount a (remove1 x ys)
+    θ a with discA a x
+    ... | yes a≡x = {!!}
+    ... | no  a≢x = {!!}
 
 
-    ... | no  a≢x      | yes a≡y = FMScount a vs               ≡⟨ cong predℕ ([i] ∙ cong (FMScount a) (path₁ ⁻¹)) ⟩
-                                   predℕ (FMScount a xs)       ≡⟨ cong predℕ [ii] ⟩
-                                   predℕ (FMScount a (x ∷ xs)) ≡⟨ cong predℕ (count-hyp a) ⟩
-                                   predℕ (FMScount a (y ∷ ys)) ≡⟨ cong predℕ [iii] ⟩
-                                   FMScount a ys               ≡⟨ cong (FMScount a) path₂ ∙ [iv] ⟩
-                                   FMScount a ws               ∎
-     where
-     [i] : suc (FMScount a vs) ≡ FMScount a (y ∷ vs)
-     [i] with discA a y
-     ...  | yes _   = refl
-     ...  | no  a≢y = ⊥.rec (a≢y a≡y)
-     [ii] : FMScount a xs ≡ FMScount a (x ∷ xs)
-     [ii] with discA a x
-     ...   | yes a≡x = ⊥.rec (a≢x a≡x)
-     ...   | no  _   = refl
-     [iii] :  FMScount a (y ∷ ys) ≡ suc (FMScount a ys)
-     [iii] with discA a y
-     ...   | yes _   = refl
-     ...   | no  a≢y = ⊥.rec (a≢y a≡y)
-     [iv] : FMScount a (x ∷ ws) ≡ FMScount a ws
-     [iv] with discA a x
-     ...   | yes a≡x = ⊥.rec (a≢x a≡x)
-     ...   | no  _   = refl
 
-    ... | no  a≢x      | no  a≢y = FMScount a vs               ≡⟨ [i] ∙ cong (FMScount a) (path₁ ⁻¹) ⟩
-                                   FMScount a xs               ≡⟨ [ii] ⟩
-                                   FMScount a (x ∷ xs)         ≡⟨ count-hyp a ⟩
-                                   FMScount a (y ∷ ys)         ≡⟨ [iii] ⟩
-                                   FMScount a ys               ≡⟨ cong (FMScount a) path₂ ∙ [iv] ⟩
-                                   FMScount a ws               ∎
-     where
-     [i] : FMScount a vs ≡ FMScount a (y ∷ vs)
-     [i] with discA a y
-     ...   | yes a≡y = ⊥.rec (a≢y a≡y)
-     ...   | no  _   = refl
-     [ii] : FMScount a xs ≡ FMScount a (x ∷ xs)
-     [ii] with discA a x
-     ...   | yes a≡x = ⊥.rec (a≢x a≡x)
-     ...   | no  _   = refl
-     [iii] : FMScount a (y ∷ ys) ≡ FMScount a ys
-     [iii] with discA a y
-     ...   | yes a≡y = ⊥.rec (a≢y a≡y)
-     ...   | no  _   = refl
-     [iv] : FMScount a (x ∷ ws) ≡ FMScount a ws
-     [iv] with discA a x
-     ...   | yes a≡x = ⊥.rec (a≢x a≡x)
-     ...   | no  _   = refl
+
+
+
+
+
+
+
+
+ -- -----------------------------------------------------------------------------------------------------
+ -- -- The main result:
+ -- FMScountExt : ∀ xs ys → (∀ a → FMScount a xs ≡ FMScount a ys) → xs ≡ ys
+ -- FMScountExt = FMS-≼-ElimPropBin (isPropΠ λ _ → FMS.trunc _ _) FMScount-0-lemma FMScount-0-lemma-sym θ
+ --  where
+ --  θ :  ∀ x y xs ys
+ --    → (∀ vs ws → vs ≼ xs → ws ≼ ys → (∀ a → FMScount a vs ≡ FMScount a ws) → vs ≡ ws)
+ --    → (∀ a → FMScount a (x ∷ xs) ≡ FMScount a (y ∷ ys))
+ --    ---------------------------------------------------------------------------------
+ --    → x FMS.∷ xs ≡ y FMS.∷ ys
+ --  θ x y xs ys ≼-hyp count-hyp with discA x y
+ --  -- in the case that x≡y we apply the induction hypothesis on xs and ys
+ --  ...                         | yes x≡y = cong (_∷ xs) x≡y ∙ (λ i → y ∷ path i)
+ --   where
+ --   path : xs ≡ ys
+ --   path = ≼-hyp xs ys (≼-refl xs) (≼-refl ys) count-eq
+ --       where
+ --       count-eq : ∀ a → FMScount a xs ≡ FMScount a ys
+ --       count-eq a with discA a x with discA a y
+ --       ...        | yes a≡x      | yes a≡y = cong predℕ (eq₁ ∙∙ (count-hyp a) ∙∙ eq₂ ⁻¹)
+ --        where
+ --        eq₁ : suc (FMScount a xs) ≡ FMScount a (x ∷ xs)
+ --        eq₁ with discA a x
+ --        eq₁ | yes _   = refl
+ --        eq₁ | no  a≢x = ⊥.rec (a≢x a≡x)
+
+ --        eq₂ : suc (FMScount a ys) ≡ FMScount a (y ∷ ys)
+ --        eq₂ with discA a y
+ --        eq₂ | yes _    = refl
+ --        eq₂ | no  a≢y  = ⊥.rec (a≢y a≡y)
+ --       ...        | yes a≡x      | no  a≢y = ⊥.rec (a≢y (a≡x ∙ x≡y))
+ --       ...        | no  a≢x      | yes a≡y = ⊥.rec (a≢x (a≡y ∙ x≡y ⁻¹))
+ --       ...        | no  a≢x      | no  a≢y = eq₁ ∙∙ (count-hyp a) ∙∙ eq₂ ⁻¹
+ --        where
+ --        eq₁ : FMScount a xs ≡ FMScount a (x ∷ xs)
+ --        eq₁ with discA a x
+ --        eq₁ | yes a≡x = ⊥.rec (a≢x a≡x)
+ --        eq₁ | no  _   = refl
+
+ --        eq₂ : FMScount a ys ≡ FMScount a (y ∷ ys)
+ --        eq₂ with discA a y
+ --        eq₂ | yes a≡y = ⊥.rec (a≢y a≡y)
+ --        eq₂ | no  _   = refl
+
+ --  -- in the case that x≢y we apply the induction hypothesis on (remove1 y xs) and (remove1 x ys)
+ --  ...                         | no  x≢y = x ∷ xs                 ≡⟨ cong (x ∷_) path₁ ⟩
+ --                                          x ∷ y ∷ (remove1 y xs) ≡⟨ (λ i → x ∷ y ∷ (hyp-path i)) ⟩
+ --                                          x ∷ y ∷ (remove1 x ys) ≡⟨ comm x y (remove1 x ys) ⟩
+ --                                          y ∷ x ∷ (remove1 x ys) ≡⟨ cong (y ∷_) path₂ ⁻¹ ⟩
+ --                                          y ∷ ys                 ∎
+ --   where
+ --   eq₁ : FMScount y xs ≡ suc (FMScount y ys)
+ --   eq₁ = p ∙∙ count-hyp y ∙∙ FMScount-lemma y ys
+ --    where
+ --    p : FMScount y xs ≡ FMScount y (x ∷ xs)
+ --    p with discA y x
+ --    p | yes y≡x = ⊥.rec (x≢y (y≡x ⁻¹))
+ --    p | no  _   = refl
+
+ --   eq₂ : FMScount x ys ≡ suc (FMScount x xs)
+ --   eq₂ = p ∙∙ count-hyp x ⁻¹ ∙∙ FMScount-lemma x xs
+ --    where
+ --    p : FMScount x ys ≡ FMScount x (y ∷ ys)
+ --    p with discA x y
+ --    p | yes x≡y = ⊥.rec (x≢y x≡y)
+ --    p | no  _   = refl
+
+ --   path₁ : xs ≡ y ∷ (remove1 y xs)
+ --   path₁ = remove1-lemma-suc y (FMScount y ys) xs eq₁
+
+ --   path₂ : ys ≡ x ∷ (remove1 x ys)
+ --   path₂ = remove1-lemma-suc x (FMScount x xs) ys eq₂
+
+ --   vs = remove1 y xs
+ --   ws = remove1 x ys
+
+ --   hyp-path : vs ≡ ws
+ --   hyp-path = ≼-hyp vs ws (≼-remove1 y xs) (≼-remove1 x ys) χ
+ --    where
+ --    χ : ∀ a → FMScount a vs ≡ FMScount a ws
+ --    χ a with discA a x with discA a y
+ --    ... | yes a≡x      | yes a≡y = ⊥.rec (x≢y (a≡x ⁻¹ ∙ a≡y))
+ --    ... | yes a≡x      | no  a≢y = FMScount a vs               ≡⟨ [i] ∙ cong (FMScount a) (path₁ ⁻¹) ⟩
+ --                                   FMScount a xs               ≡⟨ cong predℕ [ii] ⟩
+ --                                   predℕ (FMScount a (x ∷ xs)) ≡⟨ cong predℕ (count-hyp a) ⟩
+ --                                   predℕ (FMScount a (y ∷ ys)) ≡⟨ cong predℕ [iii] ⟩
+ --                                   predℕ (FMScount a ys)       ≡⟨ cong predℕ (cong (FMScount a) path₂ ∙ [iv]) ⟩
+ --                                   FMScount a ws               ∎
+ --     where
+ --     [i] : FMScount a vs ≡ FMScount a (y ∷ vs)
+ --     [i] with discA a y
+ --     ...   | yes a≡y = ⊥.rec (a≢y a≡y)
+ --     ...   | no  _   = refl
+ --     [ii] : suc (FMScount a xs) ≡ FMScount a (x ∷ xs)
+ --     [ii] with discA a x
+ --     ...  | yes _   = refl
+ --     ...  | no  a≢x = ⊥.rec (a≢x a≡x)
+ --     [iii] : FMScount a (y ∷ ys) ≡ FMScount a ys
+ --     [iii] with discA a y
+ --     ...   | yes a≡y = ⊥.rec (a≢y a≡y)
+ --     ...   | no  _   = refl
+ --     [iv] : FMScount a (x ∷ ws) ≡ suc (FMScount a ws)
+ --     [iv] with discA a x
+ --     ...  | yes _   = refl
+ --     ...  | no  a≢x = ⊥.rec (a≢x a≡x)
+
+
+ --    ... | no  a≢x      | yes a≡y = FMScount a vs               ≡⟨ cong predℕ ([i] ∙ cong (FMScount a) (path₁ ⁻¹)) ⟩
+ --                                   predℕ (FMScount a xs)       ≡⟨ cong predℕ [ii] ⟩
+ --                                   predℕ (FMScount a (x ∷ xs)) ≡⟨ cong predℕ (count-hyp a) ⟩
+ --                                   predℕ (FMScount a (y ∷ ys)) ≡⟨ cong predℕ [iii] ⟩
+ --                                   FMScount a ys               ≡⟨ cong (FMScount a) path₂ ∙ [iv] ⟩
+ --                                   FMScount a ws               ∎
+ --     where
+ --     [i] : suc (FMScount a vs) ≡ FMScount a (y ∷ vs)
+ --     [i] with discA a y
+ --     ...  | yes _   = refl
+ --     ...  | no  a≢y = ⊥.rec (a≢y a≡y)
+ --     [ii] : FMScount a xs ≡ FMScount a (x ∷ xs)
+ --     [ii] with discA a x
+ --     ...   | yes a≡x = ⊥.rec (a≢x a≡x)
+ --     ...   | no  _   = refl
+ --     [iii] :  FMScount a (y ∷ ys) ≡ suc (FMScount a ys)
+ --     [iii] with discA a y
+ --     ...   | yes _   = refl
+ --     ...   | no  a≢y = ⊥.rec (a≢y a≡y)
+ --     [iv] : FMScount a (x ∷ ws) ≡ FMScount a ws
+ --     [iv] with discA a x
+ --     ...   | yes a≡x = ⊥.rec (a≢x a≡x)
+ --     ...   | no  _   = refl
+
+ --    ... | no  a≢x      | no  a≢y = FMScount a vs               ≡⟨ [i] ∙ cong (FMScount a) (path₁ ⁻¹) ⟩
+ --                                   FMScount a xs               ≡⟨ [ii] ⟩
+ --                                   FMScount a (x ∷ xs)         ≡⟨ count-hyp a ⟩
+ --                                   FMScount a (y ∷ ys)         ≡⟨ [iii] ⟩
+ --                                   FMScount a ys               ≡⟨ cong (FMScount a) path₂ ∙ [iv] ⟩
+ --                                   FMScount a ws               ∎
+ --     where
+ --     [i] : FMScount a vs ≡ FMScount a (y ∷ vs)
+ --     [i] with discA a y
+ --     ...   | yes a≡y = ⊥.rec (a≢y a≡y)
+ --     ...   | no  _   = refl
+ --     [ii] : FMScount a xs ≡ FMScount a (x ∷ xs)
+ --     [ii] with discA a x
+ --     ...   | yes a≡x = ⊥.rec (a≢x a≡x)
+ --     ...   | no  _   = refl
+ --     [iii] : FMScount a (y ∷ ys) ≡ FMScount a ys
+ --     [iii] with discA a y
+ --     ...   | yes a≡y = ⊥.rec (a≢y a≡y)
+ --     ...   | no  _   = refl
+ --     [iv] : FMScount a (x ∷ ws) ≡ FMScount a ws
+ --     [iv] with discA a x
+ --     ...   | yes a≡x = ⊥.rec (a≢x a≡x)
+ --     ...   | no  _   = refl
 
 
 

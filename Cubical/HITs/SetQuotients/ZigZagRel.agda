@@ -631,7 +631,13 @@ We have already established that the horizontal arrows are equivalences
     where
     θ : ∀ a → FMScount a xs ≡ FMScount a (remove1 x ys)
     θ a with discA a x
-    ... | yes a≡x = {!!}
+    ... | yes a≡x = subst (λ b → FMScount b xs ≡ FMScount b (remove1 x ys)) (a≡x ⁻¹) eq₂
+     where
+     eq₂ : FMScount x xs ≡ FMScount x (remove1 x ys)
+     eq₂ = FMScount x xs               ≡⟨ cong predℕ (FMScount-lemma x xs) ⁻¹ ⟩
+           predℕ (FMScount x (x ∷ xs)) ≡⟨ cong predℕ (h₁ x) ⟩
+           predℕ (FMScount x ys)       ≡⟨ (lem-remove1 x ys) ⁻¹ ⟩
+           FMScount x (remove1 x ys)   ∎
     ... | no  a≢x = {!!}
 
 

@@ -638,8 +638,25 @@ We have already established that the horizontal arrows are equivalences
            predℕ (FMScount x (x ∷ xs)) ≡⟨ cong predℕ (h₁ x) ⟩
            predℕ (FMScount x ys)       ≡⟨ (lem-remove1 x ys) ⁻¹ ⟩
            FMScount x (remove1 x ys)   ∎
-    ... | no  a≢x = {!!}
+    ... | no  a≢x = FMScount a xs                   ≡⟨ eq₃ ⟩
+                    FMScount a (x ∷ xs)             ≡⟨ h₁ a ⟩
+                    FMScount a ys                   ≡⟨ cong (FMScount a) path ⟩
+                    FMScount a (x ∷ (remove1 x ys)) ≡⟨ eq₄ ⟩
+                    FMScount a (remove1 x ys)       ∎
+     where
+     eq₃ : FMScount a xs ≡ FMScount a (x ∷ xs)
+     eq₃ with discA a x
+     eq₃ | yes a≡x = ⊥.rec (a≢x a≡x)
+     eq₃ | no  _   = refl
+     
+     eq₄ : FMScount a (x ∷ (remove1 x ys)) ≡ FMScount a (remove1 x ys)
+     eq₄ with discA a x
+     eq₄ | yes a≡x = ⊥.rec (a≢x a≡x)
+     eq₄ | no  _   = refl
 
+
+  Thm : ∀ xs ys → (∀ a → FMScount a xs ≡ FMScount a ys) → xs ≡ ys
+  Thm = FMS-≼-ElimPropBinSym BisProp BisSym b₀₀ left-hyp
 
 
 
@@ -811,17 +828,55 @@ We have already established that the horizontal arrows are equivalences
  -- FMScountExt' = FMS-ElimPropBin' {!!} (λ _ _ → refl) (λ x xs ys x₁ x₂ x₃ → {!!}) {!!}
 
 
- -- ν : X/Rˣ → FMSet A
- -- ν [ [] ] = []
- -- ν [ x ∷ xs ] = x ∷ ν [ xs ]
- -- ν (eq/ xs xs' r i) = {!!}
- --  where
- --   ρ : ∀ a → s a xs ≡ s a xs'
- --   ρ = λ a → (r .snd .fst a) ∙ (r .snd .snd a) ⁻¹
- -- ν (squash/ xs/ xs/' p q i j) = trunc (ν xs/) (ν xs/') (cong ν p) (cong ν q) i j
+
+ -- Now  construct an inverse for μ
+ List→FMSet : X → FMSet A
+ List→FMSet [] = []
+ List→FMSet (x ∷ xs) = x ∷ List→FMSet xs
+
+ List→FMSet-count : ∀ a xs → s a xs ≡ FMScount a (List→FMSet xs)
+ List→FMSet-count a [] = refl
+ List→FMSet-count a (x ∷ xs) with discA a x
+ ...                         | yes _ = cong suc (List→FMSet-count a xs)
+ ...                         | no  _ = List→FMSet-count a xs
+ 
+
+ ν : X/Rˣ → FMSet A
+ ν [ xs ] = List→FMSet xs
+ ν (eq/ xs ys r i) = path i
+  where
+   ρ : ∀ a → s a xs ≡ s a ys
+   ρ = λ a → (r .snd .fst a) ∙ (r .snd .snd a) ⁻¹
+
+   θ : ∀ a → FMScount a (List→FMSet xs) ≡ FMScount a (List→FMSet ys)
+   θ a = List→FMSet-count a xs ⁻¹ ∙∙ ρ a ∙∙ List→FMSet-count a ys
+
+   path : List→FMSet xs ≡ List→FMSet ys
+   path = FMScountExt.Thm _ _ θ
+ ν (squash/ xs/ xs/' p q i j) = trunc (ν xs/) (ν xs/') (cong ν p) (cong ν q) i j
 
 
 
+ σ : section μ ν
+ σ = elimProp (λ _ → squash/ _ _) θ
+  where
+  θ : (xs : List A) → μ (ν [ xs ]) ≡ [ xs ]
+  θ [] = refl
+  θ (x ∷ xs) = cong (x ∷/_) (θ xs)
+
+
+ ν-∷/-commute : (x : A) (ys : X/Rˣ) → ν (x ∷/ ys) ≡ x ∷ ν ys
+ ν-∷/-commute x = elimProp (λ _ → FMS.trunc _ _) λ xs → refl
+ 
+ τ : retract μ ν
+ τ = FMS.ElimProp.f (FMS.trunc _ _) refl θ
+  where
+  θ : ∀ x {xs} → ν (μ xs) ≡ xs → ν (μ (x ∷ xs)) ≡ x ∷ xs
+  θ x {xs} p = path ∙ cong (x ∷_) p
+   where
+   path : ν (μ (x ∷ xs)) ≡ x ∷ ν (μ xs)
+   path = ν-∷/-commute x (μ xs)
+   
 
 
 

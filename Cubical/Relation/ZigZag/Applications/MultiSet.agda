@@ -8,16 +8,22 @@ open import Cubical.Foundations.Prelude
 open import Cubical.Foundations.Isomorphism
 open import Cubical.Foundations.HLevels
 open import Cubical.Foundations.Structure
+open import Cubical.Foundations.Logic hiding ([_])
 open import Cubical.Data.Nat
+open import Cubical.Data.Nat.Order
+open import Cubical.Data.FinData
 open import Cubical.Data.List hiding ([_])
 open import Cubical.Structures.MultiSet
 open import Cubical.HITs.SetQuotients.Base
 open import Cubical.HITs.SetQuotients.Properties
 open import Cubical.HITs.FiniteMultiset as FMS hiding ([_])
 open import Cubical.HITs.FiniteMultiset.CountExtensionality
+open import Cubical.HITs.PropositionalTruncation
 open import Cubical.Relation.Nullary
 open import Cubical.Relation.Nullary.DecidableEq
 open import Cubical.Relation.ZigZag.Base as ZigZag
+
+
 
 private
  variable
@@ -31,6 +37,37 @@ data AList (A : Type ℓ) : Type ℓ where
  ⟨_,_⟩∷_ : A → ℕ → AList A → AList A
 
 infixr 5 ⟨_,_⟩∷_
+
+
+AListFinConcat : ∀ n → (f : Fin n → A) → (g : Fin n → ℕ) → AList A
+AListFinConcat zero f g = ⟨⟩
+AListFinConcat (suc n) f g = ⟨ f zero , g zero ⟩∷ AListFinConcat n f' g'
+ where
+ f' = λ ind → f (suc ind)
+ g' = λ ind → g (suc ind)
+
+
+
+-- Yet another way of defining finite multisets:
+supp : {A : Type ℓ} → (A → ℕ) → Type ℓ
+supp {A = A} f = Σ[ a ∈ A ] (0 < f a)
+
+fin-supp : {A : Type ℓ} → (A → ℕ) → Type ℓ
+fin-supp f = Σ[ n ∈ ℕ ] (Fin n ≃ supp f)
+
+FuncFMS : (A : Type ℓ) → Type ℓ
+FuncFMS A = Σ[ f ∈ (A → ℕ) ] ∥ fin-supp f ∥
+
+
+Set-PropTrunc-lemma : {X Y : Type ℓ} {P : X → Type ℓ} (Yset : isSet Y)
+                  → (φ : (x : X) → P x → Y)
+                  → (ρ : (x : X) → (α β : P x) → φ x α ≡ φ x β)
+                  -----------------------------------------------------
+                  → (x : X) → ∥ P x ∥ → Y
+Set-PropTrunc-lemma Yset φ ρ x = elim→Set (λ _ → Yset) (λ α → φ x α) (λ α β → ρ x α β)
+
+
+
 
 
 -- We have a count-structure on List and AList and use these to get a bisimulation between the two
@@ -106,6 +143,20 @@ module Lists&ALists {A : Type ℓ} (discA : Discrete A) where
 
  List/Rᴸ = (List A) / Rᴸ
  AList/Rᴬᴸ = (AList A) / Rᴬᴸ
+
+ -- We can now define a function FuncFMS→AList/Rᴬᴸ
+ Ψ : FuncFMS A →  AList/Rᴬᴸ
+ Ψ (f , |finsuppf|) = Set-PropTrunc-lemma {P = fin-supp} squash/ (λ f α → [ χ f α ]) θ f |finsuppf|
+  where
+  χ : (f : A → ℕ) → fin-supp f → AList A
+  χ f (n , e) = AListFinConcat n (λ ind → (e .fst ind) .fst) (λ ind → f ((e .fst ind) .fst))
+
+  obs : (f : A → ℕ) (α : fin-supp f) (a : A) → ALcount a (χ f α) ≡ f a
+  obs f (n , e) a = {!!}
+
+  θ : (f : A → ℕ) (α β : fin-supp f) → [ χ f α ] ≡ [ χ f β ]
+  θ f α β = eq/ _ _ (ψ (χ f α) , ε (χ f α) , λ a → ε (χ f α) a ∙∙ obs f α a ∙∙ sym (obs f β a))
+
 
  List/Rᴸ≃AList/Rᴬᴸ : List/Rᴸ ≃ AList/Rᴬᴸ
  List/Rᴸ≃AList/Rᴬᴸ = ZigZag.Bisimulation→Equiv.Thm (List A) (AList A)

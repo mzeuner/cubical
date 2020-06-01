@@ -4,15 +4,17 @@
 module Cubical.Relation.ZigZag.Applications.MultiSet where
 
 open import Cubical.Core.Everything
-open import Cubical.Foundations.Prelude
-open import Cubical.Foundations.Isomorphism
-open import Cubical.Foundations.HLevels
-open import Cubical.Foundations.Structure
+open import Cubical.Foundations.Everything
+-- open import Cubical.Foundations.Prelude
+-- open import Cubical.Foundations.Isomorphism
+-- open import Cubical.Foundations.HLevels
+-- open import Cubical.Foundations.Structure
 open import Cubical.Foundations.Logic hiding ([_])
 open import Cubical.Data.Nat
 open import Cubical.Data.Nat.Order
 open import Cubical.Data.FinData
 open import Cubical.Data.List hiding ([_])
+open import Cubical.Data.Empty as ⊥
 open import Cubical.Structures.MultiSet
 open import Cubical.HITs.SetQuotients.Base
 open import Cubical.HITs.SetQuotients.Properties
@@ -39,7 +41,7 @@ data AList (A : Type ℓ) : Type ℓ where
 infixr 5 ⟨_,_⟩∷_
 
 
-AListFinConcat : ∀ n → (f : Fin n → A) → (g : Fin n → ℕ) → AList A
+AListFinConcat : (n : ℕ) (f : Fin n → A) (g : Fin n → ℕ) → AList A
 AListFinConcat zero f g = ⟨⟩
 AListFinConcat (suc n) f g = ⟨ f zero , g zero ⟩∷ AListFinConcat n f' g'
  where
@@ -145,17 +147,63 @@ module Lists&ALists {A : Type ℓ} (discA : Discrete A) where
  AList/Rᴬᴸ = (AList A) / Rᴬᴸ
 
  -- We can now define a function FuncFMS→AList/Rᴬᴸ
- Ψ : FuncFMS A →  AList/Rᴬᴸ
- Ψ (f , |finsuppf|) = Set-PropTrunc-lemma {P = fin-supp} squash/ (λ f α → [ χ f α ]) θ f |finsuppf|
+ ξ : (f : A → ℕ) → fin-supp f → AList A
+ ξ f (n , e) = AListFinConcat n (λ ind → (e .fst ind) .fst) (λ ind → f ((e .fst ind) .fst))
+
+ ξ-lemma : (n : ℕ) (f : A → ℕ) (e : Fin n ≃ supp f) → ∀ a → ALcount a (ξ f (n , e)) ≡ f a
+ ξ-lemma zero f e a with zero ≟ f a
+ ...                | lt 0<fa = ⊥.rec (¬Fin0 (invEquiv e .fst (a , 0<fa)))
+ ...                | eq 0≡fa = 0≡fa
+ ...                | gt 0>fa = ⊥.rec (¬-<-zero 0>fa)
+ ξ-lemma (suc n) f e a = cong (ALcount a) path ∙ eq₁
   where
-  χ : (f : A → ℕ) → fin-supp f → AList A
-  χ f (n , e) = AListFinConcat n (λ ind → (e .fst ind) .fst) (λ ind → f ((e .fst ind) .fst))
+  ys = ξ f (suc n , e)
+  a₀ = (e .fst zero) .fst
 
-  obs : (f : A → ℕ) (α : fin-supp f) (a : A) → ALcount a (χ f α) ≡ f a
-  obs f (n , e) a = {!!}
+  g : A → ℕ
+  g a' with discA  a' a₀
+  ...  | yes _ = zero
+  ...  | no  _ = f a'
 
-  θ : (f : A → ℕ) (α β : fin-supp f) → [ χ f α ] ≡ [ χ f β ]
-  θ f α β = eq/ _ _ (ψ (χ f α) , ε (χ f α) , λ a → ε (χ f α) a ∙∙ obs f α a ∙∙ sym (obs f β a))
+  e' : Fin n ≃ supp g
+  fst e' ind = e .fst (suc ind) .fst , {!!}
+  snd e' = {!!}
+
+  β : fin-supp g
+  β = (n , e')
+
+  xs = ξ g β
+
+  hyp : ∀ a → ALcount a xs ≡ g a
+  hyp = ξ-lemma n g e'
+
+  path : ys ≡ ⟨ a₀ , f a₀ ⟩∷ xs
+  path = cong (⟨ a₀ , f a₀ ⟩∷_) {!!}
+
+  eq₁ : ALcount a (⟨ a₀ , f a₀ ⟩∷ xs) ≡ f a
+  eq₁ with discA a a₀
+  ... | yes a≡a₀ = {!!}
+  ... | no  a≢a₀ = ALcount a (⟨ a₀ , f a₀ ⟩∷ xs) ≡⟨ {!refl!} ⟩
+                   ALcount a xs ≡⟨ hyp a ⟩
+                   g a ≡⟨ eq₂ ⟩
+                   f a ∎
+   where
+   eq₂ : g a ≡ f a
+   eq₂  with discA a a₀
+   ... | yes a≡a₀ = ⊥.rec (a≢a₀ a≡a₀)
+   ... | no  a≢a₀ = refl
+
+
+
+ Ξ : FuncFMS A →  AList/Rᴬᴸ
+ Ξ (f , |finsuppf|) = Set-PropTrunc-lemma {P = fin-supp} squash/ (λ f α → [ ξ f α ]) θ f |finsuppf|
+  where
+  θ : (f : A → ℕ) (α β : fin-supp f) → [ ξ f α ] ≡ [ ξ f β ]
+  θ f α β = eq/ _ _ (ψ (ξ f α)
+                   , ε (ξ f α)
+                   , λ a → ε (ξ f α) a ∙∙ ξ-lemma (α .fst) f (α .snd) a ∙∙ sym (ξ-lemma (β .fst) f (β .snd) a))
+
+
 
 
  List/Rᴸ≃AList/Rᴬᴸ : List/Rᴸ ≃ AList/Rᴬᴸ

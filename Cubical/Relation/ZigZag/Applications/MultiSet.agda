@@ -5,10 +5,6 @@ module Cubical.Relation.ZigZag.Applications.MultiSet where
 
 open import Cubical.Core.Everything
 open import Cubical.Foundations.Everything
--- open import Cubical.Foundations.Prelude
--- open import Cubical.Foundations.Isomorphism
--- open import Cubical.Foundations.HLevels
--- open import Cubical.Foundations.Structure
 open import Cubical.Foundations.Logic hiding ([_])
 open import Cubical.Data.Nat
 open import Cubical.Data.Nat.Order
@@ -57,6 +53,10 @@ supp {A = A} f = Σ[ a ∈ A ] (0 < f a)
 fin-supp : {A : Type ℓ} → (A → ℕ) → Type ℓ
 fin-supp f = Σ[ n ∈ ℕ ] (Fin n ≃ supp f)
 
+-- untruncated version:
+FFMS : (A : Type ℓ) → Type ℓ
+FFMS A = Σ[ f ∈ (A → ℕ) ] fin-supp f
+
 FuncFMS : (A : Type ℓ) → Type ℓ
 FuncFMS A = Σ[ f ∈ (A → ℕ) ] ∥ fin-supp f ∥
 
@@ -85,7 +85,23 @@ module Lists&ALists {A : Type ℓ} (discA : Discrete A) where
           → (∀ x → R {X} {Y} x (e .fst x)) ≃ (ι X Y e)
  ι-R-char e = isoToEquiv (iso (λ f → λ a x → f x a) (λ g → λ x a → g a x) (λ _ → refl) λ _ → refl)
 
+ -- some results about R
+ module R-char {(X , Xcount) (Y , Ycount) : TypeWithStr ℓ S}
+               {f : X → Y} {g : Y → X}
+               {isBisimRfg : isBisimulation (R {X , Xcount} {Y , Ycount}) f g} where
 
+  Rˣ = ZigZag.Bisimulation→Equiv.Rᴬ X Y (R {X , Xcount} {Y , Ycount}) f g isBisimRfg
+
+  to : ∀ {x} {x'} → (∀ a → Xcount a x ≡ Xcount a x') → Rˣ x x'
+  to {x} {x'} ρ = f x , isBisimRfg .snd .fst x , λ a → sym (ρ a) ∙ isBisimRfg .snd .fst x a
+
+  from : ∀ {x} {x'} → Rˣ x x' → ∀ a → Xcount a x ≡ Xcount a x'
+  from {x} {x'} r a = r .snd .fst a ∙ sym (r .snd .snd a)
+
+
+
+
+ -- helper function for count-structures for (association) lists
  aux : (a x : A) → Dec (a ≡ x) → ℕ → ℕ
  aux a x (yes a≡x) n = suc n
  aux a x (no  a≢x) n = n
@@ -145,65 +161,6 @@ module Lists&ALists {A : Type ℓ} (discA : Discrete A) where
 
  List/Rᴸ = (List A) / Rᴸ
  AList/Rᴬᴸ = (AList A) / Rᴬᴸ
-
- -- We can now define a function FuncFMS→AList/Rᴬᴸ
- ξ : (f : A → ℕ) → fin-supp f → AList A
- ξ f (n , e) = AListFinConcat n (λ ind → (e .fst ind) .fst) (λ ind → f ((e .fst ind) .fst))
-
- ξ-lemma : (n : ℕ) (f : A → ℕ) (e : Fin n ≃ supp f) → ∀ a → ALcount a (ξ f (n , e)) ≡ f a
- ξ-lemma zero f e a with zero ≟ f a
- ...                | lt 0<fa = ⊥.rec (¬Fin0 (invEquiv e .fst (a , 0<fa)))
- ...                | eq 0≡fa = 0≡fa
- ...                | gt 0>fa = ⊥.rec (¬-<-zero 0>fa)
- ξ-lemma (suc n) f e a = cong (ALcount a) path ∙ eq₁
-  where
-  ys = ξ f (suc n , e)
-  a₀ = (e .fst zero) .fst
-
-  g : A → ℕ
-  g a' with discA  a' a₀
-  ...  | yes _ = zero
-  ...  | no  _ = f a'
-
-  e' : Fin n ≃ supp g
-  fst e' ind = e .fst (suc ind) .fst , {!!}
-  snd e' = {!!}
-
-  β : fin-supp g
-  β = (n , e')
-
-  xs = ξ g β
-
-  hyp : ∀ a → ALcount a xs ≡ g a
-  hyp = ξ-lemma n g e'
-
-  path : ys ≡ ⟨ a₀ , f a₀ ⟩∷ xs
-  path = cong (⟨ a₀ , f a₀ ⟩∷_) {!!}
-
-  eq₁ : ALcount a (⟨ a₀ , f a₀ ⟩∷ xs) ≡ f a
-  eq₁ with discA a a₀
-  ... | yes a≡a₀ = {!!}
-  ... | no  a≢a₀ = ALcount a (⟨ a₀ , f a₀ ⟩∷ xs) ≡⟨ {!refl!} ⟩
-                   ALcount a xs ≡⟨ hyp a ⟩
-                   g a ≡⟨ eq₂ ⟩
-                   f a ∎
-   where
-   eq₂ : g a ≡ f a
-   eq₂  with discA a a₀
-   ... | yes a≡a₀ = ⊥.rec (a≢a₀ a≡a₀)
-   ... | no  a≢a₀ = refl
-
-
-
- Ξ : FuncFMS A →  AList/Rᴬᴸ
- Ξ (f , |finsuppf|) = Set-PropTrunc-lemma {P = fin-supp} squash/ (λ f α → [ ξ f α ]) θ f |finsuppf|
-  where
-  θ : (f : A → ℕ) (α β : fin-supp f) → [ ξ f α ] ≡ [ ξ f β ]
-  θ f α β = eq/ _ _ (ψ (ξ f α)
-                   , ε (ξ f α)
-                   , λ a → ε (ξ f α) a ∙∙ ξ-lemma (α .fst) f (α .snd) a ∙∙ sym (ξ-lemma (β .fst) f (β .snd) a))
-
-
 
 
  List/Rᴸ≃AList/Rᴬᴸ : List/Rᴸ ≃ AList/Rᴬᴸ
@@ -361,3 +318,66 @@ module Lists&ALists {A : Type ℓ} (discA : Discrete A) where
 
  TODO: Show that all the equivalences are indeed isomorphisms of multisets not only of count-structures!
  -}
+
+
+
+ -- We establish a bisimulation between AList and FFMS (the untruncated version)
+ ξ : FFMS A → AList A
+ ξ (f , n , e) = AListFinConcat n (λ ind → (e .fst ind) .fst) (λ ind → f ((e .fst ind) .fst))
+
+ ζ : AList A → FFMS A
+ ζ xs = (λ a → ALcount a xs) , {!!} , {!!}
+
+ -- ξ-lemma : (n : ℕ) (f : A → ℕ) (e : Fin n ≃ supp f) → ∀ a → ALcount a (ξ f (n , e)) ≡ f a
+ -- ξ-lemma zero f e a with zero ≟ f a
+ -- ...                | lt 0<fa = ⊥.rec (¬Fin0 (invEquiv e .fst (a , 0<fa)))
+ -- ...                | eq 0≡fa = 0≡fa
+ -- ...                | gt 0>fa = ⊥.rec (¬-<-zero 0>fa)
+ -- ξ-lemma (suc n) f e a = cong (ALcount a) path ∙ eq₁
+ --  where
+ --  ys = ξ f (suc n , e)
+ --  a₀ = (e .fst zero) .fst
+
+ --  g : A → ℕ
+ --  g a' with discA  a' a₀
+ --  ...  | yes _ = zero
+ --  ...  | no  _ = f a'
+
+ --  e' : Fin n ≃ supp g
+ --  fst e' ind = e .fst (suc ind) .fst , {!!}
+ --  snd e' = {!!}
+
+ --  β : fin-supp g
+ --  β = (n , e')
+
+ --  xs = ξ g β
+
+ --  hyp : ∀ a → ALcount a xs ≡ g a
+ --  hyp = ξ-lemma n g e'
+
+ --  path : ys ≡ ⟨ a₀ , f a₀ ⟩∷ xs
+ --  path = cong (⟨ a₀ , f a₀ ⟩∷_) {!!}
+
+ --  eq₁ : ALcount a (⟨ a₀ , f a₀ ⟩∷ xs) ≡ f a
+ --  eq₁ with discA a a₀
+ --  ... | yes a≡a₀ = {!!}
+ --  ... | no  a≢a₀ = ALcount a (⟨ a₀ , f a₀ ⟩∷ xs) ≡⟨ {!refl!} ⟩
+ --                   ALcount a xs ≡⟨ hyp a ⟩
+ --                   g a ≡⟨ eq₂ ⟩
+ --                   f a ∎
+ --   where
+ --   eq₂ : g a ≡ f a
+ --   eq₂  with discA a a₀
+ --   ... | yes a≡a₀ = ⊥.rec (a≢a₀ a≡a₀)
+ --   ... | no  a≢a₀ = refl
+
+
+
+ -- Ξ : FuncFMS A →  AList/Rᴬᴸ
+ -- Ξ (f , |finsuppf|) = Set-PropTrunc-lemma {P = fin-supp} squash/ (λ f α → [ ξ f α ]) θ f |finsuppf|
+ --  where
+ --  θ : (f : A → ℕ) (α β : fin-supp f) → [ ξ f α ] ≡ [ ξ f β ]
+ --  θ f α β = eq/ _ _ (ψ (ξ f α)
+ --                   , ε (ξ f α)
+ --                   , λ a → ε (ξ f α) a ∙∙ ξ-lemma (α .fst) f (α .snd) a ∙∙ sym (ξ-lemma (β .fst) f (β .snd) a))
+

@@ -8,6 +8,7 @@ open import Cubical.Foundations.Everything
 open import Cubical.Foundations.Logic hiding ([_])
 open import Cubical.Data.Nat
 open import Cubical.Data.Nat.Order
+open import Cubical.Data.Sigma
 open import Cubical.Data.FinData
 open import Cubical.Data.List hiding ([_])
 open import Cubical.Data.Empty as ⊥
@@ -57,9 +58,14 @@ fin-supp f = Σ[ n ∈ ℕ ] (Fin n ≃ supp f)
 FFMS : (A : Type ℓ) → Type ℓ
 FFMS A = Σ[ f ∈ (A → ℕ) ] fin-supp f
 
+FFMScount : A → FFMS A → ℕ
+FFMScount a (f , _) = f a
+
 FuncFMS : (A : Type ℓ) → Type ℓ
 FuncFMS A = Σ[ f ∈ (A → ℕ) ] ∥ fin-supp f ∥
 
+isSetFuncFMS : isSet (FuncFMS A)
+isSetFuncFMS = isSetΣ (isSetΠ (λ _ → isSetℕ)) λ _ → isProp→isSet propTruncIsProp
 
 Set-PropTrunc-lemma : {X Y : Type ℓ} {P : X → Type ℓ} (Yset : isSet Y)
                   → (φ : (x : X) → P x → Y)
@@ -86,17 +92,17 @@ module Lists&ALists {A : Type ℓ} (discA : Discrete A) where
  ι-R-char e = isoToEquiv (iso (λ f → λ a x → f x a) (λ g → λ x a → g a x) (λ _ → refl) λ _ → refl)
 
  -- some results about R
- module R-char {(X , Xcount) (Y , Ycount) : TypeWithStr ℓ S}
-               {f : X → Y} {g : Y → X}
-               {isBisimRfg : isBisimulation (R {X , Xcount} {Y , Ycount}) f g} where
+ -- module R-char {(X , Xcount) (Y , Ycount) : TypeWithStr ℓ S}
+ --               {f : X → Y} {g : Y → X}
+ --               {isBisimRfg : isBisimulation (R {X , Xcount} {Y , Ycount}) f g} where
 
-  Rˣ = ZigZag.Bisimulation→Equiv.Rᴬ X Y (R {X , Xcount} {Y , Ycount}) f g isBisimRfg
+ --  Rˣ = ZigZag.Bisimulation→Equiv.Rᴬ X Y (R {X , Xcount} {Y , Ycount}) f g isBisimRfg
 
-  to : ∀ {x} {x'} → (∀ a → Xcount a x ≡ Xcount a x') → Rˣ x x'
-  to {x} {x'} ρ = f x , isBisimRfg .snd .fst x , λ a → sym (ρ a) ∙ isBisimRfg .snd .fst x a
+ --  to : ∀ {x} {x'} → (∀ a → Xcount a x ≡ Xcount a x') → Rˣ x x'
+ --  to {x} {x'} ρ = f x , isBisimRfg .snd .fst x , λ a → sym (ρ a) ∙ isBisimRfg .snd .fst x a
 
-  from : ∀ {x} {x'} → Rˣ x x' → ∀ a → Xcount a x ≡ Xcount a x'
-  from {x} {x'} r a = r .snd .fst a ∙ sym (r .snd .snd a)
+ --  from : ∀ {x} {x'} → Rˣ x x' → ∀ a → Xcount a x ≡ Xcount a x'
+ --  from {x} {x'} r a = r .snd .fst a ∙ sym (r .snd .snd a)
 
 
 
@@ -326,7 +332,91 @@ module Lists&ALists {A : Type ℓ} (discA : Discrete A) where
  ξ (f , n , e) = AListFinConcat n (λ ind → (e .fst ind) .fst) (λ ind → f ((e .fst ind) .fst))
 
  ζ : AList A → FFMS A
- ζ xs = (λ a → ALcount a xs) , {!!} , {!!}
+ ζ xs = (λ a → ALcount a xs) , {!!}
+
+ -- ξ and ζ are a bisimulation
+ ξ-cancel : ∀ f → R {FFMS A , FFMScount} {AList A , ALcount} f (ξ f)
+ ξ-cancel = {!!}
+
+ ζ-cancel : ∀ xs → R {FFMS A , FFMScount} {AList A , ALcount} (ζ xs) xs
+ ζ-cancel = {!!}
+
+
+ -- R {List A , Lcount} {AList A , ALcount} is zigzag-complete
+ zigzagR₂ : isZigZagComplete (R {FFMS A , FFMScount} {AList A , ALcount})
+ zigzagR₂ _ _ _ _ r r' r'' a = (r a) ∙∙ sym (r' a) ∙∙ (r'' a)
+
+
+ -- now we can apply the main result about zigzag-complete relations:
+ Rᶠᶠᵐˢ  = ZigZag.Bisimulation→Equiv.Rᴬ (FFMS A) (AList A) (R {FFMS A , FFMScount} {AList A , ALcount})
+          ξ ζ (zigzagR₂ , ξ-cancel , ζ-cancel)
+ Rᴬᴸ² = ZigZag.Bisimulation→Equiv.Rᴮ (FFMS A) (AList A) (R {FFMS A , FFMScount} {AList A , ALcount})
+          ξ ζ (zigzagR₂ , ξ-cancel , ζ-cancel)
+
+
+ FFMS/Rᶠᶠᵐˢ = (FFMS A) / Rᶠᶠᵐˢ
+ AList/Rᴬᴸ² = (AList A) / Rᴬᴸ²
+
+
+ FFMS/Rᶠᶠᵐˢ≃AList/Rᴬᴸ² : FFMS/Rᶠᶠᵐˢ ≃ AList/Rᴬᴸ²
+ FFMS/Rᶠᶠᵐˢ≃AList/Rᴬᴸ² = ZigZag.Bisimulation→Equiv.Thm (FFMS A) (AList A)
+                       (R {FFMS A , FFMScount} {AList A , ALcount})
+                        ξ ζ (zigzagR₂ , ξ-cancel , ζ-cancel)
+
+
+
+ -- The only thing missing is the equivalence FFMS/Rᶠᶠᵐˢ≃FuncFMS
+ quot→trunc : FFMS/Rᶠᶠᵐˢ → FuncFMS A
+ quot→trunc [ (f , α) ] = f , ∣ α ∣
+ quot→trunc (eq/ (f , α) (g , β) r i) = funExt ρ i , isProp→PathP {B = λ i → ∥ fin-supp (funExt ρ i) ∥}
+                                                     (λ _ → propTruncIsProp) ∣ α ∣ ∣ β ∣ i
+  where
+  ρ : ∀ a → f a ≡ g a
+  ρ a = r .snd .fst a ∙ sym (r .snd .snd a)
+ quot→trunc (squash/ f g p q i j) = isSetFuncFMS
+            (quot→trunc f) (quot→trunc g) (cong quot→trunc p) (cong quot→trunc q) i j
+
+
+ trunc→quot : FuncFMS A → FFMS/Rᶠᶠᵐˢ
+ trunc→quot (f , ∣α∣) = Set-PropTrunc-lemma squash/ untrunc→quot θ f ∣α∣
+  where
+  untrunc→quot : (f : A → ℕ) → fin-supp f → FFMS/Rᶠᶠᵐˢ
+  untrunc→quot f α = [ f , α ]
+
+  θ : (f : A → ℕ) (α β : fin-supp f) → [ f , α ] ≡ [ f , β ]
+  θ f α β = eq/ _ _ (ξ (f , α) , ξ-cancel (f , α) , ξ-cancel (f , α))
+
+
+ quot→trunc→quot : section trunc→quot quot→trunc
+ quot→trunc→quot = elimProp (λ _ → squash/ _ _) θ
+  where
+  θ : (x : FFMS A) → trunc→quot (quot→trunc [ x ]) ≡ [ x ]
+  θ (f , α) = eq/ _ _ (ξ (f , α) ,  subst (λ x → R {FFMS A , FFMScount} {AList A , ALcount} x (ξ (f , α)))
+                                          path (ξ-cancel (f , α))
+                                 ,  ξ-cancel (f , α))
+   where
+   path : (f , α) ≡ transp (λ i → FFMS A) i0 (f , α)
+   path i = transp (λ i → FFMS A) (~ i) (f , α)
+
+
+ trunc→quot→trunc : retract trunc→quot quot→trunc
+ trunc→quot→trunc (f , ∣α∣) = curry f ∣α∣
+  where
+  curry : (f : A → ℕ) → (∣α∣ : ∥ fin-supp f ∥) → quot→trunc (trunc→quot (f , ∣α∣)) ≡ (f , ∣α∣)
+  curry f = Cubical.HITs.PropositionalTruncation.elim (λ _ → isSetFuncFMS _ _) θ
+   where
+   path : transp (λ i → A → ℕ) i0 f ≡ f
+   path i = transp (λ i → A → ℕ) i f
+
+   θ : (α : fin-supp f)
+     → (transp (λ i → A → ℕ) i0 f , ∣ transp (λ i → fin-supp (transp (λ j → A → ℕ) (~ i) f)) i0 α ∣)
+     ≡ (f , ∣ α ∣)
+   θ α = ΣProp≡ (λ _ → propTruncIsProp) path
+
+
+
+
+
 
  -- ξ-lemma : (n : ℕ) (f : A → ℕ) (e : Fin n ≃ supp f) → ∀ a → ALcount a (ξ f (n , e)) ≡ f a
  -- ξ-lemma zero f e a with zero ≟ f a

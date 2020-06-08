@@ -332,14 +332,36 @@ module Lists&ALists {A : Type ℓ} (discA : Discrete A) where
  ξ (f , n , e) = AListFinConcat n (λ ind → (e .fst ind) .fst) (λ ind → f ((e .fst ind) .fst))
 
  ζ : AList A → FFMS A
- ζ xs = (λ a → ALcount a xs) , {!!}
+ ζ xs = (λ a → ALcount a xs) , fin-suppALcount xs
+  where
+  fin-suppALcount : ∀ xs → fin-supp (λ a → ALcount a xs)
+  fin-suppALcount ⟨⟩ = zero , isoToEquiv (iso (λ f₀ → ⊥.rec (¬Fin0 f₀)) (λ (_ , ineq) → ⊥.rec (¬m<m ineq))
+                                         (λ (_ , ineq) → ⊥.rec (¬m<m ineq)) (λ f₀ → ⊥.rec (¬Fin0 f₀)))
+  fin-suppALcount (⟨ x , zero ⟩∷ xs) = fin-suppALcount xs
+  fin-suppALcount (⟨ x , suc n ⟩∷ xs) with zero ≟ (ALcount x xs) --=m
+  ...             | lt 0<m = fin-suppALcount xs .fst , compEquiv (fin-suppALcount xs .snd) supp-<-hyp
+   where
+   supp-<-hyp : supp (λ a → ALcount a xs) ≃ supp (λ a → ALcount a (⟨ x , suc n ⟩∷ xs))
+   supp-<-hyp = {!!}
+  ...             | eq 0≡m = suc (fin-suppALcount xs .fst) , e
+   where
+    e : Fin (suc (fin-suppALcount xs .fst)) ≃ supp (λ a → ALcount a (⟨ x , suc n ⟩∷ xs))
+    e = isoToEquiv (iso f g {!!} {!!})
+     where
+     f : Fin (suc (fin-suppALcount xs .fst)) → supp (λ a → ALcount a (⟨ x , suc n ⟩∷ xs))
+     f zero = x , {!!}
+     f (suc ind) = {!ζ xs .snd .snd .fst !}
+     g : supp (λ a → ALcount a (⟨ x , suc n ⟩∷ xs)) → Fin (suc (fin-suppALcount xs .fst))
+     g (a , ineq) = {!!}
+  ...             | gt 0>m = ⊥.rec (¬-<-zero 0>m)
+
 
  -- ξ and ζ are a bisimulation
  ξ-cancel : ∀ f → R {FFMS A , FFMScount} {AList A , ALcount} f (ξ f)
  ξ-cancel = {!!}
 
  ζ-cancel : ∀ xs → R {FFMS A , FFMScount} {AList A , ALcount} (ζ xs) xs
- ζ-cancel = {!!}
+ ζ-cancel xs a = refl
 
 
  -- R {List A , Lcount} {AList A , ALcount} is zigzag-complete
@@ -395,14 +417,14 @@ module Lists&ALists {A : Type ℓ} (discA : Discrete A) where
                                           path (ξ-cancel (f , α))
                                  ,  ξ-cancel (f , α))
    where
-   path : (f , α) ≡ transp (λ i → FFMS A) i0 (f , α)
+   path : (f , α) ≡ transp (λ i → FFMS A) i0 (f , α) --this is just transpfill
    path i = transp (λ i → FFMS A) (~ i) (f , α)
 
 
  trunc→quot→trunc : retract trunc→quot quot→trunc
  trunc→quot→trunc (f , ∣α∣) = curry f ∣α∣
   where
-  curry : (f : A → ℕ) → (∣α∣ : ∥ fin-supp f ∥) → quot→trunc (trunc→quot (f , ∣α∣)) ≡ (f , ∣α∣)
+  curry : (f : A → ℕ) → (∣α∣ : ∥ fin-supp f ∥) → quot→trunc (trunc→quot (f , ∣α∣)) ≡ (f , ∣α∣) --curry-fct in the lib (Data.Function
   curry f = Cubical.HITs.PropositionalTruncation.elim (λ _ → isSetFuncFMS _ _) θ
    where
    path : transp (λ i → A → ℕ) i0 f ≡ f

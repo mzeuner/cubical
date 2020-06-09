@@ -5,7 +5,7 @@ module Cubical.Relation.ZigZag.Applications.MultiSet where
 
 open import Cubical.Core.Everything
 open import Cubical.Foundations.Everything
-open import Cubical.Foundations.Logic hiding ([_])
+open import Cubical.Foundations.Logic hiding ([_] ; ¬_)
 open import Cubical.Data.Nat
 open import Cubical.Data.Nat.Order
 open import Cubical.Data.Sigma
@@ -37,6 +37,13 @@ data AList (A : Type ℓ) : Type ℓ where
 
 infixr 5 ⟨_,_⟩∷_
 
+caseFin : ∀ {ℓ} {n : ℕ} → {A : Type ℓ} → (a0 aS : A) → Fin (suc n) → A
+caseFin a0 aS zero    = a0
+caseFin a0 aS (suc ind) = aS
+
+Fin-snotz : {n : ℕ} {ind : Fin n} → ¬ Path (Fin (suc n)) (suc ind) zero
+Fin-snotz {n = n} {ind = ind} p = subst (caseFin ⊥.⊥ ℕ) p zero
+
 
 AListFinConcat : (n : ℕ) (f : Fin n → A) (g : Fin n → ℕ) → AList A
 AListFinConcat zero f g = ⟨⟩
@@ -45,6 +52,20 @@ AListFinConcat (suc n) f g = ⟨ f zero , g zero ⟩∷ AListFinConcat n f' g'
  f' = λ ind → f (suc ind)
  g' = λ ind → g (suc ind)
 
+AListFinConcat-subst-ℕ-lemma : (n : ℕ) (f : Fin n → A) (g₁ g₂ : Fin n → ℕ)
+                             → (∀ ind → g₁ ind ≡ g₂ ind)
+                             → AListFinConcat n f g₁ ≡ AListFinConcat n f g₂
+AListFinConcat-subst-ℕ-lemma zero f g₁ g₂ hyp = refl
+AListFinConcat-subst-ℕ-lemma (suc n) f g₁ g₂ hyp =
+ ⟨ f zero , g₁ zero ⟩∷ (AListFinConcat n f' g₁')
+   ≡⟨ cong (λ a → ⟨ f zero , a ⟩∷ (AListFinConcat n f' g₁')) (hyp zero) ⟩
+ ⟨ f zero , g₂ zero ⟩∷ (AListFinConcat n f' g₁')
+   ≡⟨ cong (⟨ f zero , g₂ zero ⟩∷_) (AListFinConcat-subst-ℕ-lemma n f' g₁' g₂' λ ind → hyp (suc ind))  ⟩
+ ⟨ f zero , g₂ zero ⟩∷ (AListFinConcat n f' g₂') ∎
+ where
+ f' = λ ind → f (suc ind)
+ g₁' = λ ind → g₁ (suc ind)
+ g₂' = λ ind → g₂ (suc ind)
 
 
 -- Yet another way of defining finite multisets:
@@ -335,25 +356,26 @@ module Lists&ALists {A : Type ℓ} (discA : Discrete A) where
  ζ xs = (λ a → ALcount a xs) , fin-suppALcount xs
   where
   fin-suppALcount : ∀ xs → fin-supp (λ a → ALcount a xs)
-  fin-suppALcount ⟨⟩ = zero , isoToEquiv (iso (λ f₀ → ⊥.rec (¬Fin0 f₀)) (λ (_ , ineq) → ⊥.rec (¬m<m ineq))
-                                         (λ (_ , ineq) → ⊥.rec (¬m<m ineq)) (λ f₀ → ⊥.rec (¬Fin0 f₀)))
-  fin-suppALcount (⟨ x , zero ⟩∷ xs) = fin-suppALcount xs
-  fin-suppALcount (⟨ x , suc n ⟩∷ xs) with zero ≟ (ALcount x xs) --=m
-  ...             | lt 0<m = fin-suppALcount xs .fst , compEquiv (fin-suppALcount xs .snd) supp-<-hyp
-   where
-   supp-<-hyp : supp (λ a → ALcount a xs) ≃ supp (λ a → ALcount a (⟨ x , suc n ⟩∷ xs))
-   supp-<-hyp = {!!}
-  ...             | eq 0≡m = suc (fin-suppALcount xs .fst) , e
-   where
-    e : Fin (suc (fin-suppALcount xs .fst)) ≃ supp (λ a → ALcount a (⟨ x , suc n ⟩∷ xs))
-    e = isoToEquiv (iso f g {!!} {!!})
-     where
-     f : Fin (suc (fin-suppALcount xs .fst)) → supp (λ a → ALcount a (⟨ x , suc n ⟩∷ xs))
-     f zero = x , {!!}
-     f (suc ind) = {!ζ xs .snd .snd .fst !}
-     g : supp (λ a → ALcount a (⟨ x , suc n ⟩∷ xs)) → Fin (suc (fin-suppALcount xs .fst))
-     g (a , ineq) = {!!}
-  ...             | gt 0>m = ⊥.rec (¬-<-zero 0>m)
+  fin-suppALcount xs = {!!}
+  -- fin-suppALcount ⟨⟩ = zero , isoToEquiv (iso (λ f₀ → ⊥.rec (¬Fin0 f₀)) (λ (_ , ineq) → ⊥.rec (¬m<m ineq))
+  --                                        (λ (_ , ineq) → ⊥.rec (¬m<m ineq)) (λ f₀ → ⊥.rec (¬Fin0 f₀)))
+  -- fin-suppALcount (⟨ x , zero ⟩∷ xs) = fin-suppALcount xs
+  -- fin-suppALcount (⟨ x , suc n ⟩∷ xs) with zero ≟ (ALcount x xs) --=m
+  -- ...             | lt 0<m = fin-suppALcount xs .fst , compEquiv (fin-suppALcount xs .snd) supp-<-hyp
+  --  where
+  --  supp-<-hyp : supp (λ a → ALcount a xs) ≃ supp (λ a → ALcount a (⟨ x , suc n ⟩∷ xs))
+  --  supp-<-hyp = {!!}
+  -- ...             | eq 0≡m = suc (fin-suppALcount xs .fst) , e
+  --  where
+  --   e : Fin (suc (fin-suppALcount xs .fst)) ≃ supp (λ a → ALcount a (⟨ x , suc n ⟩∷ xs))
+  --   e = isoToEquiv (iso f g {!!} {!!})
+  --    where
+  --    f : Fin (suc (fin-suppALcount xs .fst)) → supp (λ a → ALcount a (⟨ x , suc n ⟩∷ xs))
+  --    f zero = x , {!!}
+  --    f (suc ind) = {!ζ xs .snd .snd .fst !}
+  --    g : supp (λ a → ALcount a (⟨ x , suc n ⟩∷ xs)) → Fin (suc (fin-suppALcount xs .fst))
+  --    g (a , ineq) = {!!}
+  -- ...             | gt 0>m = ⊥.rec (¬-<-zero 0>m)
 
 
  -- ξ and ζ are a bisimulation
@@ -437,51 +459,98 @@ module Lists&ALists {A : Type ℓ} (discA : Discrete A) where
 
 
 
+ ALcount-≢-lemma : (a x : A) (n : ℕ) (xs : AList A) → ¬ (a ≡ x) → ALcount a (⟨ x , n ⟩∷ xs) ≡ ALcount a xs
+ ALcount-≢-lemma a x zero xs a≢x = refl
+ ALcount-≢-lemma a x (suc n) xs a≢x = ALcount a (⟨ x , suc n ⟩∷ xs) ≡⟨ path ⟩
+                                      ALcount a (⟨ x , n ⟩∷ xs)     ≡⟨ ALcount-≢-lemma a x n xs a≢x ⟩
+                                      ALcount a xs                  ∎
+  where
+  path : ALcount a (⟨ x , suc n ⟩∷ xs) ≡ ALcount a (⟨ x , n ⟩∷ xs)
+  path with discA a x
+  ...  | yes a≡x = ⊥.rec (a≢x a≡x)
+  ...  | no  _   = refl
 
 
+ ALcount-≡-lemma : (a x : A) (n : ℕ) (xs : AList A) → (a ≡ x) → ALcount a (⟨ x , n ⟩∷ xs) ≡ n + ALcount a xs
+ ALcount-≡-lemma a x zero xs a≡x = refl
+ ALcount-≡-lemma a x (suc n) xs a≡x = ALcount a (⟨ x , suc n ⟩∷ xs)   ≡⟨ path ⟩
+                                      suc (ALcount a (⟨ x , n ⟩∷ xs)) ≡⟨ cong suc (ALcount-≡-lemma a x n xs a≡x) ⟩
+                                      suc (n + ALcount a xs)          ≡⟨ refl ⟩
+                                      suc n + ALcount a xs ∎
+  where
+  path : ALcount a (⟨ x , suc n ⟩∷ xs) ≡ suc (ALcount a (⟨ x , n ⟩∷ xs))
+  path with discA a x
+  ...  | yes _ = refl
+  ...  | no a≢x = ⊥.rec (a≢x a≡x)
 
- -- ξ-lemma : (n : ℕ) (f : A → ℕ) (e : Fin n ≃ supp f) → ∀ a → ALcount a (ξ f (n , e)) ≡ f a
- -- ξ-lemma zero f e a with zero ≟ f a
- -- ...                | lt 0<fa = ⊥.rec (¬Fin0 (invEquiv e .fst (a , 0<fa)))
- -- ...                | eq 0≡fa = 0≡fa
- -- ...                | gt 0>fa = ⊥.rec (¬-<-zero 0>fa)
- -- ξ-lemma (suc n) f e a = cong (ALcount a) path ∙ eq₁
- --  where
- --  ys = ξ f (suc n , e)
- --  a₀ = (e .fst zero) .fst
 
- --  g : A → ℕ
- --  g a' with discA  a' a₀
- --  ...  | yes _ = zero
- --  ...  | no  _ = f a'
+ ξ-lemma : (n : ℕ) (f : A → ℕ) (e : Fin n ≃ supp f) → ∀ a → ALcount a (ξ (f , n , e)) ≡ f a
+ ξ-lemma zero f e a with zero ≟ f a
+ ...                | lt 0<fa = ⊥.rec (¬Fin0 (invEquiv e .fst (a , 0<fa)))
+ ...                | eq 0≡fa = 0≡fa
+ ...                | gt 0>fa = ⊥.rec (¬-<-zero 0>fa)
+ ξ-lemma (suc n) f e a = cong (ALcount a) path ∙ eq₁
+  where
+  ys = ξ (f , suc n , e)
+  a₀ = (e .fst zero) .fst
 
- --  e' : Fin n ≃ supp g
- --  fst e' ind = e .fst (suc ind) .fst , {!!}
- --  snd e' = {!!}
+  g : A → ℕ
+  g a' with discA  a' a₀
+  ...  | yes _ = zero
+  ...  | no  _ = f a'
 
- --  β : fin-supp g
- --  β = (n , e')
+  foo : (ind : Fin n) → f (e .fst (suc ind) .fst) ≡ g (e .fst (suc ind) .fst)
+  foo ind with discA (e .fst (suc ind) .fst) a₀
+  ...     | yes p = ⊥.rec {!!}
+   where
+   eq₂ : e. fst (suc ind) ≡ e. fst zero
+   eq₂ = ΣProp≡ (λ _ → m≤n-isProp) p
+   -- invEquiv-is-linv
+   -- ¬eq₂ : ¬ e. fst (suc ind) ≡ e. fst zero
+   -- ¬eq₂ p = {!cong (invEquiv e .fst) p!}
+  ...     | no  _ = refl
 
- --  xs = ξ g β
+  e' : Fin n ≃ supp g
+  fst e' ind = e .fst (suc ind) .fst , subst (λ n → 0 < n) (foo ind) (e .fst (suc ind) .snd)
+  snd e' = {!!}
 
- --  hyp : ∀ a → ALcount a xs ≡ g a
- --  hyp = ξ-lemma n g e'
+  β : fin-supp g
+  β = (n , e')
 
- --  path : ys ≡ ⟨ a₀ , f a₀ ⟩∷ xs
- --  path = cong (⟨ a₀ , f a₀ ⟩∷_) {!!}
+  xs = ξ (g , β)
 
- --  eq₁ : ALcount a (⟨ a₀ , f a₀ ⟩∷ xs) ≡ f a
- --  eq₁ with discA a a₀
- --  ... | yes a≡a₀ = {!!}
- --  ... | no  a≢a₀ = ALcount a (⟨ a₀ , f a₀ ⟩∷ xs) ≡⟨ {!refl!} ⟩
- --                   ALcount a xs ≡⟨ hyp a ⟩
- --                   g a ≡⟨ eq₂ ⟩
- --                   f a ∎
- --   where
- --   eq₂ : g a ≡ f a
- --   eq₂  with discA a a₀
- --   ... | yes a≡a₀ = ⊥.rec (a≢a₀ a≡a₀)
- --   ... | no  a≢a₀ = refl
+  hyp : ∀ a → ALcount a xs ≡ g a
+  hyp = ξ-lemma n g e'
+
+  path : ξ (f , suc n , e) ≡ ⟨ a₀ , f a₀ ⟩∷ ξ (g , n , e')
+  path = cong (⟨ a₀ , f a₀ ⟩∷_) (AListFinConcat-subst-ℕ-lemma n (λ ind → e .fst (suc ind) .fst)
+                                (λ ind → f (e .fst (suc ind) .fst)) (λ ind → g (e .fst (suc ind) .fst)) foo)
+
+  eq₁ : ALcount a (⟨ a₀ , f a₀ ⟩∷ xs) ≡ f a
+  eq₁ with discA a a₀
+  ... | yes a≡a₀ = subst (λ b → ALcount b (⟨ a₀ , f a₀ ⟩∷ xs) ≡ f b) (sym a≡a₀) eq₂
+   where
+   eq₃ : g a₀ ≡ zero
+   eq₃ with discA a₀ a₀
+   ... | yes _ = refl
+   ... | no a₀≢a₀ = ⊥.rec (a₀≢a₀ refl)
+
+   eq₂ : ALcount a₀ (⟨ a₀ , f a₀ ⟩∷ xs) ≡ f a₀
+   eq₂ = ALcount a₀ (⟨ a₀ , f a₀ ⟩∷ xs) ≡⟨ ALcount-≡-lemma a₀ a₀ (f a₀) xs refl ⟩
+         f a₀ + ALcount a₀ xs           ≡⟨ cong (f a₀ +_) (hyp a₀) ⟩
+         f a₀ + g a₀                    ≡⟨ cong (f a₀ +_) eq₃ ⟩
+         f a₀ + zero                    ≡⟨ +-zero _ ⟩
+         f a₀                           ∎
+  ... | no  a≢a₀ = ALcount a (⟨ a₀ , f a₀ ⟩∷ xs) ≡⟨ ALcount-≢-lemma a a₀ (f a₀) xs a≢a₀ ⟩
+                   ALcount a xs ≡⟨ hyp a ⟩
+                   g a ≡⟨ eq₂ ⟩
+                   f a ∎
+   where
+   eq₂ : g a ≡ f a
+   eq₂  with discA a a₀
+   ... | yes a≡a₀ = ⊥.rec (a≢a₀ a≡a₀)
+   ... | no  a≢a₀ = refl
+
 
 
 

@@ -44,6 +44,9 @@ caseFin a0 aS (suc ind) = aS
 Fin-snotz : {n : ℕ} {ind : Fin n} → ¬ Path (Fin (suc n)) (suc ind) zero
 Fin-snotz {n = n} {ind = ind} p = subst (caseFin ⊥.⊥ ℕ) p zero
 
+predFin : {n : ℕ} → (ind : Fin (suc n)) → ¬ ind ≡ zero → Fin n
+predFin zero ¬p = ⊥.rec (¬p refl)
+predFin (suc ind) ¬p = ind
 
 AListFinConcat : (n : ℕ) (f : Fin n → A) (g : Fin n → ℕ) → AList A
 AListFinConcat zero f g = ⟨⟩
@@ -501,18 +504,20 @@ module Lists&ALists {A : Type ℓ} (discA : Discrete A) where
 
   foo : (ind : Fin n) → f (e .fst (suc ind) .fst) ≡ g (e .fst (suc ind) .fst)
   foo ind with discA (e .fst (suc ind) .fst) a₀
-  ...     | yes p = ⊥.rec {!!}
+  ...     | yes p = ⊥.rec {!invEquiv-is-linv!}
    where
    eq₂ : e. fst (suc ind) ≡ e. fst zero
    eq₂ = ΣProp≡ (λ _ → m≤n-isProp) p
+   eq₃ = cong (invEquiv e .fst) eq₂
    -- invEquiv-is-linv
-   -- ¬eq₂ : ¬ e. fst (suc ind) ≡ e. fst zero
-   -- ¬eq₂ p = {!cong (invEquiv e .fst) p!}
   ...     | no  _ = refl
 
   e' : Fin n ≃ supp g
-  fst e' ind = e .fst (suc ind) .fst , subst (λ n → 0 < n) (foo ind) (e .fst (suc ind) .snd)
-  snd e' = {!!}
+  e' .fst ind = e .fst (suc ind) .fst , subst (λ n → 0 < n) (foo ind) (e .fst (suc ind) .snd)
+  e' .snd .equiv-proof (a , 0<ga) .fst .fst = {!!}
+                     --predFin (invEquiv e .fst (a , subst (λ n → 0 < n) {!!} 0<ga)) {!!}
+  e' .snd .equiv-proof (a , 0<ga) .fst .snd = {!!}
+  e' .snd .equiv-proof (a , 0<ga) .snd (ind , p) = {!!}
 
   β : fin-supp g
   β = (n , e')

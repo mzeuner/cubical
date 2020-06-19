@@ -32,7 +32,7 @@ ys : AssocList ℕ
 ys = transptest.ALremove1 ℕ discreteℕ zero xs
 
 zs : AssocList ℕ
-zs = ⟨ zero , 2 ⟩∷ ⟨⟩
+zs = ⟨ zero , 4 ⟩∷ ⟨⟩
 
 -- _ : ys ≡ zs
 -- _ = refl

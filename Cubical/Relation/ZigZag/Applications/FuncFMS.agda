@@ -48,9 +48,7 @@ module _(A : Type₀) (discA : Discrete A) where
 
 
  _∈ᵈ_ : A → LFSet A → Bool
- a ∈ᵈ xs with ∈-dec a xs
- ...     | yes a∈xs = true
- ...     | no  a∉xs = false
+ a ∈ᵈ xs = Dec→Bool (∈-dec a xs)
 
 
  -- rm-dup : LFSet A → FMSet A
@@ -63,9 +61,7 @@ module _(A : Type₀) (discA : Discrete A) where
 
  ξ : (A → ℕ) → LFSet A → AssocList A
  ξ f [] = ⟨⟩
- ξ f (x ∷ xs) with ∈-dec x xs
- ...              | yes x∈xs = ξ f xs
- ...              | no  x∉xs = ⟨ x , f x ⟩∷ ξ f xs
+ ξ f (x ∷ xs) = caseBool (ξ f xs) (⟨ x , f x ⟩∷ ξ f xs) (x ∈ᵈ xs)
  ξ f (dup x xs i) = {!!}
   where
   path : ξ f (x ∷ x ∷ xs) ≡ ξ f (x ∷ xs)

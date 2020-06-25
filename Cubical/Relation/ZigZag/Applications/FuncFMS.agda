@@ -7,6 +7,7 @@ open import Cubical.Foundations.Isomorphism
 open import Cubical.Foundations.HLevels
 open import Cubical.Foundations.Structure
 open import Cubical.Data.Nat
+open import Cubical.Data.Nat.Order
 open import Cubical.Data.Bool
 open import Cubical.Data.Sum
 open import Cubical.Data.Empty as ⊥
@@ -25,11 +26,37 @@ open import Cubical.Relation.ZigZag.Base as ZigZag
 private
  variable
   ℓ : Level
-  A : Type ℓ
+  A : Type₀
 
 _holds : hProp ℓ → Type ℓ
 _holds = fst
 
+record FFMS (A : Type₀) : Type₀ where
+  no-eta-equality
+  field
+   fun : A → ℕ
+   supp : LFSet A
+   toSupp : ∀ a → 0 < fun a → (a ∈ supp) holds
+   fromSupp : ∀ a → (a ∈ supp) holds → 0 < fun a
+
+-- LFSet-++-char : {A : Type₀} {xs ys : LFSet A} (a : A) → (a ∈ (xs ++ ys)) .fst → ∥ (a ∈ xs) .fst ⊎ (a ∈ ys) .fst ∥
+-- LFSet-++-char {A} {[]} {ys} a ∈++ = ∣ inr ∈++ ∣
+-- LFSet-++-char {A} {x ∷ xs} {ys} a ∈++ = {!!}
+-- LFSet-++-char {A} {dup x xs i} {ys} a ∈++ = {!!}
+-- LFSet-++-char {A} {comm x y xs i} {ys} a ∈++ = {!!}
+-- LFSet-++-char {A} {trunc xs xs₁ x y i i₁} {ys} a ∈++ = {!!}
+
+infixr 5 _∪ᴹ_
+
+open FFMS
+
+_∪ᴹ_ : FFMS A → FFMS A → FFMS A
+fun (XS ∪ᴹ YS) a = XS .fun a + YS .fun a
+supp (XS ∪ᴹ YS) = XS .supp ++ YS .supp
+toSupp (XS ∪ᴹ YS) a  0<XSfa+YSfa = {!!}
+fromSupp (XS ∪ᴹ YS) = {!!}
+
+-- define intersection of LFSets and thus of FFMS, show equivalence with FMSet/AssocList
 module _(A : Type₀) (discA : Discrete A) where
 
  ∈-dec : (a : A) (xs : LFSet A) → Dec ((a ∈ xs) .fst)
@@ -59,15 +86,15 @@ module _(A : Type₀) (discA : Discrete A) where
  -- rm-dup (trunc xs xs₁ x y i i₁) = {!!}
 
 
- ξ : (A → ℕ) → LFSet A → AssocList A
- ξ f [] = ⟨⟩
- ξ f (x ∷ xs) = caseBool (ξ f xs) (⟨ x , f x ⟩∷ ξ f xs) (x ∈ᵈ xs)
- ξ f (dup x xs i) = {!!}
-  where
-  path : ξ f (x ∷ x ∷ xs) ≡ ξ f (x ∷ xs)
-  path = {!!}
- ξ f (comm x y xs i) = {!!}
- ξ f (trunc xs ys p q i j) = trunc (ξ f xs) (ξ f ys) (cong (ξ f) p) (cong (ξ f) q) i j
+ -- ξ : (A → ℕ) → LFSet A → AssocList A
+ -- ξ f [] = ⟨⟩
+ -- ξ f (x ∷ xs) = caseBool (ξ f xs) (⟨ x , f x ⟩∷ ξ f xs) (x ∈ᵈ xs)
+ -- ξ f (dup x xs i) = path i
+ --  where
+ --  path : ξ f (x ∷ x ∷ xs) ≡ ξ f (x ∷ xs)
+ --  path = {!!}
+ -- ξ f (comm x y xs i) = {!!}
+ -- ξ f (trunc xs ys p q i j) = trunc (ξ f xs) (ξ f ys) (cong (ξ f) p) (cong (ξ f) q) i j
 
 
  max : ℕ → ℕ → ℕ

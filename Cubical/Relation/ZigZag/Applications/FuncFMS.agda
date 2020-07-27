@@ -50,6 +50,11 @@ infixr 5 _∪ᴹ_
 
 open FFMS
 
+<0-Dich : {m n : ℕ} → 0 < m + n → (0 < m) ⊎ (0 < n)
+<0-Dich {zero} 0<m+n = inr 0<m+n
+<0-Dich {suc m} _ = inl (m , +-comm m 1)
+
+
 _∪ᴹ_ : FFMS A → FFMS A → FFMS A
 fun (XS ∪ᴹ YS) a = XS .fun a + YS .fun a
 supp (XS ∪ᴹ YS) = XS .supp ++ YS .supp

@@ -528,8 +528,18 @@ module Loc (R' : CommRing {ℓ}) (S' : ℙ (R' .fst)) (SsubMonoid : isSubMonoid 
 
  -- Commutative ring structure on Rₛ
  RₛAsCommRing : CommRing
- RₛAsCommRing = makeCommRing 0ₗ 1ₗ _+ₗ_ _·ₗ_ -ₗ_ squash/ +ₗ-assoc +ₗ-rid +ₗ-rinv +ₗ-comm
-                                                         ·ₗ-assoc ·ₗ-rid ·ₗ-rdist-+ₗ ·ₗ-comm
+ RₛAsCommRing  = Rₛ , RₛCommRingStr
+  where
+  open CommRingStr
+  RₛCommRingStr : CommRingStr Rₛ
+  0r RₛCommRingStr = 0ₗ
+  1r RₛCommRingStr = 1ₗ
+  _+_ RₛCommRingStr = _+ₗ_
+  _·_ RₛCommRingStr = _·ₗ_
+  - RₛCommRingStr = -ₗ_
+  isCommRing RₛCommRingStr = makeIsCommRing squash/ +ₗ-assoc +ₗ-rid +ₗ-rinv +ₗ-comm
+                                                      ·ₗ-assoc ·ₗ-rid ·ₗ-rdist-+ₗ ·ₗ-comm
+
 
 
 -- Test: (R[1/f])[1/g] ≡ R[1/fg]
@@ -759,4 +769,4 @@ module φtestℤ where
  -- not true !!!
  -- _ : test ≡ φ 5/36
  -- _ = refl
-
+ -- normalize check.φ ℤAsCommRing φtestℤ.2z φtestℤ.3z φtestℤ.5/36 doesn't really work...

@@ -138,6 +138,12 @@ module polyHIT2 (R' : CommRing {ℓ}) where
   del : 0r ∷ₚ 0p ≡ 0p
   trunc : isSet ListPoly
 
+{-
+ const : R → ListPoly
+ _+X*_ : R → ListPoly → ListPoly
+ del : (r : R) → r +X* (const 0r) ≡ const r
+ trunc ...
+-}
 
  module Elim {ℓ'} {B : ListPoly → Type ℓ'}
    (0p* : B 0p) (_∷ₚ*_ : (r : R) {p : ListPoly} (b : B p) → B (r ∷ₚ p))
@@ -201,3 +207,15 @@ module polyHIT2 (R' : CommRing {ℓ}) where
  -- del i +ₚ trunc ys ys₁ x y i₁ i₂ = {!!}
  -- trunc xs xs₁ x y i i₁ +ₚ ys = {!!}
 
+{-
+listEval : {A : R-alg} → A → R-AlgHom ListPoly A
+freeEval : {A : R-alg} → A ≃ R-AlgHom R[⊤] A
+
+(x : ListPoly) (y : R[⊤]) → {A : R-Alg} → (a : A) → listEval a x ≡ freeEval a y
+Question: structured rel. of R-algebras?
+
+=> ListPoly / evalExtensionality ≅[ R-alg ] R[⊤] / evalExt ≅[ R-alg ] R[⊤]
+and if discrete R => ListPoly ≅ ListPoly / evalExtensionality
+
+R[X]/⟨rX-1⟩ ≅ R[1/r], r ∈ R
+-}

@@ -30,6 +30,9 @@ open import Cubical.Algebra.AbGroup
 open import Cubical.Algebra.Monoid
 open import Cubical.Algebra.Ring
 open import Cubical.Algebra.CommRing
+open import Cubical.Algebra.CommRing.Localisation.Base
+open import Cubical.Algebra.CommRing.Localisation.UniversalProperty
+open import Cubical.Algebra.CommRing.Localisation.InvertingElements
 open import Cubical.Algebra.RingSolver.ReflectionSolving
 
 open import Cubical.HITs.SetQuotients as SQ
@@ -93,6 +96,11 @@ module _ (A' : CommRing {ℓ}) where
 
   ·-lcoh : (x y z : A) → R x y → R (x · z) (y · z)
   ·-lcoh x y z Rxy = ·-lcoh-≼ x y z (Rxy .fst) , ·-lcoh-≼ y x z (Rxy .snd)
+
+ 𝓞 : A / R → CommRing {ℓ}
+ 𝓞 [ a ] = R[1/_]AsCommRing A' a
+ 𝓞 (eq/ a b r i) = {!!}
+ 𝓞 (squash/ x y p q i j) = {!!}
 
  -- -- might com in handy later
  -- data ZarLat : Type ℓ where

@@ -50,6 +50,9 @@ module _ (A' : CommRing {ℓ}) where
  A = fst A'
  open CommRingStr (snd A')
  open Exponentiation A'
+ private
+  -- A[1/_] = R[1/_] A'
+  A[1/_] = R[1/_]AsCommRing A'
 
  _≼_ : A → A → Type ℓ
  x ≼ y = Σ[ n ∈ ℕ ] Σ[ z ∈ A ] x ^ n ≡ z · y -- rad(x) ⊆ rad(y)
@@ -98,9 +101,19 @@ module _ (A' : CommRing {ℓ}) where
   ·-lcoh x y z Rxy = ·-lcoh-≼ x y z (Rxy .fst) , ·-lcoh-≼ y x z (Rxy .snd)
 
  𝓞 : A / R → CommRing {ℓ}
- 𝓞 [ a ] = R[1/_]AsCommRing A' a
- 𝓞 (eq/ a b r i) = {!!}
- 𝓞 (squash/ x y p q i j) = {!!}
+ 𝓞 = rec→Gpd.fun isGroupoidCommRing (λ a → A[1/ a ]) Rcoh locPathProp
+  where
+  isGroupoidCommRing : isGroupoid CommRing
+  isGroupoidCommRing  S T = {!!}
+
+  Rcoh : (a b : A) → R a b → A[1/ a ] ≡ A[1/ b ]
+  Rcoh a b ((n , x , p) , (m , y , q)) = {!!}
+
+  locPathProp : (a b : A) → isProp (A[1/ a ] ≡ A[1/ b ])
+  locPathProp a b = {!!}
+ -- 𝓞 [ a ] = A[1/ a ]AsCommRing
+ -- 𝓞 (eq/ a b r i) = {!!}
+ -- 𝓞 (squash/ x y p q i j) = {!!}
 
  -- -- might com in handy later
  -- data ZarLat : Type ℓ where

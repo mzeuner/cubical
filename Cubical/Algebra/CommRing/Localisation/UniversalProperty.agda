@@ -4,7 +4,7 @@
 -- by the universal property, and give sufficient criteria for
 -- satisfying the universal property.
 
-{-# OPTIONS --cubical --no-import-sorts --safe #-}
+{-# OPTIONS --cubical --no-import-sorts --safe --experimental-lossy-unification #-}
 module Cubical.Algebra.CommRing.Localisation.UniversalProperty where
 
 open import Cubical.Foundations.Prelude
@@ -15,6 +15,7 @@ open import Cubical.Foundations.Univalence
 open import Cubical.Foundations.HLevels
 open import Cubical.Foundations.Powerset
 open import Cubical.Foundations.Transport
+open import Cubical.Foundations.Structure
 open import Cubical.Functions.FunExtEquiv
 open import Cubical.Functions.Surjection
 open import Cubical.Functions.Embedding
@@ -413,3 +414,37 @@ module _ (R' : CommRing {ℓ}) (S' : ℙ (fst R')) (SMultClosedSubset : isMultCl
 
    Surχ : isSurjection (f χ)
    Surχ a = PT.rec propTruncIsProp (λ x → PT.∣ [ x .fst ] , x .snd ∣) (surχ a)
+
+
+-- A useful lemma for when localizing at two different subsets gives the same result
+module LocTwoSubsets (R' : CommRing {ℓ})
+                     (S₁ : ℙ (fst R')) (S₁MultClosedSubset : isMultClosedSubset R' S₁)
+                     (S₂ : ℙ (fst R')) (S₂MultClosedSubset : isMultClosedSubset R' S₂) where
+ open isMultClosedSubset
+ open CommRingStr (snd R') hiding (is-set)
+ open Theory (CommRing→Ring R')
+ open RingHom
+ open Loc R' S₁ S₁MultClosedSubset renaming (S⁻¹R to S₁⁻¹R ;
+                                             S⁻¹RAsCommRing to S₁⁻¹RAsCommRing)
+ open Loc R' S₂ S₂MultClosedSubset renaming (S⁻¹R to S₂⁻¹R ;
+                                             S⁻¹RAsCommRing to S₂⁻¹RAsCommRing)
+ open S⁻¹RUniversalProp R' S₁ S₁MultClosedSubset renaming (_/1 to _/₁1)
+ open S⁻¹RUniversalProp R' S₂ S₂MultClosedSubset renaming (_/1 to _/₂1)
+
+ private
+  R = fst R'
+  S₁⁻¹Rˣ = S₁⁻¹RAsCommRing ˣ
+  S₂⁻¹Rˣ = S₂⁻¹RAsCommRing ˣ
+
+
+ isContrS₁⁻¹R≡S₂⁻¹R : (∀ s₁ → s₁ ∈ S₁ → s₁ /₂1 ∈ S₂⁻¹Rˣ)
+                    → (∀ s₂ → s₂ ∈ S₂ → s₂ /₁1 ∈ S₁⁻¹Rˣ)
+                    → isContr (S₁⁻¹RAsCommRing ≡ S₂⁻¹RAsCommRing)
+ isContrS₁⁻¹R≡S₂⁻¹R S₁⊆S₂⁻¹Rˣ S₂⊆S₁⁻¹Rˣ = isContrRetract (equivToIso (CommRingPath _ _) .inv)
+                                                         (equivToIso (CommRingPath _ _) .fun)
+                                                         (equivToIso (CommRingPath _ _) .rightInv)
+                                                         isContrS₁⁻¹R≅S₂⁻¹R
+  where
+  isContrS₁⁻¹R≅S₂⁻¹R : isContr (Σ[ e ∈ S₁⁻¹R ≃ S₂⁻¹R ]
+                                 (CommRingEquiv S₁⁻¹RAsCommRing S₂⁻¹RAsCommRing e))
+  isContrS₁⁻¹R≅S₂⁻¹R = ({!!} , {!!}) , {!!}

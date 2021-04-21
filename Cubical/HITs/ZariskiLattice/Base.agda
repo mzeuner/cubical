@@ -60,7 +60,8 @@ module _ (A' : CommRing {ℓ}) where
  _≼_ : A → A → Type ℓ
  x ≼ y = Σ[ n ∈ ℕ ] Σ[ z ∈ A ] x ^ n ≡ z · y -- rad(x) ⊆ rad(y)
 
- ≼ToLoc : (x y : A) → x ≼ y → (_/1 A' ([_ⁿ|n≥0] A' x) (powersFormMultClosedSubset _ _) y) ∈ A[1/ x ] ˣ
+ ≼ToLoc : (x y : A) → x ≼ y
+        → (_/1 A' ([_ⁿ|n≥0] A' x) (powersFormMultClosedSubset _ _) y) ∈ A[1/ x ] ˣ -- y/1 ∈ A[1/x]ˣ
  ≼ToLoc x y (n , z , p) = [ z , (x ^ n) ,  PT.∣ n , refl ∣ ] -- xⁿ≡zy → y⁻¹ ≡ z/xⁿ
                         , eq/ _ _ ((1r , powersFormMultClosedSubset _ _ .containsOne)
                         , path y z ∙ cong (λ w → 1r · 1r · (1r · w)) (sym p))

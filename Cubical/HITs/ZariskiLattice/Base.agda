@@ -11,6 +11,7 @@ open import Cubical.Foundations.Univalence
 open import Cubical.Foundations.HLevels
 open import Cubical.Foundations.Powerset
 open import Cubical.Foundations.Transport
+open import Cubical.Foundations.Structure
 open import Cubical.Functions.FunExtEquiv
 
 import Cubical.Data.Empty as ⊥
@@ -50,6 +51,8 @@ module _ (A' : CommRing {ℓ}) where
  A = fst A'
  open CommRingStr (snd A')
  open Exponentiation A'
+ open S⁻¹RUniversalProp
+ open isMultClosedSubset
  private
   -- A[1/_] = R[1/_] A'
   A[1/_] = R[1/_]AsCommRing A'
@@ -57,7 +60,15 @@ module _ (A' : CommRing {ℓ}) where
  _≼_ : A → A → Type ℓ
  x ≼ y = Σ[ n ∈ ℕ ] Σ[ z ∈ A ] x ^ n ≡ z · y -- rad(x) ⊆ rad(y)
 
- -- ≼ is a pre-order:
+ ≼ToLoc : (x y : A) → x ≼ y → (_/1 A' ([_ⁿ|n≥0] A' x) (powersFormMultClosedSubset _ _) y) ∈ A[1/ x ] ˣ
+ ≼ToLoc x y (n , z , p) = [ z , (x ^ n) ,  PT.∣ n , refl ∣ ] -- xⁿ≡zy → y⁻¹ ≡ z/xⁿ
+                        , eq/ _ _ ((1r , powersFormMultClosedSubset _ _ .containsOne)
+                        , path y z ∙ cong (λ w → 1r · 1r · (1r · w)) (sym p))
+  where
+  path : (y z : A) → 1r · (y · z) · 1r ≡ 1r · 1r · (1r · (z · y))
+  path = solve A'
+
+-- ≼ is a pre-order:
 
  Refl≼ : isRefl _≼_
  Refl≼ x = (1 , 1r , ·-comm _ _)
@@ -100,20 +111,23 @@ module _ (A' : CommRing {ℓ}) where
   ·-lcoh : (x y z : A) → R x y → R (x · z) (y · z)
   ·-lcoh x y z Rxy = ·-lcoh-≼ x y z (Rxy .fst) , ·-lcoh-≼ y x z (Rxy .snd)
 
- 𝓞 : A / R → CommRing {ℓ}
- 𝓞 = rec→Gpd.fun isGroupoidCommRing (λ a → A[1/ a ]) Rcoh locPathProp
+ 𝓞ᴰ : A / R → CommRing {ℓ}
+ 𝓞ᴰ = rec→Gpd.fun CommRingGpd (λ a → A[1/ a ]) Rcoh locPathProp
   where
-  isGroupoidCommRing : isGroupoid CommRing
-  isGroupoidCommRing  S T = {!!}
-
   Rcoh : (a b : A) → R a b → A[1/ a ] ≡ A[1/ b ]
   Rcoh a b ((n , x , p) , (m , y , q)) = {!!}
 
   locPathProp : (a b : A) → isProp (A[1/ a ] ≡ A[1/ b ])
-  locPathProp a b = {!!}
- -- 𝓞 [ a ] = A[1/ a ]AsCommRing
- -- 𝓞 (eq/ a b r i) = {!!}
- -- 𝓞 (squash/ x y p q i j) = {!!}
+  locPathProp a b = isPropRetract (equivToIso (CommRingPath _ _) .inv)
+                                  (equivToIso (CommRingPath _ _) .fun)
+                                  (equivToIso (CommRingPath _ _) .rightInv)
+                                  locEquivProp
+   where
+   locEquivProp : isProp (Σ[ e ∈ ⟨ A[1/ a ] ⟩ ≃ ⟨ A[1/ b ] ⟩ ] (CommRingEquiv A[1/ a ] A[1/ b ] e))
+   locEquivProp ((f , _) , _) ((g , _) , _) = Σ≡Prop (isPropRingEquiv _ _)
+                                             (Σ≡Prop isPropIsEquiv {!!}) -- lost the information
+                                                                         -- that f,g are induced
+                                                                         -- by universal prop
 
  -- -- might com in handy later
  -- data ZarLat : Type ℓ where

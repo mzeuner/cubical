@@ -141,6 +141,15 @@ record RingEquiv (R : Ring {ℓ}) (S : Ring {ℓ'}) (e : ⟨ R ⟩ ≃ ⟨ S ⟩
     isHom+ : (x y : ⟨ R ⟩) → equivFun e (x R.+ y) ≡ equivFun e x S.+ equivFun e y
     isHom· : (x y : ⟨ R ⟩) → equivFun e (x R.· y) ≡ equivFun e x S.· equivFun e y
 
+open RingEquiv
+
+isPropRingEquiv : (R : Ring {ℓ}) (S : Ring {ℓ'}) (e : ⟨ R ⟩ ≃ ⟨ S ⟩)
+                → isProp (RingEquiv R S e)
+RingEquiv.pres1 (isPropRingEquiv R S e ι₁ ι₂ i) = isSetRing S _ _ (ι₁ .pres1) (ι₂ .pres1) i
+RingEquiv.isHom+ (isPropRingEquiv R S e ι₁ ι₂ i) x y =
+                                  isSetRing S _ _ (ι₁ .isHom+ x y) (ι₂ .isHom+ x y) i
+RingEquiv.isHom· (isPropRingEquiv R S e ι₁ ι₂ i) x y =
+                                  isSetRing S _ _ (ι₁ .isHom· x y) (ι₂ .isHom· x y) i
 
 record RingHom (R S : Ring {ℓ}) : Type ℓ where
 

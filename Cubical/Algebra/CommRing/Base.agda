@@ -156,6 +156,21 @@ CommRingPath = CommRingΣTheory.CommRingPath
 isSetCommRing : ((R , str) : CommRing {ℓ}) → isSet R
 isSetCommRing (R , str) = str .CommRingStr.is-set
 
+CommRingGpd : isGroupoid (CommRing {ℓ})
+CommRingGpd R S = isSetRetract (equivToIso (CommRingPath R S) .inv)
+                               (equivToIso (CommRingPath R S) .fun)
+                               (equivToIso (CommRingPath R S) .rightInv) isSetR≅S
+ where
+ isSetR≅S : isSet (Σ[ e ∈ ⟨ R ⟩ ≃ ⟨ S ⟩ ] CommRingEquiv R S e)
+ isSetR≅S _ _ = isPropRetract (equivToIso (Σ≡PropEquiv (isPropRingEquiv _ _)) .inv)
+                              (equivToIso (Σ≡PropEquiv (isPropRingEquiv _ _)) .fun)
+                              (equivToIso (Σ≡PropEquiv (isPropRingEquiv _ _)) .rightInv)
+               --proof that isProp (e₁ ≡ e₂)
+               (isPropRetract (equivToIso (Σ≡PropEquiv isPropIsEquiv) .inv)
+                              (equivToIso (Σ≡PropEquiv isPropIsEquiv) .fun)
+                              (equivToIso (Σ≡PropEquiv isPropIsEquiv) .rightInv)
+               (isSetΠ (λ _ → isSetCommRing S) _ _)) --proof that isProp (f₁ ≡ f₂)
+
 isPropIsCommRing : {R : Type ℓ} (0r 1r : R) (_+_ _·_ : R → R → R) (-_ : R → R)
              → isProp (IsCommRing 0r 1r _+_ _·_ -_)
 isPropIsCommRing 0r 1r _+_ _·_ -_ (iscommring RR RC) (iscommring SR SC) =

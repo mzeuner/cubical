@@ -168,6 +168,12 @@ record RingHom (R S : Ring {ℓ}) : Type ℓ where
 _$_ : {R S : Ring {ℓ}} → (φ : RingHom R S) → (x : ⟨ R ⟩) → ⟨ S ⟩
 φ $ x = RingHom.f φ x
 
+isEquivRingHom→RingEquiv : (R S : Ring {ℓ}) (φ : RingHom R S) (isEquivφ : isEquiv (RingHom.f φ))
+                         → RingEquiv R S (RingHom.f φ , isEquivφ)
+pres1 (isEquivRingHom→RingEquiv R S φ isEquivφ) = RingHom.pres1 φ
+isHom+ (isEquivRingHom→RingEquiv R S φ isEquivφ) = RingHom.isHom+ φ
+isHom· (isEquivRingHom→RingEquiv R S φ isEquivφ) = RingHom.isHom· φ
+
 module RingΣTheory {ℓ} where
 
   RawRingStructure = λ (X : Type ℓ) → (X → X → X) × X × (X → X → X)

@@ -428,8 +428,14 @@ module LocTwoSubsets (R' : CommRing {ℓ})
                                              S⁻¹RAsCommRing to S₁⁻¹RAsCommRing)
  open Loc R' S₂ S₂MultClosedSubset renaming (S⁻¹R to S₂⁻¹R ;
                                              S⁻¹RAsCommRing to S₂⁻¹RAsCommRing)
- open S⁻¹RUniversalProp R' S₁ S₁MultClosedSubset renaming (_/1 to _/₁1)
- open S⁻¹RUniversalProp R' S₂ S₂MultClosedSubset renaming (_/1 to _/₂1)
+ open S⁻¹RUniversalProp R' S₁ S₁MultClosedSubset renaming ( _/1 to _/₁1
+                                                 ; /1AsCommRingHom to /₁1AsCommRingHom
+                                                 ; S/1⊆S⁻¹Rˣ to S₁/1⊆S₁⁻¹Rˣ
+                                                 ; S⁻¹RHasUniversalProp to S₁⁻¹RHasUniversalProp)
+ open S⁻¹RUniversalProp R' S₂ S₂MultClosedSubset renaming ( _/1 to _/₂1
+                                                 ; /1AsCommRingHom to /₂1AsCommRingHom
+                                                 ; S/1⊆S⁻¹Rˣ to S₂/1⊆S₂⁻¹Rˣ
+                                                 ; S⁻¹RHasUniversalProp to S₂⁻¹RHasUniversalProp)
 
  private
   R = fst R'
@@ -445,6 +451,27 @@ module LocTwoSubsets (R' : CommRing {ℓ})
                                                          (equivToIso (CommRingPath _ _) .rightInv)
                                                          isContrS₁⁻¹R≅S₂⁻¹R
   where
+  χ₁ : CommRingHom S₁⁻¹RAsCommRing S₂⁻¹RAsCommRing
+  χ₁ = S₁⁻¹RHasUniversalProp S₂⁻¹RAsCommRing /₂1AsCommRingHom S₁⊆S₂⁻¹Rˣ .fst .fst
+
+  χ₂ : CommRingHom S₂⁻¹RAsCommRing S₁⁻¹RAsCommRing
+  χ₂ = S₂⁻¹RHasUniversalProp S₁⁻¹RAsCommRing /₁1AsCommRingHom S₂⊆S₁⁻¹Rˣ .fst .fst
+
+  -- S⁻¹RHasUniversalProp : hasLocUniversalProp S⁻¹RAsCommRing /1AsCommRingHom S/1⊆S⁻¹Rˣ
+  IsoS₁⁻¹RS₂⁻¹R : Iso S₁⁻¹R S₂⁻¹R
+  fun IsoS₁⁻¹RS₂⁻¹R = f χ₁
+  inv IsoS₁⁻¹RS₂⁻¹R = f χ₂
+  rightInv IsoS₁⁻¹RS₂⁻¹R = {!!}
+  leftInv IsoS₁⁻¹RS₂⁻¹R = {!!}
+
   isContrS₁⁻¹R≅S₂⁻¹R : isContr (Σ[ e ∈ S₁⁻¹R ≃ S₂⁻¹R ]
                                  (CommRingEquiv S₁⁻¹RAsCommRing S₂⁻¹RAsCommRing e))
-  isContrS₁⁻¹R≅S₂⁻¹R = ({!!} , {!!}) , {!!}
+  isContrS₁⁻¹R≅S₂⁻¹R = Center , Uniqueness
+   where
+   S₁⁻¹R≃S₂⁻¹R = isoToEquiv IsoS₁⁻¹RS₂⁻¹R
+   Center = S₁⁻¹R≃S₂⁻¹R , isEquivRingHom→RingEquiv _ _ χ₁ (snd S₁⁻¹R≃S₂⁻¹R)
+
+   Uniqueness : (y : Σ[ e ∈ S₁⁻¹R ≃ S₂⁻¹R ] (CommRingEquiv S₁⁻¹RAsCommRing S₂⁻¹RAsCommRing e))
+              → Center ≡ y
+   Uniqueness (e , _) = Σ≡Prop (isPropRingEquiv _ _) (Σ≡Prop isPropIsEquiv {!!})
+   -- works only if e respects _/1!!!

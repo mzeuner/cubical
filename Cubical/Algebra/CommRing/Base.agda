@@ -165,7 +165,8 @@ CommRingGpd R S = isSetRetract (equivToIso (CommRingPath R S) .inv)
  isSetR≅S _ _ = isPropRetract (equivToIso (Σ≡PropEquiv (isPropRingEquiv _ _)) .inv)
                               (equivToIso (Σ≡PropEquiv (isPropRingEquiv _ _)) .fun)
                               (equivToIso (Σ≡PropEquiv (isPropRingEquiv _ _)) .rightInv)
-               --proof that isProp (e₁ ≡ e₂)
+               --proof that isProp (e₁ ≡ e₂) use
+               --equivEq : {e f : A ≃ B} → (h : e .fst ≡ f .fst) → e ≡ f
                (isPropRetract (equivToIso (Σ≡PropEquiv isPropIsEquiv) .inv)
                               (equivToIso (Σ≡PropEquiv isPropIsEquiv) .fun)
                               (equivToIso (Σ≡PropEquiv isPropIsEquiv) .rightInv)

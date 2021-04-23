@@ -113,6 +113,7 @@ module _ (A' : CommRing {ℓ}) where
   ·-lcoh x y z Rxy = ·-lcoh-≼ x y z (Rxy .fst) , ·-lcoh-≼ y x z (Rxy .snd)
 
  𝓞ᴰ : A / R → CommRing {ℓ}
+ -- A/R → CommAlg A → CommRing
  𝓞ᴰ = rec→Gpd.fun CommRingGpd (λ a → A[1/ a ]) Rcoh locPathProp
   where
   Rcoh : (a b : A) → R a b → A[1/ a ] ≡ A[1/ b ]

@@ -302,6 +302,26 @@ module AlgebraΣTheory (R : Ring {ℓ}) where
 AlgebraPath : {R : Ring {ℓ}} (M N : Algebra R) → (AlgebraEquiv M N) ≃ (M ≡ N)
 AlgebraPath {ℓ} {R} = AlgebraΣTheory.AlgebraPath R
 
+-- isPropIsAlgebra : {R : Ring {ℓ} } {A : Type ℓ} (0a 1a : A) (_+_ _·_ : A → A → A)
+--                   (-_ : A → A) (_⋆_ : (fst R) → A → A)
+--              → isProp (IsAlgebra R 0a 1a _+_ _·_ -_ _⋆_)
+-- isPropIsAlgebra 0a 1a _+_ _·_ -_ _⋆_
+--                 (isalgebra isLeftModule₁ ·-isMonoid₁ dist₁ ⋆-lassoc₁ ⋆-rassoc₁)
+--                 (isalgebra isLeftModule₂ ·-isMonoid₂ dist₂ ⋆-lassoc₂ ⋆-rassoc₂) i =
+--                  isalgebra {!!} {!!} {!!} {!!} {!!}
+  -- (isring RG RM RD) (isring SG SM SD) =
+  -- λ i → isring (isPropIsAbGroup _ _ _ RG SG i)
+  --              (isPropIsMonoid _ _ RM SM i)
+  --              (isPropDistr RD SD i)
+  -- where
+  -- isSetR : isSet _
+  -- isSetR = RM .IsMonoid.isSemigroup .IsSemigroup.is-set
+
+  -- isPropDistr : isProp ((x y z : _) → ((x · (y + z)) ≡ ((x · y) + (x · z)))
+  --                                   × (((x + y) · z) ≡ ((x · z) + (y · z))))
+  -- isPropDistr = isPropΠ3 λ _ _ _ → isProp× (isSetR _ _) (isSetR _ _)
+
+
 module AlgebraTheory (R : Ring {ℓ}) (A : Algebra R) where
   open RingStr (snd R) renaming (_+_ to _+r_ ; _·_ to _·r_)
   open Algebra A

@@ -67,39 +67,33 @@ module CommAlgChar (R : CommRing {ℓ}) where
 
 
  CommRingWithHomRoundTrip : (Aφ : CommRingWithHom) → fromCommAlg (toCommAlg Aφ) ≡ Aφ
- CommRingWithHomRoundTrip (A , φ) = ΣPathP
-                          (equivFun (CommRingPath _ _) (idEquiv (A .fst) , idEquivIsRingEquiv)
-                          , foo)
+ CommRingWithHomRoundTrip (A , φ) = ΣPathP (APath , φPathP)
   where
   -- note that because we had to use makeIsCommAlgebra only the carrier-types
   -- and operations are definitionally equal. The proofs of the axioms might differ!
-  idEquivIsRingEquiv : CommRingEquiv (fromCommAlg (toCommAlg (A , φ)) .fst) A (idEquiv  (A .fst))
-  RingEquiv.pres1 idEquivIsRingEquiv = refl
-  RingEquiv.isHom+ idEquivIsRingEquiv x y = refl
-  RingEquiv.isHom· idEquivIsRingEquiv x y = refl
+  APath : fst (fromCommAlg (toCommAlg (A , φ))) ≡ A
+  fst (APath i) = fst A
+  0r (snd (APath i)) = 0r (snd A)
+  1r (snd (APath i)) = 1r (snd A)
+  _+_ (snd (APath i)) = _+_ (snd A)
+  _·_ (snd (APath i)) = _·_ (snd A)
+  - snd (APath i) = -_ (snd A)
+  isCommRing (snd (APath i)) = isProp→PathP (λ i → isPropIsCommRing _ _ _ _ _ )
+             (isCommRing (snd (fst (fromCommAlg (toCommAlg (A , φ)))))) (isCommRing (snd A)) i
 
-  -- bar : PathP (λ i → (R .fst) → (A .fst)) (fromCommAlg (toCommAlg (A , φ)) .snd .f) (φ .f)
-  -- bar = funExt (λ x → ·Rid (snd A) (φ .f x))
-
-  baz : PathP (λ i → (R .fst) →
-              (equivFun (CommRingPath (fromCommAlg (toCommAlg (A , φ)) .fst) A) (idEquiv (A .fst)
-              , idEquivIsRingEquiv) i) .fst)
-              (fromCommAlg (toCommAlg (A , φ)) .snd .f) (φ .f)
-  baz = funExt bar
-   where
-   bar : (x : R .fst) → PathP (λ i →
-                               equivFun (CommRingPath (fromCommAlg (toCommAlg (A , φ)) .fst) A)
-                               (idEquiv (A .fst) , idEquivIsRingEquiv) i .fst)
-         (fromCommAlg (toCommAlg (A , φ)) .snd .f x) (φ .f x)
-   bar x = toPathP {!!}
-  -- baz i x = ·Rid ((equivFun (CommRingPath (fromCommAlg (toCommAlg (A , φ)) .fst) A)
-  --                 (idEquiv (A .fst)
-  --             , idEquivIsRingEquiv) i) .snd) {!!} i
-  -- (toPathP (transportRefl (f φ x)) i)
+  -- this only works because fst (APath i) = fst A definitionally!
+  φPathP : PathP (λ i → CommRingHom R (APath i)) (snd (fromCommAlg (toCommAlg (A , φ)))) φ
+  φPathP = RingHomEqDep _ _ _ _ _ _ λ i x → ·Rid (snd A) (f φ x) i
 
 
-  foo : PathP (λ i → CommRingHom R
-              (equivFun (CommRingPath (fromCommAlg (toCommAlg (A , φ)) .fst) A) (idEquiv (A .fst)
-              , idEquivIsRingEquiv) i))
-              (fromCommAlg (toCommAlg (A , φ)) .snd) φ
-  foo = RingHomEqDep _ _ _ _ _ _ baz --doesn't accept bar
+ CommAlgRoundTrip : (A : CommAlgebra R) → toCommAlg (fromCommAlg A) ≡ A
+ CommAlgebra.Carrier (CommAlgRoundTrip A i) = CommAlgebra.Carrier A
+ CommAlgebra.0a (CommAlgRoundTrip A i) = CommAlgebra.0a A
+ CommAlgebra.1a (CommAlgRoundTrip A i) = CommAlgebra.1a A
+ CommAlgebra._+_ (CommAlgRoundTrip A i) = CommAlgebra._+_ A
+ CommAlgebra._·_ (CommAlgRoundTrip A i) = CommAlgebra._·_ A
+ CommAlgebra.- CommAlgRoundTrip A i = CommAlgebra.-_ A
+ CommAlgebra._⋆_ (CommAlgRoundTrip A i) r x = (CommAlgebra.⋆-lassoc A r (CommAlgebra.1a A) x
+                                            ∙ cong (CommAlgebra._⋆_ A r) (CommAlgebra.·Lid A x)) i
+                                            -- (r ⋆ 1a) · x ≡ r ⋆ x
+ CommAlgebra.isCommAlgebra (CommAlgRoundTrip A i) = {!!}

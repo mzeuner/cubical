@@ -303,7 +303,7 @@ AlgebraPath : {R : Ring {ℓ}} (M N : Algebra R) → (AlgebraEquiv M N) ≃ (M �
 AlgebraPath {ℓ} {R} = AlgebraΣTheory.AlgebraPath R
 
 module AlgebraTheory (R : Ring {ℓ}) (A : Algebra R) where
-  open RingStr (snd R) renaming (_+_ to _+r_)
+  open RingStr (snd R) renaming (_+_ to _+r_ ; _·_ to _·r_)
   open Algebra A
 
   0-actsNullifying : (x : ⟨ A ⟩a) → 0r ⋆ x ≡ 0a
@@ -312,3 +312,10 @@ module AlgebraTheory (R : Ring {ℓ}) (A : Algebra R) where
                        (0r +r 0r) ⋆ x      ≡⟨ ⋆-ldist 0r 0r x ⟩
                        (0r ⋆ x) + (0r ⋆ x) ∎
     in Theory.+Idempotency→0 (Algebra→Ring A) (0r ⋆ x) idempotent-+
+
+  ⋆Dist· : (x y : ⟨ R ⟩) (a b : ⟨ A ⟩a) → (x ·r y) ⋆ (a · b) ≡ (x ⋆ a) · (y ⋆ b)
+  ⋆Dist· x y a b = (x ·r y) ⋆ (a · b) ≡⟨ ⋆-rassoc _ _ _ ⟩
+                   a · ((x ·r y) ⋆ b) ≡⟨ cong (a ·_) (⋆-assoc _ _ _) ⟩
+                   a · (x ⋆ (y ⋆ b)) ≡⟨ sym (⋆-rassoc _ _ _) ⟩
+                   x ⋆ (a · (y ⋆ b)) ≡⟨ sym (⋆-lassoc _ _ _) ⟩
+                   (x ⋆ a) · (y ⋆ b) ∎

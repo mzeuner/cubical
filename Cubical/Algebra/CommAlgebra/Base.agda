@@ -70,6 +70,9 @@ module _ {R : CommRing {ℓ}} where
   CommAlgebraEquiv : (R S : CommAlgebra R) → Type ℓ
   CommAlgebraEquiv R S = AlgebraEquiv (CommAlgebra→Algebra R) (CommAlgebra→Algebra S)
 
+  CommAlgebraHom : (R S : CommAlgebra R) → Type ℓ
+  CommAlgebraHom R S = AlgebraHom (CommAlgebra→Algebra R) (CommAlgebra→Algebra S)
+
   makeIsCommAlgebra : {A : Type ℓ} {0a 1a : A}
                       {_+_ _·_ : A → A → A} { -_ : A → A} {_⋆_ : ⟨ R ⟩ → A → A}
                       (isSet-A : isSet A)

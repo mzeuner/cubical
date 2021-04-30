@@ -19,6 +19,7 @@ open import Cubical.Algebra.Ring
 open import Cubical.Algebra.AbGroup
 open import Cubical.Algebra.Group
 open import Cubical.Algebra.Monoid
+open import Cubical.Algebra.Semigroup
 
 open Iso
 
@@ -302,24 +303,31 @@ module AlgebraΣTheory (R : Ring {ℓ}) where
 AlgebraPath : {R : Ring {ℓ}} (M N : Algebra R) → (AlgebraEquiv M N) ≃ (M ≡ N)
 AlgebraPath {ℓ} {R} = AlgebraΣTheory.AlgebraPath R
 
--- isPropIsAlgebra : {R : Ring {ℓ} } {A : Type ℓ} (0a 1a : A) (_+_ _·_ : A → A → A)
---                   (-_ : A → A) (_⋆_ : (fst R) → A → A)
---              → isProp (IsAlgebra R 0a 1a _+_ _·_ -_ _⋆_)
--- isPropIsAlgebra 0a 1a _+_ _·_ -_ _⋆_
---                 (isalgebra isLeftModule₁ ·-isMonoid₁ dist₁ ⋆-lassoc₁ ⋆-rassoc₁)
---                 (isalgebra isLeftModule₂ ·-isMonoid₂ dist₂ ⋆-lassoc₂ ⋆-rassoc₂) i =
---                  isalgebra {!!} {!!} {!!} {!!} {!!}
-  -- (isring RG RM RD) (isring SG SM SD) =
-  -- λ i → isring (isPropIsAbGroup _ _ _ RG SG i)
-  --              (isPropIsMonoid _ _ RM SM i)
-  --              (isPropDistr RD SD i)
-  -- where
-  -- isSetR : isSet _
-  -- isSetR = RM .IsMonoid.isSemigroup .IsSemigroup.is-set
+isPropIsAlgebra : {R : Ring {ℓ} } {A : Type ℓ} (0a 1a : A) (_+_ _·_ : A → A → A)
+                  (-_ : A → A) (_⋆_ : (fst R) → A → A)
+             → isProp (IsAlgebra R 0a 1a _+_ _·_ -_ _⋆_)
+isPropIsAlgebra 0a 1a _+_ _·_ -_ _⋆_
+                (isalgebra isLeftModule₁ ·-isMonoid₁ dist₁ ⋆-lassoc₁ ⋆-rassoc₁)
+                (isalgebra isLeftModule₂ ·-isMonoid₂ dist₂ ⋆-lassoc₂ ⋆-rassoc₂) i =
+                 isalgebra (isPropIsLeftModule _ _ _ _ isLeftModule₁ isLeftModule₂ i)
+                           (isPropIsMonoid _ _ ·-isMonoid₁ ·-isMonoid₂ i)
+                           (isPropDistr dist₁ dist₂ i)
+                           (isPropLAssoc ⋆-lassoc₁ ⋆-lassoc₂ i)
+                           (isPropRAssoc ⋆-rassoc₁ ⋆-rassoc₂ i)
+ where
+ isSetA : isSet _
+ isSetA = ·-isMonoid₁ .IsMonoid.isSemigroup .IsSemigroup.is-set
 
-  -- isPropDistr : isProp ((x y z : _) → ((x · (y + z)) ≡ ((x · y) + (x · z)))
-  --                                   × (((x + y) · z) ≡ ((x · z) + (y · z))))
-  -- isPropDistr = isPropΠ3 λ _ _ _ → isProp× (isSetR _ _) (isSetR _ _)
+ isPropDistr : isProp ((x y z : _) → ((x · (y + z)) ≡ ((x · y) + (x · z)))
+                                   × (((x + y) · z) ≡ ((x · z) + (y · z))))
+ isPropDistr = isPropΠ3 λ _ _ _ → isProp× (isSetA _ _) (isSetA _ _)
+
+ isPropLAssoc : isProp ((r : _) (x y : _) → ((r ⋆ x) · y) ≡ (r ⋆ (x · y)))
+ isPropLAssoc = isPropΠ3 (λ _ _ _ → isSetA _ _)
+
+ isPropRAssoc : isProp ((r : _) (x y : _) → (r ⋆ (x · y)) ≡ (x · (r ⋆ y)))
+ isPropRAssoc = isPropΠ3 (λ _ _ _ → isSetA _ _)
+
 
 
 module AlgebraTheory (R : Ring {ℓ}) (A : Algebra R) where

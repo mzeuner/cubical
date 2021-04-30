@@ -28,6 +28,7 @@ private
 -- An R-algebra is the same as a CommRing A
 -- with a CommRingHomm φ : R → A
 module CommAlgChar (R : CommRing {ℓ}) where
+ open Iso
  open CommRingStr
  open RingHom
  open CommTheory
@@ -96,4 +97,14 @@ module CommAlgChar (R : CommRing {ℓ}) where
  CommAlgebra._⋆_ (CommAlgRoundTrip A i) r x = (CommAlgebra.⋆-lassoc A r (CommAlgebra.1a A) x
                                             ∙ cong (CommAlgebra._⋆_ A r) (CommAlgebra.·Lid A x)) i
                                             -- (r ⋆ 1a) · x ≡ r ⋆ x
- CommAlgebra.isCommAlgebra (CommAlgRoundTrip A i) = {!!}
+ CommAlgebra.isCommAlgebra (CommAlgRoundTrip A i) =
+                           isProp→PathP (λ i → isPropIsCommAlgebra _ _ _ _ _
+                                        (CommAlgebra._⋆_ (CommAlgRoundTrip A i)))
+                                        (CommAlgebra.isCommAlgebra (toCommAlg (fromCommAlg A)))
+                                        (CommAlgebra.isCommAlgebra A) i
+
+ CommAlgIso : Iso (CommAlgebra R) CommRingWithHom
+ fun CommAlgIso = fromCommAlg
+ inv CommAlgIso = toCommAlg
+ rightInv CommAlgIso = CommRingWithHomRoundTrip
+ leftInv CommAlgIso = CommAlgRoundTrip

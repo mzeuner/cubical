@@ -172,3 +172,18 @@ module CommAlgebraΣTheory (R : CommRing {ℓ}) where
 
 CommAlgebraPath : (R : CommRing {ℓ}) → (A B : CommAlgebra R) → (CommAlgebraEquiv A B) ≃ (A ≡ B)
 CommAlgebraPath = CommAlgebraΣTheory.CommAlgebraPath
+
+isPropIsCommAlgebra : {R : CommRing {ℓ} } {A : Type ℓ} (0a 1a : A) (_+_ _·_ : A → A → A)
+                      (-_ : A → A) (_⋆_ : (fst R) → A → A)
+                    → isProp (IsCommAlgebra R 0a 1a _+_ _·_ -_ _⋆_)
+isPropIsCommAlgebra 0a 1a _+_ _·_ -_ _⋆_
+                    (iscommalgebra isAlgebra₁ ·-comm₁)
+                    (iscommalgebra isAlgebra₂ ·-comm₂) i =
+                     iscommalgebra (isPropIsAlgebra _ _ _ _ _ _ isAlgebra₁ isAlgebra₂ i)
+                                   (isPropComm ·-comm₁ ·-comm₂ i)
+ where
+ isSetA : isSet _
+ isSetA = isAlgebra₁ .IsAlgebra.·-isMonoid .IsMonoid.isSemigroup .IsSemigroup.is-set
+
+ isPropComm : isProp (∀ x y → x · y ≡ y · x)
+ isPropComm = isPropΠ2 λ _ _ → isSetA _ _

@@ -206,6 +206,30 @@ _∘a_ {ℓ} {R} {A} {B} {C}
             r ⋆ (f (g x))  ∎
 
 
+open AlgebraHom
+
+AlgebraHomEqDep : {R : Ring {ℓ}} (A B C : Algebra R) (p : B ≡ C) (φ : AlgebraHom A B) (ψ : AlgebraHom A C)
+             → PathP (λ i → A .Algebra.Carrier → p i .Algebra.Carrier) (φ .f) (ψ .f)
+             → PathP (λ i → AlgebraHom A (p i)) φ ψ
+f (AlgebraHomEqDep A B C p φ ψ q i) = q i
+isHom+ (AlgebraHomEqDep A B C p φ ψ q i) x y =
+  isProp→PathP {B = λ i → q i (Algebra._+_ A x y) ≡ Algebra._+_ (p i) (q i x) (q i y)}
+  (λ i → commonExtractors.isSetAlgebra (p i) _ _) (φ .isHom+ x y) (ψ .isHom+ x y) i
+isHom· (AlgebraHomEqDep A B C p φ ψ q i) x y =
+  isProp→PathP {B = λ i → q i (Algebra._·_ A x y) ≡ Algebra._·_ (p i) (q i x) (q i y)}
+  (λ i → commonExtractors.isSetAlgebra (p i) _ _) (φ .isHom· x y) (ψ .isHom· x y) i
+pres1 (AlgebraHomEqDep A B C p φ ψ q i) =
+  isProp→PathP {B = λ i → q i (Algebra.1a A) ≡ Algebra.1a (p i)}
+  (λ i → commonExtractors.isSetAlgebra (p i) _ _) (φ .pres1) (ψ .pres1) i
+comm⋆ (AlgebraHomEqDep A B C p φ ψ q i) r x =
+  isProp→PathP {B = λ i → q i (Algebra._⋆_ A r x) ≡ Algebra._⋆_ (p i) r (q i x)}
+  (λ i → commonExtractors.isSetAlgebra (p i) _ _) (φ .comm⋆ r x) (ψ .comm⋆ r x) i
+
+AlgebraHomPath : {R : Ring {ℓ}} {A B : Algebra R} (φ ψ : AlgebraHom A B)
+               → AlgebraHom.f φ ≡ AlgebraHom.f ψ
+               → φ ≡ ψ
+AlgebraHomPath {A = A} {B = B} φ ψ p = AlgebraHomEqDep A B B refl φ ψ p
+
 module AlgebraΣTheory (R : Ring {ℓ}) where
 
   RawAlgebraStructure = λ (A : Type ℓ) → (A → A → A) × (A → A → A) × A × (⟨ R ⟩ → A → A)

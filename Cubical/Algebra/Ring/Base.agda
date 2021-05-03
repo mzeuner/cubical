@@ -184,6 +184,10 @@ isHom· (RingHomEqDep R S T p φ ψ q i) x y =
   isProp→PathP {B = λ i → q i ((snd R RingStr.· x) y) ≡ (snd (p i) RingStr.· q i x) (q i y)}
   (λ i → isSetRing (p i) _ _) (φ .isHom· x y) (ψ .isHom· x y) i
 
+RingHomPath : (R S : Ring {ℓ}) (φ ψ : RingHom R S)
+            → φ .f ≡ ψ .f
+            → φ ≡ ψ
+RingHomPath R S φ ψ p = RingHomEqDep R S S refl φ ψ p
 
 module RingΣTheory {ℓ} where
 

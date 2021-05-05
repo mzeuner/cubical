@@ -128,14 +128,20 @@ module AlgLocTwoSubsets (R' : CommRing {ℓ})
  open isMultClosedSubset
  open CommRingStr (snd R') hiding (is-set)
  open Theory (CommRing→Ring R')
- open RingHom
  open Loc R' S₁ S₁MultClosedSubset renaming (S⁻¹R to S₁⁻¹R ;
                                              S⁻¹RAsCommRing to S₁⁻¹RAsCommRing)
  open Loc R' S₂ S₂MultClosedSubset renaming (S⁻¹R to S₂⁻¹R ;
                                              S⁻¹RAsCommRing to S₂⁻¹RAsCommRing)
- open AlgLoc R' S₁ S₁MultClosedSubset renaming (S⁻¹RAsCommAlg to S₁⁻¹RAsCommAlg)
- open AlgLoc R' S₂ S₂MultClosedSubset renaming (S⁻¹RAsCommAlg to S₂⁻¹RAsCommAlg)
+ open AlgLoc R' S₁ S₁MultClosedSubset renaming ( S⁻¹RAsCommAlg to S₁⁻¹RAsCommAlg
+                                               ; S⋆1⊆S⁻¹Rˣ to S₁⋆1⊆S₁⁻¹Rˣ
+                                               ; S⁻¹RHasAlgUniversalProp to S₁⁻¹RHasAlgUniversalProp
+                                               ; isContrHomS⁻¹RS⁻¹R to isContrHomS₁⁻¹RS₁⁻¹R)
+ open AlgLoc R' S₂ S₂MultClosedSubset renaming ( S⁻¹RAsCommAlg to S₂⁻¹RAsCommAlg
+                                               ; S⋆1⊆S⁻¹Rˣ to S₂⋆1⊆S₂⁻¹Rˣ
+                                               ; S⁻¹RHasAlgUniversalProp to S₂⁻¹RHasAlgUniversalProp
+                                               ; isContrHomS⁻¹RS⁻¹R to isContrHomS₂⁻¹RS₂⁻¹R)
 
+ open AlgebraHom
  open CommAlgebra ⦃...⦄
 
  private
@@ -154,5 +160,33 @@ module AlgLocTwoSubsets (R' : CommRing {ℓ})
                                           (equivToIso (invEquiv (CommAlgebraPath _ _ _)))
                                           isContrS₁⁻¹R≅S₂⁻¹R
   where
+  χ₁ : CommAlgebraHom S₁⁻¹RAsCommAlg S₂⁻¹RAsCommAlg
+  χ₁ = S₁⁻¹RHasAlgUniversalProp S₂⁻¹RAsCommAlg S₁⊆S₂⁻¹Rˣ .fst
+
+  χ₂ : CommAlgebraHom S₂⁻¹RAsCommAlg S₁⁻¹RAsCommAlg
+  χ₂ = S₂⁻¹RHasAlgUniversalProp S₁⁻¹RAsCommAlg S₂⊆S₁⁻¹Rˣ .fst
+
+  χ₁∘χ₂≡id : χ₁ ∘a χ₂ ≡ idAlgHom
+  χ₁∘χ₂≡id = isContr→isProp isContrHomS₂⁻¹RS₂⁻¹R _ _
+
+  χ₂∘χ₁≡id : χ₂ ∘a χ₁ ≡ idAlgHom
+  χ₂∘χ₁≡id = isContr→isProp isContrHomS₁⁻¹RS₁⁻¹R _ _
+
+  IsoS₁⁻¹RS₂⁻¹R : Iso S₁⁻¹R S₂⁻¹R
+  Iso.fun IsoS₁⁻¹RS₂⁻¹R = f χ₁
+  Iso.inv IsoS₁⁻¹RS₂⁻¹R = f χ₂
+  Iso.rightInv IsoS₁⁻¹RS₂⁻¹R = funExt⁻ (cong f χ₁∘χ₂≡id)
+  Iso.leftInv IsoS₁⁻¹RS₂⁻¹R = funExt⁻ (cong f χ₂∘χ₁≡id)
+
   isContrS₁⁻¹R≅S₂⁻¹R : isContr (CommAlgebraEquiv S₁⁻¹RAsCommAlg S₂⁻¹RAsCommAlg)
-  isContrS₁⁻¹R≅S₂⁻¹R = {!!}
+  isContrS₁⁻¹R≅S₂⁻¹R = center , uniqueness
+   where
+   center : CommAlgebraEquiv S₁⁻¹RAsCommAlg S₂⁻¹RAsCommAlg
+   AlgebraEquiv.e center = isoToEquiv IsoS₁⁻¹RS₂⁻¹R
+   AlgebraEquiv.isHom+ center = isHom+ χ₁
+   AlgebraEquiv.isHom· center = isHom· χ₁
+   AlgebraEquiv.pres1 center = pres1 χ₁
+   AlgebraEquiv.comm⋆ center = comm⋆ χ₁
+
+   uniqueness : (y : CommAlgebraEquiv S₁⁻¹RAsCommAlg S₂⁻¹RAsCommAlg) → center ≡ y
+   uniqueness y = {!!}

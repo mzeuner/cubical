@@ -208,6 +208,13 @@ _∘a_ {ℓ} {R} {A} {B} {C}
 
 open AlgebraHom
 
+idAlgHom : {R : Ring {ℓ}} {A : Algebra R} → AlgebraHom A A
+f idAlgHom x = x
+isHom+ idAlgHom x y = refl
+isHom· idAlgHom x y = refl
+pres1 idAlgHom = refl
+comm⋆ idAlgHom r x = refl
+
 AlgebraHomEqDep : {R : Ring {ℓ}} (A B C : Algebra R) (p : B ≡ C) (φ : AlgebraHom A B) (ψ : AlgebraHom A C)
              → PathP (λ i → A .Algebra.Carrier → p i .Algebra.Carrier) (φ .f) (ψ .f)
              → PathP (λ i → AlgebraHom A (p i)) φ ψ

@@ -45,7 +45,7 @@ module CommAlgChar (R : CommRing {ℓ}) where
  CommAlgebra._+_ (toCommAlg (A , φ)) = _+_ (snd A)
  CommAlgebra._·_ (toCommAlg (A , φ)) = _·_ (snd A)
  CommAlgebra.- toCommAlg (A , φ) = -_ (snd A)
- CommAlgebra._⋆_ (toCommAlg (A , φ)) r a = _·_ (snd A) ((f φ) r) a --λ r a → φa · r
+ CommAlgebra._⋆_ (toCommAlg (A , φ)) r a = _·_ (snd A) ((f φ) r) a --λ r a → φr · a
  CommAlgebra.isCommAlgebra (toCommAlg (A , φ)) = makeIsCommAlgebra
    (is-set (snd A))
    (+Assoc (snd A)) (+Rid (snd A)) (+Rinv (snd A)) (+Comm (snd A))

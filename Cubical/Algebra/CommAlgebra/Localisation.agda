@@ -116,3 +116,43 @@ module AlgLoc (R' : CommRing {ℓ})
                 _⋆_  B' r (f ψ (1a S⁻¹RAsCommAlg))           ≡⟨ cong (_⋆_  B' r) (pres1 ψ) ⟩
                 _⋆_  B' r 1b ∎
 
+
+ -- an immediate corrollary:
+ isContrHomS⁻¹RS⁻¹R : isContr (CommAlgebraHom S⁻¹RAsCommAlg S⁻¹RAsCommAlg)
+ isContrHomS⁻¹RS⁻¹R = S⁻¹RHasAlgUniversalProp S⁻¹RAsCommAlg S⋆1⊆S⁻¹Rˣ
+
+
+module AlgLocTwoSubsets (R' : CommRing {ℓ})
+                        (S₁ : ℙ (fst R')) (S₁MultClosedSubset : isMultClosedSubset R' S₁)
+                        (S₂ : ℙ (fst R')) (S₂MultClosedSubset : isMultClosedSubset R' S₂) where
+ open isMultClosedSubset
+ open CommRingStr (snd R') hiding (is-set)
+ open Theory (CommRing→Ring R')
+ open RingHom
+ open Loc R' S₁ S₁MultClosedSubset renaming (S⁻¹R to S₁⁻¹R ;
+                                             S⁻¹RAsCommRing to S₁⁻¹RAsCommRing)
+ open Loc R' S₂ S₂MultClosedSubset renaming (S⁻¹R to S₂⁻¹R ;
+                                             S⁻¹RAsCommRing to S₂⁻¹RAsCommRing)
+ open AlgLoc R' S₁ S₁MultClosedSubset renaming (S⁻¹RAsCommAlg to S₁⁻¹RAsCommAlg)
+ open AlgLoc R' S₂ S₂MultClosedSubset renaming (S⁻¹RAsCommAlg to S₂⁻¹RAsCommAlg)
+
+ open CommAlgebra ⦃...⦄
+
+ private
+  R = fst R'
+  S₁⁻¹Rˣ = S₁⁻¹RAsCommRing ˣ
+  S₂⁻¹Rˣ = S₂⁻¹RAsCommRing ˣ
+  instance
+   _ = S₁⁻¹RAsCommAlg
+   _ = S₂⁻¹RAsCommAlg
+
+
+ isContrS₁⁻¹R≡S₂⁻¹R : (∀ s₁ → s₁ ∈ S₁ → s₁ ⋆ 1a ∈ S₂⁻¹Rˣ)
+                    → (∀ s₂ → s₂ ∈ S₂ → s₂ ⋆ 1a ∈ S₁⁻¹Rˣ)
+                    → isContr (S₁⁻¹RAsCommAlg ≡ S₂⁻¹RAsCommAlg)
+ isContrS₁⁻¹R≡S₂⁻¹R S₁⊆S₂⁻¹Rˣ S₂⊆S₁⁻¹Rˣ = isOfHLevelRetractFromIso 0
+                                          (equivToIso (invEquiv (CommAlgebraPath _ _ _)))
+                                          isContrS₁⁻¹R≅S₂⁻¹R
+  where
+  isContrS₁⁻¹R≅S₂⁻¹R : isContr (CommAlgebraEquiv S₁⁻¹RAsCommAlg S₂⁻¹RAsCommAlg)
+  isContrS₁⁻¹R≅S₂⁻¹R = {!!}

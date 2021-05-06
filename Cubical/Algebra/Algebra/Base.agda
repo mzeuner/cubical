@@ -141,6 +141,39 @@ record AlgebraEquiv {R : Ring {ℓ}} (A B : Algebra R) : Type ℓ where
     pres1  : equivFun e 1a ≡ 1a
     comm⋆  : (r : ⟨ R ⟩) (x : ⟨ A ⟩a) → equivFun e (r ⋆ x) ≡ r ⋆ equivFun e x
 
+
+AlgebraEquivEqDep : {R : Ring {ℓ}} (A B C : Algebra R) (p : B ≡ C)
+                  (φ : AlgebraEquiv A B) (ψ : AlgebraEquiv A C)
+                → PathP (λ i → A .Algebra.Carrier → p i .Algebra.Carrier)
+                        (φ .AlgebraEquiv.e .fst) (ψ .AlgebraEquiv.e .fst)
+                → PathP (λ i → AlgebraEquiv A (p i)) φ ψ
+AlgebraEquiv.e (AlgebraEquivEqDep A B C p φ ψ q i) = (q i) , isProp→PathP {B = λ i → isEquiv (q i)}
+               (λ _ → isPropIsEquiv _) (φ .AlgebraEquiv.e .snd) (ψ .AlgebraEquiv.e .snd) i
+AlgebraEquiv.isHom+ (AlgebraEquivEqDep A B C p φ ψ q i) x y =
+  isProp→PathP {B = λ i → q i (Algebra._+_ A x y) ≡ Algebra._+_ (p i) (q i x) (q i y)}
+  (λ i → commonExtractors.isSetAlgebra (p i) _ _)
+  (φ .AlgebraEquiv.isHom+ x y) (ψ .AlgebraEquiv.isHom+ x y) i
+AlgebraEquiv.isHom· (AlgebraEquivEqDep A B C p φ ψ q i) x y =
+  isProp→PathP {B = λ i → q i (Algebra._·_ A x y) ≡ Algebra._·_ (p i) (q i x) (q i y)}
+  (λ i → commonExtractors.isSetAlgebra (p i) _ _)
+  (φ .AlgebraEquiv.isHom· x y) (ψ .AlgebraEquiv.isHom· x y) i
+AlgebraEquiv.pres1 (AlgebraEquivEqDep A B C p φ ψ q i) =
+  isProp→PathP {B = λ i → q i (Algebra.1a A) ≡ Algebra.1a (p i)}
+  (λ i → commonExtractors.isSetAlgebra (p i) _ _)
+  (φ .AlgebraEquiv.pres1) (ψ .AlgebraEquiv.pres1) i
+AlgebraEquiv.comm⋆ (AlgebraEquivEqDep A B C p φ ψ q i) r x =
+  isProp→PathP {B = λ i → q i (Algebra._⋆_ A r x) ≡ Algebra._⋆_ (p i) r (q i x)}
+  (λ i → commonExtractors.isSetAlgebra (p i) _ _)
+  (φ .AlgebraEquiv.comm⋆ r x) (ψ .AlgebraEquiv.comm⋆ r x) i
+
+AlgebraEquivPath : {R : Ring {ℓ}} {A B : Algebra R} (φ ψ : AlgebraEquiv A B)
+               → φ .AlgebraEquiv.e .fst ≡ ψ .AlgebraEquiv.e .fst
+               → φ ≡ ψ
+AlgebraEquivPath {A = A} {B = B} φ ψ p = AlgebraEquivEqDep A B B refl φ ψ p
+
+
+
+
 record AlgebraHom {R : Ring {ℓ}} (A B : Algebra R) : Type ℓ where
 
   constructor algebrahom
@@ -205,32 +238,43 @@ _∘a_ {ℓ} {R} {A} {B} {C}
             f (r ⋆ (g x))  ≡⟨ comm⋆f _ _ ⟩
             r ⋆ (f (g x))  ∎
 
-
-open AlgebraHom
+AlgebraEquiv→AlgebraHom : {R : Ring {ℓ}} {A B : Algebra R}
+                        → AlgebraEquiv A B → AlgebraHom A B
+AlgebraHom.f (AlgebraEquiv→AlgebraHom φ) = φ .AlgebraEquiv.e .fst
+AlgebraHom.isHom+ (AlgebraEquiv→AlgebraHom φ) = φ .AlgebraEquiv.isHom+
+AlgebraHom.isHom· (AlgebraEquiv→AlgebraHom φ) = φ .AlgebraEquiv.isHom·
+AlgebraHom.pres1 (AlgebraEquiv→AlgebraHom φ) = φ .AlgebraEquiv.pres1
+AlgebraHom.comm⋆ (AlgebraEquiv→AlgebraHom φ) = φ .AlgebraEquiv.comm⋆
 
 idAlgHom : {R : Ring {ℓ}} {A : Algebra R} → AlgebraHom A A
-f idAlgHom x = x
-isHom+ idAlgHom x y = refl
-isHom· idAlgHom x y = refl
-pres1 idAlgHom = refl
-comm⋆ idAlgHom r x = refl
+AlgebraHom.f idAlgHom x = x
+AlgebraHom.isHom+ idAlgHom x y = refl
+AlgebraHom.isHom· idAlgHom x y = refl
+AlgebraHom.pres1 idAlgHom = refl
+AlgebraHom.comm⋆ idAlgHom r x = refl
 
-AlgebraHomEqDep : {R : Ring {ℓ}} (A B C : Algebra R) (p : B ≡ C) (φ : AlgebraHom A B) (ψ : AlgebraHom A C)
-             → PathP (λ i → A .Algebra.Carrier → p i .Algebra.Carrier) (φ .f) (ψ .f)
-             → PathP (λ i → AlgebraHom A (p i)) φ ψ
-f (AlgebraHomEqDep A B C p φ ψ q i) = q i
-isHom+ (AlgebraHomEqDep A B C p φ ψ q i) x y =
+AlgebraHomEqDep : {R : Ring {ℓ}} (A B C : Algebra R) (p : B ≡ C)
+                  (φ : AlgebraHom A B) (ψ : AlgebraHom A C)
+                → PathP (λ i → A .Algebra.Carrier → p i .Algebra.Carrier)
+                        (φ .AlgebraHom.f) (ψ .AlgebraHom.f)
+                → PathP (λ i → AlgebraHom A (p i)) φ ψ
+AlgebraHom.f (AlgebraHomEqDep A B C p φ ψ q i) = q i
+AlgebraHom.isHom+ (AlgebraHomEqDep A B C p φ ψ q i) x y =
   isProp→PathP {B = λ i → q i (Algebra._+_ A x y) ≡ Algebra._+_ (p i) (q i x) (q i y)}
-  (λ i → commonExtractors.isSetAlgebra (p i) _ _) (φ .isHom+ x y) (ψ .isHom+ x y) i
-isHom· (AlgebraHomEqDep A B C p φ ψ q i) x y =
+  (λ i → commonExtractors.isSetAlgebra (p i) _ _)
+  (φ .AlgebraHom.isHom+ x y) (ψ .AlgebraHom.isHom+ x y) i
+AlgebraHom.isHom· (AlgebraHomEqDep A B C p φ ψ q i) x y =
   isProp→PathP {B = λ i → q i (Algebra._·_ A x y) ≡ Algebra._·_ (p i) (q i x) (q i y)}
-  (λ i → commonExtractors.isSetAlgebra (p i) _ _) (φ .isHom· x y) (ψ .isHom· x y) i
-pres1 (AlgebraHomEqDep A B C p φ ψ q i) =
+  (λ i → commonExtractors.isSetAlgebra (p i) _ _)
+  (φ .AlgebraHom.isHom· x y) (ψ .AlgebraHom.isHom· x y) i
+AlgebraHom.pres1 (AlgebraHomEqDep A B C p φ ψ q i) =
   isProp→PathP {B = λ i → q i (Algebra.1a A) ≡ Algebra.1a (p i)}
-  (λ i → commonExtractors.isSetAlgebra (p i) _ _) (φ .pres1) (ψ .pres1) i
-comm⋆ (AlgebraHomEqDep A B C p φ ψ q i) r x =
+  (λ i → commonExtractors.isSetAlgebra (p i) _ _)
+  (φ .AlgebraHom.pres1) (ψ .AlgebraHom.pres1) i
+AlgebraHom.comm⋆ (AlgebraHomEqDep A B C p φ ψ q i) r x =
   isProp→PathP {B = λ i → q i (Algebra._⋆_ A r x) ≡ Algebra._⋆_ (p i) r (q i x)}
-  (λ i → commonExtractors.isSetAlgebra (p i) _ _) (φ .comm⋆ r x) (ψ .comm⋆ r x) i
+  (λ i → commonExtractors.isSetAlgebra (p i) _ _)
+  (φ .AlgebraHom.comm⋆ r x) (ψ .AlgebraHom.comm⋆ r x) i
 
 AlgebraHomPath : {R : Ring {ℓ}} {A B : Algebra R} (φ ψ : AlgebraHom A B)
                → AlgebraHom.f φ ≡ AlgebraHom.f ψ

@@ -188,5 +188,6 @@ module AlgLocTwoSubsets (R' : CommRing {ℓ})
    AlgebraEquiv.pres1 center = pres1 χ₁
    AlgebraEquiv.comm⋆ center = comm⋆ χ₁
 
-   uniqueness : (y : CommAlgebraEquiv S₁⁻¹RAsCommAlg S₂⁻¹RAsCommAlg) → center ≡ y
-   uniqueness y = {!!}
+   uniqueness : (φ : CommAlgebraEquiv S₁⁻¹RAsCommAlg S₂⁻¹RAsCommAlg) → center ≡ φ
+   uniqueness φ = AlgebraEquivPath _ _
+     (cong f (S₁⁻¹RHasAlgUniversalProp S₂⁻¹RAsCommAlg S₁⊆S₂⁻¹Rˣ .snd (AlgebraEquiv→AlgebraHom φ)))

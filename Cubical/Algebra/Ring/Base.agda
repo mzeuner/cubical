@@ -168,11 +168,34 @@ record RingHom (R S : Ring {ℓ}) : Type ℓ where
 _$_ : {R S : Ring {ℓ}} → (φ : RingHom R S) → (x : ⟨ R ⟩) → ⟨ S ⟩
 φ $ x = RingHom.f φ x
 
+
 isEquivRingHom→RingEquiv : (R S : Ring {ℓ}) (φ : RingHom R S) (isEquivφ : isEquiv (RingHom.f φ))
                          → RingEquiv R S (RingHom.f φ , isEquivφ)
 pres1 (isEquivRingHom→RingEquiv R S φ isEquivφ) = RingHom.pres1 φ
 isHom+ (isEquivRingHom→RingEquiv R S φ isEquivφ) = RingHom.isHom+ φ
 isHom· (isEquivRingHom→RingEquiv R S φ isEquivφ) = RingHom.isHom· φ
+
+open RingHom
+
+RingHomEqDep : (R S T : Ring {ℓ}) (p : S ≡ T) (φ : RingHom R S) (ψ : RingHom R T)
+             → PathP (λ i → R .fst → p i .fst) (φ .f) (ψ .f)
+             → PathP (λ i → RingHom R (p i)) φ ψ
+f (RingHomEqDep R S T p φ ψ q i) = q i
+pres1 (RingHomEqDep R S T p φ ψ q i) =
+  isProp→PathP {B = λ i → q i (RingStr.1r (snd R)) ≡ RingStr.1r (snd (p i))}
+  (λ i → isSetRing (p i) _ _) (φ .pres1) (ψ .pres1) i
+isHom+ (RingHomEqDep R S T p φ ψ q i) x y =
+  isProp→PathP {B = λ i → q i ((snd R RingStr.+ x) y) ≡ (snd (p i) RingStr.+ q i x) (q i y)}
+  (λ i → isSetRing (p i) _ _) (φ .isHom+ x y) (ψ .isHom+ x y) i
+isHom· (RingHomEqDep R S T p φ ψ q i) x y =
+  isProp→PathP {B = λ i → q i ((snd R RingStr.· x) y) ≡ (snd (p i) RingStr.· q i x) (q i y)}
+  (λ i → isSetRing (p i) _ _) (φ .isHom· x y) (ψ .isHom· x y) i
+
+RingHomPath : (R S : Ring {ℓ}) (φ ψ : RingHom R S)
+            → φ .f ≡ ψ .f
+            → φ ≡ ψ
+RingHomPath R S φ ψ p = RingHomEqDep R S S refl φ ψ p
+
 
 module RingΣTheory {ℓ} where
 

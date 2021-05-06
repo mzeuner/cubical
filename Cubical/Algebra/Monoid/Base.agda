@@ -64,7 +64,6 @@ Monoid = TypeWithStr _ MonoidStr
 
 monoid : (A : Type ℓ) (ε : A) (_·_ : A → A → A) (h : IsMonoid ε _·_) → Monoid
 monoid A ε _·_ h = A , monoidstr ε _·_ h
-
 -- Easier to use constructors
 
 makeIsMonoid : {M : Type ℓ} {ε : M} {_·_ : M → M → M}

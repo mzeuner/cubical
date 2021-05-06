@@ -16,6 +16,8 @@ open import Cubical.Structures.Macro
 open import Cubical.Algebra.Ring
 open import Cubical.Algebra.AbGroup
 open import Cubical.Algebra.Group
+open import Cubical.Algebra.Monoid
+open import Cubical.Algebra.Semigroup
 
 open Iso
 
@@ -207,3 +209,31 @@ module LeftModuleΣTheory (R : Ring {ℓ}) where
 LeftModulePath : {R : Ring {ℓ}} (M N : LeftModule R) → (LeftModuleEquiv M N) ≃ (M ≡ N)
 LeftModulePath {ℓ} {R} = LeftModuleΣTheory.LeftModulePath R
 
+
+isPropIsLeftModule : {R : Ring {ℓ} } {M : Type ℓ} (0m : M) (_+_ : M → M → M)
+                     (-_ : M → M) (_⋆_ : (fst R) → M → M)
+                   → isProp (IsLeftModule R 0m _+_ -_ _⋆_)
+isPropIsLeftModule {R = R} 0m _+_ -_ _⋆_
+                   (ismodule +-isAbGroup₁ ⋆-assoc₁ ⋆-ldist₁ ⋆-rdist₁ ⋆-lid₁)
+                   (ismodule +-isAbGroup₂ ⋆-assoc₂ ⋆-ldist₂ ⋆-rdist₂ ⋆-lid₂) i =
+                    ismodule (isPropIsAbGroup _ _ _ +-isAbGroup₁ +-isAbGroup₂ i)
+                             (isPropAssoc ⋆-assoc₁ ⋆-assoc₂ i)
+                             (isPropLDist ⋆-ldist₁ ⋆-ldist₂ i)
+                             (isPropRDist ⋆-rdist₁ ⋆-rdist₂ i)
+                             (isPropLId ⋆-lid₁ ⋆-lid₂ i)
+ where
+ open RingStr (snd R) renaming (_+_ to _+r_ ; _·_ to _·r_)
+ isSetM : isSet _
+ isSetM = +-isAbGroup₁ .IsAbGroup.isMonoid .IsMonoid.isSemigroup .IsSemigroup.is-set
+
+ isPropAssoc : isProp (∀ r s x → ((r ·r s) ⋆ x) ≡ (r ⋆ (s ⋆ x)))
+ isPropAssoc = isPropΠ3 (λ _ _ _ → isSetM _ _)
+
+ isPropLDist : isProp (∀ r s x → ((r +r s) ⋆ x) ≡ ((r ⋆ x) + (s ⋆ x)))
+ isPropLDist = isPropΠ3 (λ _ _ _ → isSetM _ _)
+
+ isPropRDist : isProp (∀ r x y → (r ⋆ (x + y)) ≡ ((r ⋆ x) + (r ⋆ y)))
+ isPropRDist = isPropΠ3 (λ _ _ _ → isSetM _ _)
+
+ isPropLId : isProp (∀ x → 1r ⋆ x ≡ x)
+ isPropLId = isPropΠ λ _ → isSetM _ _

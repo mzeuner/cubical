@@ -34,6 +34,9 @@ open import Cubical.Algebra.CommRing
 open import Cubical.Algebra.CommRing.Localisation.Base
 open import Cubical.Algebra.CommRing.Localisation.UniversalProperty
 open import Cubical.Algebra.CommRing.Localisation.InvertingElements
+open import Cubical.Algebra.CommAlgebra.Base
+open import Cubical.Algebra.CommAlgebra.Properties
+open import Cubical.Algebra.CommAlgebra.Localisation
 open import Cubical.Algebra.RingSolver.ReflectionSolving
 
 open import Cubical.HITs.SetQuotients as SQ
@@ -49,41 +52,41 @@ private
 
 module _ (A' : CommRing {ℓ}) where
  A = fst A'
- open CommRingStr (snd A')
+ open CommRingStr (snd A') renaming (_·_ to _·r_ ; ·-comm to ·r-comm ; ·Assoc to ·rAssoc
+                                                 ; ·Lid to ·rLid)
  open Exponentiation A'
- open S⁻¹RUniversalProp
  open isMultClosedSubset
+ open CommAlgebra ⦃...⦄
  private
-  -- A[1/_] = R[1/_] A'
-  A[1/_] = R[1/_]AsCommRing A'
+  A[1/_] : A → CommAlgebra A'
+  A[1/ x ] = AlgLoc.S⁻¹RAsCommAlg A' ([_ⁿ|n≥0] A' x) (powersFormMultClosedSubset _ _)
+
+  A[1/_]ˣ : (x : A) → ℙ (CommAlgebra.Carrier A[1/ x ])
+  A[1/ x ]ˣ = (CommAlgebra→CommRing A[1/ x ]) ˣ
 
  _≼_ : A → A → Type ℓ
- x ≼ y = Σ[ n ∈ ℕ ] Σ[ z ∈ A ] x ^ n ≡ z · y -- rad(x) ⊆ rad(y)
-
- ≼ToLoc : (x y : A) → x ≼ y
-        → (_/1 A' ([_ⁿ|n≥0] A' x) (powersFormMultClosedSubset _ _) y) ∈ A[1/ x ] ˣ -- y/1 ∈ A[1/x]ˣ
- ≼ToLoc x y (n , z , p) = [ z , (x ^ n) ,  PT.∣ n , refl ∣ ] -- xⁿ≡zy → y⁻¹ ≡ z/xⁿ
-                        , eq/ _ _ ((1r , powersFormMultClosedSubset _ _ .containsOne)
-                        , path y z ∙ cong (λ w → 1r · 1r · (1r · w)) (sym p))
-  where
-  path : (y z : A) → 1r · (y · z) · 1r ≡ 1r · 1r · (1r · (z · y))
-  path = solve A'
+ x ≼ y = ∥ Σ[ n ∈ ℕ ] Σ[ z ∈ A ] x ^ n ≡ z ·r y ∥ -- rad(x) ⊆ rad(y)
 
 -- ≼ is a pre-order:
 
  Refl≼ : isRefl _≼_
- Refl≼ x = (1 , 1r , ·-comm _ _)
+ Refl≼ x = PT.∣ 1 , 1r , ·r-comm _ _ ∣
 
  Trans≼ : isTrans _≼_
- Trans≼ x y z (n , a , p) (m , b , q) = n ·ℕ m , (a ^ m · b) , path
+ Trans≼ x y z = map2 Trans≼Σ
   where
-  path : x ^ (n ·ℕ m) ≡ a ^ m · b · z
-  path = x ^ (n ·ℕ m)    ≡⟨ ^-rdist-·ℕ x n m ⟩
-         (x ^ n) ^ m     ≡⟨ cong (_^ m) p ⟩
-         (a · y) ^ m     ≡⟨ ^-ldist-· a y m ⟩
-         a ^ m · y ^ m   ≡⟨ cong (a ^ m ·_) q ⟩
-         a ^ m · (b · z) ≡⟨ ·Assoc _ _ _ ⟩
-         a ^ m · b · z   ∎
+  Trans≼Σ : Σ[ n ∈ ℕ ] Σ[ a ∈ A ] x ^ n ≡ a ·r y
+          → Σ[ n ∈ ℕ ] Σ[ a ∈ A ] y ^ n ≡ a ·r z
+          → Σ[ n ∈ ℕ ] Σ[ a ∈ A ] x ^ n ≡ a ·r z
+  Trans≼Σ (n , a , p) (m , b , q) = n ·ℕ m , (a ^ m ·r b) , path
+   where
+   path : x ^ (n ·ℕ m) ≡ a ^ m ·r b ·r z
+   path = x ^ (n ·ℕ m)    ≡⟨ ^-rdist-·ℕ x n m ⟩
+          (x ^ n) ^ m     ≡⟨ cong (_^ m) p ⟩
+          (a ·r y) ^ m     ≡⟨ ^-ldist-· a y m ⟩
+          a ^ m ·r y ^ m   ≡⟨ cong (a ^ m ·r_) q ⟩
+          a ^ m ·r (b ·r z) ≡⟨ ·rAssoc _ _ _ ⟩
+          a ^ m ·r b ·r z   ∎
 
 
  R : A → A → Type ℓ
@@ -95,41 +98,73 @@ module _ (A' : CommRing {ℓ}) where
  RequivRel .transitive _ _ _ Rxy Ryz = Trans≼ _ _ _ (Rxy .fst) (Ryz .fst)
                                      , Trans≼ _ _ _  (Ryz .snd) (Rxy .snd)
 
- -- The quotient A/R corresponds to the basic opens of the Zariski topology
- -- multiplication lifts to the quotient and corresponds to intersection
- -- of basic opens, i.e. we get a join-semilattice with:
+ -- The quotient A/R corresponds to the basic opens of the Zariski topology.
+ -- Multiplication lifts to the quotient and corresponds to intersection
+ -- of basic opens, i.e. we get a meet-semilattice with:
  _∧/_ : A / R → A / R → A / R
- _∧/_ = setQuotSymmBinOp (RequivRel .reflexive) (RequivRel .transitive) _·_ ·-comm ·-lcoh
+ _∧/_ = setQuotSymmBinOp (RequivRel .reflexive) (RequivRel .transitive) _·r_ ·r-comm ·r-lcoh
   where
-  ·-lcoh-≼ : (x y z : A) → x ≼ y → (x · z) ≼ (y · z)
-  ·-lcoh-≼ x y z (n , a , p) = suc n , (x · z ^ n · a) , (cong (x · z ·_) (^-ldist-· _ _ _)
-                                                       ∙∙ cong (λ v → x · z · (v · z ^ n)) p
-                                                       ∙∙ path _ _ _ _ _)
+  ·r-lcoh-≼ : (x y z : A) → x ≼ y → (x ·r z) ≼ (y ·r z)
+  ·r-lcoh-≼ x y z = map ·r-lcoh-≼Σ
    where
-   path : (x z a y zn : A) →  x · z · (a · y · zn) ≡ x · zn · a · (y · z)
+   path : (x z a y zn : A) →  x ·r z ·r (a ·r y ·r zn) ≡ x ·r zn ·r a ·r (y ·r z)
    path = solve A'
 
-  ·-lcoh : (x y z : A) → R x y → R (x · z) (y · z)
-  ·-lcoh x y z Rxy = ·-lcoh-≼ x y z (Rxy .fst) , ·-lcoh-≼ y x z (Rxy .snd)
+   ·r-lcoh-≼Σ : Σ[ n ∈ ℕ ] Σ[ a ∈ A ] x ^ n ≡ a ·r y
+              → Σ[ n ∈ ℕ ] Σ[ a ∈ A ] (x ·r z) ^ n ≡ a ·r (y ·r z)
+   ·r-lcoh-≼Σ  (n , a , p) = suc n , (x ·r z ^ n ·r a) , (cong (x ·r z ·r_) (^-ldist-· _ _ _)
+                                                       ∙∙ cong (λ v → x ·r z ·r (v ·r z ^ n)) p
+                                                       ∙∙ path _ _ _ _ _)
 
- 𝓞ᴰ : A / R → CommRing {ℓ}
- -- A/R → CommAlg A → CommRing
- 𝓞ᴰ = rec→Gpd.fun CommRingGpd (λ a → A[1/ a ]) Rcoh locPathProp
-  where
-  Rcoh : (a b : A) → R a b → A[1/ a ] ≡ A[1/ b ]
-  Rcoh a b ((n , x , p) , (m , y , q)) = {!!}
+  ·r-lcoh : (x y z : A) → R x y → R (x ·r z) (y ·r z)
+  ·r-lcoh x y z Rxy = ·r-lcoh-≼ x y z (Rxy .fst) , ·r-lcoh-≼ y x z (Rxy .snd)
 
-  locPathProp : (a b : A) → isProp (A[1/ a ] ≡ A[1/ b ])
-  locPathProp a b = isPropRetract (equivToIso (CommRingPath _ _) .inv)
-                                  (equivToIso (CommRingPath _ _) .fun)
-                                  (equivToIso (CommRingPath _ _) .rightInv)
-                                  locEquivProp
+ module ≼ToLoc (x y : A)  where
+  private
+   instance
+    _ = A[1/ x ]
+    _ = A[1/ y ]
+
+  lemma : x ≼ y → y ⋆ 1a ∈ A[1/ x ]ˣ
+  lemma = PT.rec (A[1/ x ]ˣ (y ⋆ 1a) .snd) lemmaΣ
    where
-   locEquivProp : isProp (Σ[ e ∈ ⟨ A[1/ a ] ⟩ ≃ ⟨ A[1/ b ] ⟩ ] (CommRingEquiv A[1/ a ] A[1/ b ] e))
-   locEquivProp ((f , _) , _) ((g , _) , _) = Σ≡Prop (isPropRingEquiv _ _)
-                                             (Σ≡Prop isPropIsEquiv {!!}) -- lost the information
-                                                                         -- that f,g are induced
-                                                                         -- by universal prop
+   path1 : (y z : A) → 1r ·r (y ·r 1r ·r z) ·r 1r ≡ z ·r y
+   path1 = solve A'
+   path2 : (xn : A) → xn ≡ 1r ·r 1r ·r (1r ·r 1r ·r xn)
+   path2 = solve A'
+
+   lemmaΣ : Σ[ n ∈ ℕ ] Σ[ a ∈ A ] x ^ n ≡ a ·r y → y ⋆ 1a ∈ A[1/ x ]ˣ
+   lemmaΣ (n , z , p) = [ z , (x ^ n) ,  PT.∣ n , refl ∣ ] -- xⁿ≡zy → y⁻¹ ≡ z/xⁿ
+                      , eq/ _ _ ((1r , powersFormMultClosedSubset _ _ .containsOne)
+                      , (path1 _ _ ∙∙ sym p ∙∙ path2 _))
+
+ powerIs≽ : (x a : A) → x ∈ ([_ⁿ|n≥0] A' a) → a ≼ x
+ powerIs≽ x a = map powerIs≽Σ
+  where
+  powerIs≽Σ : Σ[ n ∈ ℕ ] (x ≡ a ^ n) → Σ[ n ∈ ℕ ] Σ[ z ∈ A ] (a ^ n ≡ z ·r x)
+  powerIs≽Σ (n , p) = n , 1r , sym p ∙ sym (·rLid _)
+
+
+ 𝓞ᴰ : A / R → CommAlgebra A'
+ 𝓞ᴰ = rec→Gpd.fun isGroupoidCommAlgebra (λ a → A[1/ a ]) RCoh LocPathCoh
+    where
+    RCoh : ∀ a b → R a b → A[1/ a ] ≡ A[1/ b ]
+    RCoh a b (a≼b , b≼a) = fst (isContrS₁⁻¹R≡S₂⁻¹R
+             (λ _ x∈[aⁿ|n≥0] → ≼ToLoc.lemma _ _ (Trans≼ _ a _ b≼a (powerIs≽ _ _ x∈[aⁿ|n≥0])))
+              λ _ x∈[bⁿ|n≥0] → ≼ToLoc.lemma _ _ (Trans≼ _ b _ a≼b (powerIs≽ _ _ x∈[bⁿ|n≥0])))
+     where
+     open AlgLocTwoSubsets A' ([_ⁿ|n≥0] A' a) (powersFormMultClosedSubset _ _)
+                              ([_ⁿ|n≥0] A' b) (powersFormMultClosedSubset _ _)
+
+    LocPathCoh : ∀ a b → isProp (A[1/ a ] ≡ A[1/ b ])
+    LocPathCoh a b = isPropS₁⁻¹R≡S₂⁻¹R
+     where
+     open AlgLocTwoSubsets A' ([_ⁿ|n≥0] A' a) (powersFormMultClosedSubset _ _)
+                              ([_ⁿ|n≥0] A' b) (powersFormMultClosedSubset _ _)
+
+
+
+
 
  -- -- might com in handy later
  -- data ZarLat : Type ℓ where

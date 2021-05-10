@@ -191,3 +191,17 @@ module AlgLocTwoSubsets (R' : CommRing {ℓ})
    uniqueness : (φ : CommAlgebraEquiv S₁⁻¹RAsCommAlg S₂⁻¹RAsCommAlg) → center ≡ φ
    uniqueness φ = AlgebraEquivPath _ _
      (cong f (S₁⁻¹RHasAlgUniversalProp S₂⁻¹RAsCommAlg S₁⊆S₂⁻¹Rˣ .snd (AlgebraEquiv→AlgebraHom φ)))
+
+
+ isPropS₁⁻¹R≡S₂⁻¹R  : isProp (S₁⁻¹RAsCommAlg ≡ S₂⁻¹RAsCommAlg)
+ isPropS₁⁻¹R≡S₂⁻¹R S₁⁻¹R≡S₂⁻¹R  = isContr→isProp (isContrS₁⁻¹R≡S₂⁻¹R  S₁⊆S₂⁻¹Rˣ S₂⊆S₁⁻¹Rˣ) S₁⁻¹R≡S₂⁻¹R
+  where
+  S₁⊆S₂⁻¹Rˣ : ∀ s₁ → s₁ ∈ S₁ → s₁ ⋆ 1a ∈ S₂⁻¹Rˣ
+  S₁⊆S₂⁻¹Rˣ s₁ s₁∈S₁ =
+    transport (λ i → _⋆_ ⦃ S₁⁻¹R≡S₂⁻¹R i ⦄ s₁ (1a ⦃ S₁⁻¹R≡S₂⁻¹R i ⦄)
+                   ∈ (CommAlgebra→CommRing (S₁⁻¹R≡S₂⁻¹R i)) ˣ) (S₁⋆1⊆S₁⁻¹Rˣ s₁ s₁∈S₁)
+
+  S₂⊆S₁⁻¹Rˣ : ∀ s₂ → s₂ ∈ S₂ → s₂ ⋆ 1a ∈ S₁⁻¹Rˣ
+  S₂⊆S₁⁻¹Rˣ s₂ s₂∈S₂ =
+    transport (λ i → _⋆_ ⦃ (sym S₁⁻¹R≡S₂⁻¹R) i ⦄ s₂ (1a ⦃ (sym S₁⁻¹R≡S₂⁻¹R) i ⦄)
+                   ∈ (CommAlgebra→CommRing ((sym S₁⁻¹R≡S₂⁻¹R) i)) ˣ) (S₂⋆1⊆S₂⁻¹Rˣ s₂ s₂∈S₂)

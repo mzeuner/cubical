@@ -187,3 +187,7 @@ isPropIsCommAlgebra 0a 1a _+_ _·_ -_ _⋆_
 
  isPropComm : isProp (∀ x y → x · y ≡ y · x)
  isPropComm = isPropΠ2 λ _ _ → isSetA _ _
+
+isGroupoidCommAlgebra : {R : CommRing {ℓ}} → isGroupoid (CommAlgebra R)
+isGroupoidCommAlgebra A B = isOfHLevelRespectEquiv 2 (CommAlgebraPath _ _ _) (isSetAlgebraEquiv _ _)
+

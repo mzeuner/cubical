@@ -142,6 +142,58 @@ record AlgebraEquiv {R : Ring {ℓ}} (A B : Algebra R) : Type ℓ where
     comm⋆  : (r : ⟨ R ⟩) (x : ⟨ A ⟩a) → equivFun e (r ⋆ x) ≡ r ⋆ equivFun e x
 
 
+record isAlgebraEquiv {R : Ring {ℓ}} (A B : Algebra R) (e : ⟨ A ⟩a ≃ ⟨ B ⟩a) : Type ℓ where
+
+  constructor isalgebraiso
+
+  instance
+    _ : Algebra R
+    _ = A
+    _ : Algebra R
+    _ = B
+
+  open Algebra {{...}}
+
+  field
+    isHom+ : (x y : ⟨ A ⟩a) → equivFun e (x + y) ≡ equivFun e x + equivFun e y
+    isHom· : (x y : ⟨ A ⟩a) → equivFun e (x · y) ≡ equivFun e x · equivFun e y
+    pres1  : equivFun e 1a ≡ 1a
+    comm⋆  : (r : ⟨ R ⟩) (x : ⟨ A ⟩a) → equivFun e (r ⋆ x) ≡ r ⋆ equivFun e x
+
+isPropIsAlgebraEquiv : {R : Ring {ℓ}} (A B : Algebra R) (e : ⟨ A ⟩a ≃ ⟨ B ⟩a)
+                     → isProp (isAlgebraEquiv A B e)
+isAlgebraEquiv.isHom+ (isPropIsAlgebraEquiv A B e ι₁ ι₂ i) x y =
+  isSetAlgebra B _ _ (ι₁ .isAlgebraEquiv.isHom+ x y) (ι₂ .isAlgebraEquiv.isHom+ x y) i
+isAlgebraEquiv.isHom· (isPropIsAlgebraEquiv A B e ι₁ ι₂ i) x y =
+  isSetAlgebra B _ _ (ι₁ .isAlgebraEquiv.isHom· x y) (ι₂ .isAlgebraEquiv.isHom· x y) i
+isAlgebraEquiv.pres1 (isPropIsAlgebraEquiv A B e ι₁ ι₂ i) =
+  isSetAlgebra B _ _ (ι₁ .isAlgebraEquiv.pres1) (ι₂ .isAlgebraEquiv.pres1) i
+isAlgebraEquiv.comm⋆ (isPropIsAlgebraEquiv A B e ι₁ ι₂ i) r x =
+  isSetAlgebra B _ _ (ι₁ .isAlgebraEquiv.comm⋆ r x) (ι₂ .isAlgebraEquiv.comm⋆ r x) i
+
+AlgebraEquivΣIso : {R : Ring {ℓ}} (A B : Algebra R)
+                 → Iso (AlgebraEquiv A B) (Σ[ e ∈ ⟨ A ⟩a ≃ ⟨ B ⟩a ] isAlgebraEquiv A B e)
+fst (fun (AlgebraEquivΣIso A B) φ) = φ .AlgebraEquiv.e
+isAlgebraEquiv.isHom+ (snd (fun (AlgebraEquivΣIso A B) φ)) = φ .AlgebraEquiv.isHom+
+isAlgebraEquiv.isHom· (snd (fun (AlgebraEquivΣIso A B) φ)) = φ .AlgebraEquiv.isHom·
+isAlgebraEquiv.pres1 (snd (fun (AlgebraEquivΣIso A B) φ)) = φ .AlgebraEquiv.pres1
+isAlgebraEquiv.comm⋆ (snd (fun (AlgebraEquivΣIso A B) φ)) = φ .AlgebraEquiv.comm⋆
+AlgebraEquiv.e (inv (AlgebraEquivΣIso A B) (e , isAlgEquivE)) = e
+AlgebraEquiv.isHom+ (inv (AlgebraEquivΣIso A B) (e , isAlgEquivE)) = isAlgEquivE .isAlgebraEquiv.isHom+
+AlgebraEquiv.isHom· (inv (AlgebraEquivΣIso A B) (e , isAlgEquivE)) = isAlgEquivE .isAlgebraEquiv.isHom·
+AlgebraEquiv.pres1 (inv (AlgebraEquivΣIso A B) (e , isAlgEquivE)) = isAlgEquivE .isAlgebraEquiv.pres1
+AlgebraEquiv.comm⋆ (inv (AlgebraEquivΣIso A B) (e , isAlgEquivE)) = isAlgEquivE .isAlgebraEquiv.comm⋆
+rightInv (AlgebraEquivΣIso A B) _ = refl
+leftInv (AlgebraEquivΣIso A B) _ = refl
+
+isSetAlgebraEquiv : {R : Ring {ℓ}} (A B : Algebra R) → isSet (AlgebraEquiv A B)
+isSetAlgebraEquiv A B = isOfHLevelRetractFromIso 2 (AlgebraEquivΣIso A B) isSetAlgebraEquivΣ
+ where
+ isSetAlgebraEquivΣ : isSet (Σ[ e ∈ ⟨ A ⟩a ≃ ⟨ B ⟩a ] isAlgebraEquiv A B e)
+ isSetAlgebraEquivΣ _ _ = isOfHLevelRespectEquiv 1 (Σ≡PropEquiv (isPropIsAlgebraEquiv _ _))
+                         (isOfHLevelRespectEquiv 1 (Σ≡PropEquiv isPropIsEquiv)
+                         (isSetΠ (λ _ → isSetAlgebra B) _ _))
+
 AlgebraEquivEqDep : {R : Ring {ℓ}} (A B C : Algebra R) (p : B ≡ C)
                   (φ : AlgebraEquiv A B) (ψ : AlgebraEquiv A C)
                 → PathP (λ i → A .Algebra.Carrier → p i .Algebra.Carrier)

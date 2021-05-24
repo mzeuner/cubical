@@ -65,7 +65,7 @@ module _ (A' : CommRing {ℓ}) where
   A[1/ x ]ˣ = (CommAlgebra→CommRing A[1/ x ]) ˣ
 
  _≼_ : A → A → Type ℓ
- x ≼ y = ∥ Σ[ n ∈ ℕ ] Σ[ z ∈ A ] x ^ n ≡ z ·r y ∥ -- rad(x) ⊆ rad(y)
+ x ≼ y = ∃[ n ∈ ℕ ] Σ[ z ∈ A ] x ^ n ≡ z ·r y -- rad(x) ⊆ rad(y)
 
 -- ≼ is a pre-order:
 
@@ -125,7 +125,7 @@ module _ (A' : CommRing {ℓ}) where
     _ = A[1/ x ]
     _ = A[1/ y ]
 
-  lemma : x ≼ y → y ⋆ 1a ∈ A[1/ x ]ˣ
+  lemma : x ≼ y → y ⋆ 1a ∈ A[1/ x ]ˣ -- y/1 ∈ A[1/x]ˣ
   lemma = PT.rec (A[1/ x ]ˣ (y ⋆ 1a) .snd) lemmaΣ
    where
    path1 : (y z : A) → 1r ·r (y ·r 1r ·r z) ·r 1r ≡ z ·r y

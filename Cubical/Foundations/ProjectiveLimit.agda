@@ -62,3 +62,10 @@ module _ (J : Type ℓ) (_≤_ : J → J → Type ℓ') (isposet : isPoset J _�
                 Σ≡Prop (λ _ → isPropΠ2 λ _ _ → Xset _ _ _)
                 (funExt (λ z → Σ≡Prop (λ _ → isPropImplicitΠ2 (λ _ _ → isPropΠ (λ _ → Xset _ _ _)))
                  (funExt λ j → sym (h∞Compat j z) ∙ g∞Compat j z)))
+
+ universalProp :  (∀ j → isSet (X j))
+               → (Z : Type ℓ''') → (h : (j : J) → Z → X j)
+               → (∀ {i j} (i≤j : i ≤ j) (z : Z) → h i z ≡ μ i≤j (h j z))
+               → ∃![ h∞ ∈ (Z → projLim) ] (∀ i z → h i z ≡ π i (h∞ z))
+ universalProp Xset Z h hCompat = (inducedMap Z h hCompat)
+                                , inducedMapUniq Xset Z h hCompat (inducedMap Z h hCompat)

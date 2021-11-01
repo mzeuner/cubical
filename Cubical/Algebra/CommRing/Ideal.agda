@@ -2,13 +2,14 @@
   This is mostly for convenience, when working with ideals
   (which are defined for general rings) in a commutative ring.
 -}
-{-# OPTIONS --safe #-}
+{-# OPTIONS --safe --experimental-lossy-unification #-}
 module Cubical.Algebra.CommRing.Ideal where
 
 open import Cubical.Foundations.Prelude
 open import Cubical.Foundations.Function
 open import Cubical.Foundations.HLevels
 open import Cubical.Foundations.Powerset
+open import Cubical.Foundations.Equiv
 
 open import Cubical.Functions.Logic
 
@@ -89,8 +90,13 @@ module CommIdeal (R' : CommRing ℓ) where
  CommIdeal : Type (ℓ-suc ℓ)
  CommIdeal = Σ[ I ∈ ℙ R ] isCommIdeal I
 
- CommIdeal≡Char : {I J : CommIdeal} → (I .fst ⊆ J .fst) → (J .fst ⊆ I .fst) → I ≡ J
- CommIdeal≡Char I⊆J J⊆I = Σ≡Prop isPropIsCommIdeal (⊆-extensionality _ _ (I⊆J , J⊆I))
+ _≡ᴵ_ : CommIdeal → CommIdeal → Type ℓ
+ I ≡ᴵ J = I .fst ≡ᴾ J .fst
+
+ infix 4 _≡ᴵ_
+
+ CommIdeal≡Char : {I J : CommIdeal} → (I ≡ᴵ J) ≃ (I ≡ J)
+ CommIdeal≡Char = compEquiv (⊆-extensionalityEquiv _ _) (Σ≡PropEquiv isPropIsCommIdeal)
 
  ∑Closed : (I : CommIdeal) {n : ℕ} (V : FinVec R n)
          → (∀ i → V i ∈ fst I) → ∑ V ∈ fst I
@@ -109,9 +115,9 @@ module CommIdeal (R' : CommRing ℓ) where
  contains0 (snd 1Ideal) = lift tt
  ·Closed (snd 1Ideal) _ _ = lift tt
 
- contains1Is1 : (I : CommIdeal) → 1r ∈ I .fst → I ≡ 1Ideal
- contains1Is1 I 1∈I = CommIdeal≡Char (λ _ _ → lift tt)
-   λ x _ → subst-∈ (I .fst) (·Rid _) (I .snd .·Closed x 1∈I) -- x≡x·1 ∈ I
+ contains1Is1 : (I : CommIdeal) → 1r ∈ I .fst → I ≡ᴵ 1Ideal
+ contains1Is1 I 1∈I = (λ _ _ → lift tt)
+                     , (λ x _ → subst-∈ (I .fst) (·Rid _) (I .snd .·Closed x 1∈I)) -- x≡x·1 ∈ I
 
  _+i_ : CommIdeal → CommIdeal → CommIdeal
  fst (I +i J) x =
@@ -139,11 +145,11 @@ module CommIdeal (R' : CommRing ℓ) where
  +iComm⊆ : ∀ (I J : CommIdeal) → (I +i J) .fst ⊆ (J +i I) .fst
  +iComm⊆ I J x = map λ ((y , z) , y∈I , z∈J , x≡y+z) → (z , y) , z∈J , y∈I , x≡y+z ∙ +Comm _ _
 
- +iComm : ∀ (I J : CommIdeal) → I +i J ≡ J +i I
- +iComm I J = CommIdeal≡Char (+iComm⊆ I J)  (+iComm⊆ J I)
+ +iComm : ∀ (I J : CommIdeal) → I +i J ≡ᴵ J +i I
+ +iComm I J = (+iComm⊆ I J) , (+iComm⊆ J I)
 
- +iLid : ∀ (I : CommIdeal) → 0Ideal +i I ≡ I
- +iLid I = CommIdeal≡Char incl1 incl2
+ +iLid : ∀ (I : CommIdeal) → 0Ideal +i I ≡ᴵ I
+ +iLid I = incl1 , incl2
   where
   incl1 : (0Ideal +i I) .fst ⊆ I .fst
   incl1 x = rec (I .fst x .snd) λ ((y , z) , y≡0 , z∈I , x≡y+z)
@@ -159,10 +165,11 @@ module CommIdeal (R' : CommRing ℓ) where
  +iRincl I J x x∈J = ∣ (0r , x) , I .snd .contains0 , x∈J ,  sym (+Lid x) ∣
 
  +iRespLincl : ∀ (I J K : CommIdeal) → I .fst ⊆ J .fst → (I +i K) .fst ⊆ (J +i K) .fst
- +iRespLincl I J K I⊆J x = map λ ((y , z) , y∈I , z∈K , x≡y+z) → ((y , z) , I⊆J y y∈I , z∈K , x≡y+z)
+ +iRespLincl I J K I⊆J x = map
+                          λ ((y , z) , y∈I , z∈K , x≡y+z) → ((y , z) , I⊆J y y∈I , z∈K , x≡y+z)
 
- +iAssoc : ∀ (I J K : CommIdeal) → I +i (J +i K) ≡ (I +i J) +i K
- +iAssoc I J K = CommIdeal≡Char incl1 incl2
+ +iAssoc : ∀ (I J K : CommIdeal) → I +i (J +i K) ≡ᴵ (I +i J) +i K
+ +iAssoc I J K = incl1 , incl2
   where
   incl1 : (I +i (J +i K)) .fst ⊆ ((I +i J) +i K) .fst
   incl1 x = elim (λ _ → ((I +i J) +i K) .fst x .snd) (uncurry3
@@ -177,8 +184,8 @@ module CommIdeal (R' : CommRing ℓ) where
                 → ∣ (u , v + z) , u∈I , ∣ _ , v∈J , z∈K , refl ∣
                                        , x≡y+z ∙∙ cong (_+ z) y≡u+v ∙∙ sym (+Assoc _ _ _) ∣)
 
- +iIdem : ∀ (I : CommIdeal) → I +i I ≡ I
- +iIdem I = CommIdeal≡Char incl1 incl2
+ +iIdem : ∀ (I : CommIdeal) → I +i I ≡ᴵ I
+ +iIdem I = incl1 , incl2
   where
   incl1 : (I +i I) .fst ⊆ I .fst
   incl1 x = rec (I .fst x .snd) λ ((y , z) , y∈I , z∈I , x≡y+z)
@@ -218,15 +225,6 @@ module CommIdeal (R' : CommRing ℓ) where
  prodInProd _ _ x y x∈I y∈J =
             ∣ 1 , ((λ _ → x) , λ _ → y) , (λ _ → x∈I) , (λ _ → y∈J) , sym (+Rid _) ∣
 
- -- a non-dep version that works?
- -- ·iElim : {I J : CommIdeal} {P : (x : R) → x ∈ (I ·i J) .fst → Type ℓ}
- --        → (∀ x x∈IJ → isProp (P x x∈IJ))
- --        → (∀ x y x∈I y∈J → P (x · y) (prodInProd I J x y x∈I y∈J))
- --        ---------------------------------------------------------
- --        → ∀ x x∈IJ → P x x∈IJ
- -- ·iElim {I = I} {J = J} {P = P} isPropP h x = elim (isPropP x) λ (_ , (α , β) , α∈I , β∈J , x≡∑αβ)
- --                    → subst (λ x → (x∈IJ : x ∈ (I ·i J) .fst) → P x x∈IJ) (sym x≡∑αβ) {!!} {!!}
-
  ·iLincl : ∀ (I J : CommIdeal) → (I ·i J) .fst ⊆ I .fst
  ·iLincl I J x = elim (λ _ → I .fst x .snd)
    λ (_ , (α , β) , α∈I , _ , x≡∑αβ) → subst-∈ (I .fst) (sym x≡∑αβ)
@@ -236,11 +234,11 @@ module CommIdeal (R' : CommRing ℓ) where
  ·iComm⊆ I J x = map λ (n , (α , β) , ∀αi∈I , ∀βi∈J , x≡∑αβ)
                       → (n , (β , α) , ∀βi∈J , ∀αi∈I , x≡∑αβ ∙ ∑Ext (λ i → ·-comm (α i) (β i)))
 
- ·iComm : ∀ (I J : CommIdeal) → I ·i J ≡ J ·i I
- ·iComm I J = CommIdeal≡Char (·iComm⊆ I J) (·iComm⊆ J I)
+ ·iComm : ∀ (I J : CommIdeal) → I ·i J ≡ᴵ J ·i I
+ ·iComm I J = (·iComm⊆ I J) , (·iComm⊆ J I)
 
- ·iRid : ∀ (I : CommIdeal) → I ·i 1Ideal ≡ I
- ·iRid I = CommIdeal≡Char (·iLincl I 1Ideal) I1⊆I
+ ·iRid : ∀ (I : CommIdeal) → I ·i 1Ideal ≡ᴵ I
+ ·iRid I = (·iLincl I 1Ideal) , I1⊆I
   where
   useSolver : ∀ x → x ≡ x · 1r + 0r
   useSolver = solve R'
@@ -249,11 +247,11 @@ module CommIdeal (R' : CommRing ℓ) where
   I1⊆I x x∈I = ∣ 1 , ((λ _ → x) , λ _ → 1r) , (λ _ → x∈I) , (λ _ → lift tt) , useSolver x ∣
 
  -- a useful corollary
- ·iRContains1id : ∀ (I J : CommIdeal) → 1r ∈ J .fst → I ·i J ≡ I
- ·iRContains1id I J 1∈J = cong (I ·i_) (contains1Is1 J 1∈J) ∙ ·iRid I
+ ·iRContains1id : ∀ (I J : CommIdeal) → 1r ∈ J .fst → I ·i J ≡ᴵ I
+ ·iRContains1id I J 1∈J = {!!} ∙ᴾ ·iRid I --cong (I ·i_) (contains1Is1 J 1∈J) ∙ ·iRid I
 
- ·iAssoc : ∀ (I J K : CommIdeal) → I ·i (J ·i K) ≡ (I ·i J) ·i K
- ·iAssoc I J K = CommIdeal≡Char incl1 incl2
+ ·iAssoc : ∀ (I J K : CommIdeal) → I ·i (J ·i K) ≡ᴵ (I ·i J) ·i K
+ ·iAssoc I J K = incl1 , incl2
   where
   incl1 : (I ·i (J ·i K)) .fst ⊆ ((I ·i J) ·i K) .fst
   incl1 x = rec isPropPropTrunc
@@ -285,8 +283,8 @@ module CommIdeal (R' : CommRing ℓ) where
                                                (prodInProd J K _ _ (δ∈J j) (β∈K i))))
                 (α∈IJ i))
 
- ·iRdist+i : ∀ (I J K : CommIdeal) → I ·i (J +i K) ≡ I ·i J +i I ·i K
- ·iRdist+i I J K = CommIdeal≡Char incl1 incl2
+ ·iRdist+i : ∀ (I J K : CommIdeal) → I ·i (J +i K) ≡ᴵ I ·i J +i I ·i K
+ ·iRdist+i I J K = incl1 , incl2
   where
   incl1 : (I ·i (J +i K)) .fst ⊆ (I ·i J +i I ·i K) .fst
   incl1 x = rec isPropPropTrunc
@@ -313,8 +311,8 @@ module CommIdeal (R' : CommRing ℓ) where
                       → n , (α , β) , α∈I , (λ i → +iRincl J K _ (β∈K i)) , x'≡∑αβ)
 
  -- only one absorption law, i.e. CommIdeal , +i , ·i does not form a dist. lattice
- ·iAbsorb+i : ∀ (I J : CommIdeal) → I +i (I ·i J) ≡ I
- ·iAbsorb+i I J = CommIdeal≡Char incl1 incl2
+ ·iAbsorb+i : ∀ (I J : CommIdeal) → I +i (I ·i J) ≡ᴵ I
+ ·iAbsorb+i I J = incl1 , incl2
   where
   incl1 : (I +i (I ·i J)) .fst ⊆ I .fst
   incl1 x = rec (I .fst x .snd) λ ((y , z) , y∈I , z∈IJ , x≡y+z)

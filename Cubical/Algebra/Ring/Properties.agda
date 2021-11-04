@@ -199,3 +199,10 @@ module _{R S : Ring ℓ} (φ ψ : RingHom R S) where
 
  RingHom≡f : fst φ ≡ fst ψ → φ ≡ ψ
  RingHom≡f = Σ≡Prop λ f → isPropIsRingHom _ f _
+
+
+-- the Ring version of uaCompEquiv
+-- can reduce this or do you need a RingEquivJ?
+-- RingPathCompEquiv : ∀ {A B C : Ring ℓ} (f : RingEquiv A B) (g : RingEquiv B C)
+--   → RingPath A C .fst (compRingEquiv f g) ≡ RingPath A B .fst f ∙ RingPath B C .fst g
+-- RingPathCompEquiv {B = B} {C} f g = {!!}

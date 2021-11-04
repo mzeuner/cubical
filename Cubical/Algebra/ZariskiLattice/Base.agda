@@ -43,6 +43,7 @@ open import Cubical.Algebra.RingSolver.ReflectionSolving
 open import Cubical.Algebra.Semilattice
 open import Cubical.Algebra.Lattice
 open import Cubical.Algebra.DistLattice
+open import Cubical.Algebra.DistLattice.Basis
 open import Cubical.Algebra.DistLattice.BigOps
 open import Cubical.Algebra.Matrix
 
@@ -53,8 +54,7 @@ open Iso
 open BinaryRelation
 open isEquivRel
 
-private
-  variable
+private variable
     ℓ ℓ' : Level
 
 
@@ -445,6 +445,14 @@ module ZarLatUniversalProp (R' : CommRing ℓ) where
        fst χ' [ suc n , α ] ∎
 
 
+ -- the map induced by applying the universal property to the Zariski lattice
+ -- itself is the identity hom
+ ZLUniversalPropCorollary : ZLHasUniversalProp ZariskiLattice D isZarMapD .fst .fst
+                          ≡ idDistLatticeHom ZariskiLattice
+ ZLUniversalPropCorollary = cong fst
+                              (ZLHasUniversalProp ZariskiLattice D isZarMapD .snd
+                                 (idDistLatticeHom ZariskiLattice , refl))
+
 
 -- An equivalent definition that doesn't bump up the unviverse level
 module SmallZarLat (R' : CommRing ℓ) where
@@ -485,3 +493,48 @@ module SmallZarLat (R' : CommRing ℓ) where
 
  ZL≃ZL' : ZL ≃ ZL'
  ZL≃ZL' = isoToEquiv IsoLarLatSmall
+
+
+
+module BasicOpens (R' : CommRing ℓ) where
+ open CommRingStr (snd R')
+ open RingTheory (CommRing→Ring R')
+ -- open Sum (CommRing→Ring R')
+ -- open CommRingTheory R'
+ -- open Exponentiation R'
+ -- open BinomialThm R'
+ open CommIdeal R'
+ -- open RadicalIdeal R'
+ open isCommIdeal
+ -- open ProdFin R'
+
+ open ZarLat R'
+ open ZarLatUniversalProp R'
+ open IsZarMap
+
+ open Join ZariskiLattice
+
+ private
+  R = fst R'
+  ⟨_⟩ : {n : ℕ} → FinVec R n → CommIdeal
+  ⟨ V ⟩ = ⟨ V ⟩[ R' ]
+
+ BasicOpens : ℙ ZL
+ BasicOpens 𝔞 = (∃[ f ∈ R ] (D f ≡ 𝔞)) , isPropPropTrunc
+
+ BO : Type (ℓ-suc ℓ)
+ BO = Σ[ 𝔞 ∈ ZL ] (𝔞 ∈ BasicOpens)
+
+ open IsBasis
+ basicOpensAreBasis : IsBasis ZariskiLattice BasicOpens
+ contains0 basicOpensAreBasis = ∣ 0r , isZarMapD .pres0 ∣
+ ∧lClosed basicOpensAreBasis 𝔞 𝔟 = map2
+            λ (f , Df≡𝔞) (g , Dg≡𝔟) → (f · g) , isZarMapD .·≡∧ f g ∙ cong₂ (_∧z_) Df≡𝔞 Dg≡𝔟
+ ⋁Basis basicOpensAreBasis = elimProp (λ _ → isPropPropTrunc) Σhelper
+  where
+  Σhelper : (a : Σ[ n ∈ ℕ ] FinVec R n)
+          → ∃[ n ∈ ℕ ] Σ[ α ∈ FinVec ZL n ] (∀ i → α i ∈ BasicOpens) × (⋁ α ≡ [ a ])
+  Σhelper (n , α) = ∣ n , (D ∘ α) , (λ i → ∣ α i , refl ∣) , path ∣
+   where
+   path : ⋁ (D ∘ α) ≡ [ n , α ]
+   path = funExt⁻ (cong fst ZLUniversalPropCorollary) _

@@ -189,6 +189,10 @@ isPropIsRingHom R f S = isOfHLevelRetractFromIso 1 IsRingHomIsoΣ
                                   (isPropΠ2 λ _ _ → isSetRing (_ , S) _ _)
                                   (isPropΠ λ _ → isSetRing (_ , S) _ _))
 
+isSetRingEquiv : (A : Ring ℓ) (B : Ring ℓ') → isSet (RingEquiv A B)
+isSetRingEquiv A B = isSetΣ (isOfHLevel≃ 2 (isSetRing A) (isSetRing B))
+                              λ _ → isProp→isSet (isPropIsRingHom _ _ _)
+
 RingHomEqDep : (R S T : Ring ℓ) (p : S ≡ T) (φ : RingHom R S) (ψ : RingHom R T)
              → PathP (λ i → R .fst → p i .fst) (φ .fst) (ψ .fst)
              → PathP (λ i → RingHom R (p i)) φ ψ
@@ -216,6 +220,9 @@ RingHomEqDep R S T p φ ψ q = ΣPathP (q , isProp→PathP (λ _ → isPropIsRin
 
 RingPath : (R S : Ring ℓ) → RingEquiv R S ≃ (R ≡ S)
 RingPath = ∫ 𝒮ᴰ-Ring .UARel.ua
+
+isGroupoidRing : isGroupoid (Ring ℓ)
+isGroupoidRing _ _ = isOfHLevelRespectEquiv 2 (RingPath _ _) (isSetRingEquiv _ _)
 
 -- Rings have an abelian group and a monoid
 
@@ -262,6 +269,8 @@ compRingEquiv : {A : Ring ℓ} {B : Ring ℓ'} {C : Ring ℓ''}
 fst (compRingEquiv f g) = compEquiv (f .fst) (g .fst)
 snd (compRingEquiv f g) = compIsRingEquiv {g = g .fst} {f = f .fst} (g .snd) (f .snd)
 
+uaRing : {A B : Ring ℓ} → RingEquiv A B → A ≡ B
+uaRing {A = A} {B = B} = equivFun (RingPath A B)
 
 -- Smart constructor for ring homomorphisms
 -- that infers the other equations from pres1, pres+, and pres·

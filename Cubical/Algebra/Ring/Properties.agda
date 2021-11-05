@@ -1,7 +1,8 @@
-{-# OPTIONS --safe #-}
+{-# OPTIONS --safe --experimental-lossy-unification #-}
 module Cubical.Algebra.Ring.Properties where
 
 open import Cubical.Foundations.Prelude
+open import Cubical.Foundations.Function
 open import Cubical.Foundations.Equiv
 open import Cubical.Foundations.Equiv.HalfAdjoint
 open import Cubical.Foundations.HLevels
@@ -9,6 +10,8 @@ open import Cubical.Foundations.Isomorphism
 open import Cubical.Foundations.Univalence
 open import Cubical.Foundations.Transport
 open import Cubical.Foundations.SIP
+open import Cubical.Foundations.GroupoidLaws
+open import Cubical.Foundations.Path
 
 open import Cubical.Data.Sigma
 
@@ -20,9 +23,12 @@ open import Cubical.Algebra.Monoid
 open import Cubical.Algebra.AbGroup
 open import Cubical.Algebra.Ring.Base
 
+open import Cubical.HITs.PropositionalTruncation
+
 private
   variable
-    ℓ : Level
+    ℓ ℓ' : Level
+    A : Type ℓ'
 
 {-
   some basic calculations (used for example in QuotientRing.agda),
@@ -206,3 +212,72 @@ module _{R S : Ring ℓ} (φ ψ : RingHom R S) where
 -- RingPathCompEquiv : ∀ {A B C : Ring ℓ} (f : RingEquiv A B) (g : RingEquiv B C)
 --   → RingPath A C .fst (compRingEquiv f g) ≡ RingPath A B .fst f ∙ RingPath B C .fst g
 -- RingPathCompEquiv {B = B} {C} f g = {!!}
+
+-- Ring-ua functoriality
+open RingStr
+
+Ring≡ : (A B : Ring ℓ) → (
+  Σ[ p ∈ ⟨ A ⟩ ≡ ⟨ B ⟩ ]
+  Σ[ q0 ∈ PathP (λ i → p i) (0r (snd A)) (0r (snd B)) ]
+  Σ[ q1 ∈ PathP (λ i → p i) (1r (snd A)) (1r (snd B)) ]
+  Σ[ r+ ∈ PathP (λ i → p i → p i → p i) (_+_ (snd A)) (_+_ (snd B)) ]
+  Σ[ r· ∈ PathP (λ i → p i → p i → p i) (_·_ (snd A)) (_·_ (snd B)) ]
+  Σ[ s ∈ PathP (λ i → p i → p i) (-_ (snd A)) (-_ (snd B)) ]
+  PathP (λ i → IsRing (q0 i) (q1 i) (r+ i) (r· i) (s i)) (isRing (snd A)) (isRing (snd B)))
+  ≃ (A ≡ B)
+Ring≡ A B = isoToEquiv theIso
+  where
+  open Iso
+  theIso : Iso _ _
+  fun theIso (p , q0 , q1 , r+ , r· , s , t) i = p i , ringstr (q0 i) (q1 i) (r+ i) (r· i) (s i) (t i)
+  inv theIso x = cong ⟨_⟩ x , cong (0r ∘ snd) x , cong (1r ∘ snd) x
+               , cong (_+_ ∘ snd) x , cong (_·_ ∘ snd) x , cong (-_ ∘ snd) x , cong (isRing ∘ snd) x
+  rightInv theIso _ = refl
+  leftInv theIso _ = refl
+
+caracRing≡ : {A B : Ring ℓ} (p q : A ≡ B) → cong ⟨_⟩ p ≡ cong ⟨_⟩ q → p ≡ q
+caracRing≡ {A = A} {B = B} p q P =
+  sym (transportTransport⁻ (ua (Ring≡ A B)) p)
+                                   ∙∙ cong (transport (ua (Ring≡ A B))) helper
+                                   ∙∙ transportTransport⁻ (ua (Ring≡ A B)) q
+    where
+    helper : transport (sym (ua (Ring≡ A B))) p ≡ transport (sym (ua (Ring≡ A B))) q
+    helper = Σ≡Prop
+               (λ _ → isPropΣ
+                         (isOfHLevelPathP' 1 (is-set (snd B)) _ _)
+                         λ _ → isPropΣ (isOfHLevelPathP' 1 (is-set (snd B)) _ _)
+                         λ _ → isPropΣ (isOfHLevelPathP' 1 (isSetΠ2 λ _ _ → is-set (snd B)) _ _)
+                         λ _ → isPropΣ (isOfHLevelPathP' 1 (isSetΠ2 λ _ _ → is-set (snd B)) _ _)
+                         λ _ → isPropΣ (isOfHLevelPathP' 1 (isSetΠ λ _ → is-set (snd B)) _ _)
+                         λ _ → isOfHLevelPathP 1 (isPropIsRing _ _ _ _ _) _ _)
+              (transportRefl (cong ⟨_⟩ p) ∙ P ∙ sym (transportRefl (cong ⟨_⟩ q)))
+
+-- uaRingId : (A : Ring ℓ) → uaRing (idRingEquiv {A = A}) ≡ refl
+-- uaRingId A = caracRing≡ _ _ uaIdEquiv
+
+uaCompRingEquiv : {A B C : Ring ℓ} (f : RingEquiv A B) (g : RingEquiv B C)
+                 → uaRing (compRingEquiv f g) ≡ uaRing f ∙ uaRing g
+uaCompRingEquiv f g = caracRing≡ _ _ (
+  cong ⟨_⟩ (uaRing (compRingEquiv f g))
+    ≡⟨ uaCompEquiv _ _ ⟩
+  cong ⟨_⟩ (uaRing f) ∙ cong ⟨_⟩ (uaRing g)
+    ≡⟨ sym (cong-∙ ⟨_⟩ (uaRing f) (uaRing g)) ⟩
+  cong ⟨_⟩ (uaRing f ∙ uaRing g) ∎)
+
+
+
+-- A useful lemma when defining presheaves
+recPT→Ring : (𝓕  : A → Ring ℓ)
+           → (σ : ∀ x y → RingEquiv (𝓕 x) (𝓕 y))
+           → (∀ x y z → σ x z ≡ compRingEquiv (σ x y) (σ y z))
+          ------------------------------------------------------
+           → ∥ A ∥ → Ring ℓ
+recPT→Ring 𝓕 σ compCoh = rec→Gpd isGroupoidRing 𝓕 is3-Constant𝓕
+ where
+ open 3-Constant
+ open GpdElim
+
+ is3-Constant𝓕 : 3-Constant 𝓕
+ link is3-Constant𝓕 x y = uaRing (σ x y)
+ coh₁ is3-Constant𝓕 x y z = transport⁻ (PathP≡compPath _ _ _)
+                              (sym (cong uaRing (compCoh x y z) ∙ uaCompRingEquiv (σ x y) (σ y z)))

@@ -578,11 +578,20 @@ module BasicOpens (R' : CommRing ℓ) where
   --the restriction hom's
   ρ : (f g : R) → f ∈ (√i ⟨ replicateFinVec 1 g ⟩) .fst
     → CommRingHom (R[1/_]AsCommRing R' g) (R[1/_]AsCommRing R' f)
-  ρ f g f∈√⟨g⟩ = R[1/g]HasUniversalProp _ (/1AsCommRingHom _ _ _) (lemma2 f g f∈√⟨g⟩) .fst .fst
+  ρ f g f∈√⟨g⟩ = ρ' --R[1/g]HasUniversalProp _ (/1AsCommRingHom _ _ _) (lemma2 f g f∈√⟨g⟩) .fst .fst
    where
    open S⁻¹RUniversalProp R' ([_ⁿ|n≥0] R' g) (powersFormMultClosedSubset _ _)
         hiding (/1AsCommRingHom)
         renaming (S⁻¹RHasUniversalProp to R[1/g]HasUniversalProp)
+   F = R[1/g]HasUniversalProp _ (/1AsCommRingHom _ _ _) (lemma2 f g f∈√⟨g⟩) .fst .fst
+   ρ' : CommRingHom (R[1/ R' ]AsCommRing g) (R[1/ R' ]AsCommRing f)
+   fst ρ' = fst F
+   snd ρ' =  sndρ'
+    where
+    abstract
+     sndρ' : IsRingHom (CommRing→Ring (R[1/ R' ]AsCommRing g) .snd) (fst ρ')
+                       (CommRing→Ring (R[1/ R' ]AsCommRing f) .snd)
+     sndρ' = snd F
 
   --can we compute with rho?
   module _ (f g h : R) (f∈√⟨g⟩ : f ∈ (√i ⟨ replicateFinVec 1 g ⟩) .fst)
@@ -596,7 +605,8 @@ module BasicOpens (R' : CommRing ℓ) where
 
    -- no it doesn't work ...
    ρComp : ρ f h f∈√⟨h⟩ ≡ ρ f g f∈√⟨g⟩ ∘r ρ g h g∈√⟨h⟩
-   ρComp = RingHom≡f _ _ (funExt (InvElPropElim R' (λ _ → squash/ _ _) λ r n → {!eq/ _ _ ?!}))
+   ρComp = RingHom≡f _ _ (funExt (InvElPropElim R' (λ _ → squash/ _ _) λ r n → {!cong [_] ?!}))
 
    ρId : ∀ x → ρ f f f∈√⟨f⟩ .fst x ≡ x
-   ρId = InvElPropElim R' (λ _ → squash/ _ _) λ r n → {!eq/ _ _ ?!}
+   ρId = InvElPropElim R' (λ _ → squash/ _ _) {!!}
+   --  λ { r zero → cong [_] (≡-× ? (Σ≡Prop  (λ _ → isPropPropTrunc) ?)) ; r (suc n) → {!!} }

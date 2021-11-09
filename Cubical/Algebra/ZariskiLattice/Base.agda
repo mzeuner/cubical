@@ -608,5 +608,5 @@ module BasicOpens (R' : CommRing ℓ) where
    ρComp = RingHom≡f _ _ (funExt (InvElPropElim R' (λ _ → squash/ _ _) λ r n → {!cong [_] ?!}))
 
    ρId : ∀ x → ρ f f f∈√⟨f⟩ .fst x ≡ x
-   ρId = InvElPropElim R' (λ _ → squash/ _ _) {!!}
+   ρId = InvElPropElim R' (λ _ → squash/ _ _) λ r n → {!!}
    --  λ { r zero → cong [_] (≡-× ? (Σ≡Prop  (λ _ → isPropPropTrunc) ?)) ; r (suc n) → {!!} }

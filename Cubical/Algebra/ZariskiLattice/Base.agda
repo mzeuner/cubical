@@ -564,49 +564,66 @@ module BasicOpens (R' : CommRing ℓ) where
                       , (path1 _ _ ∙∙ sym p ∙∙ path2 _))
 
 
-  lemma2 : ∀ (f g : R) → f ∈ (√i ⟨ replicateFinVec 1 g ⟩) .fst
-         → ∀ (h : R) → h ∈ ([_ⁿ|n≥0] R' g) → (_/1 _ _ _ h) ∈ R[1/ f ]ˣ
-  lemma2 f g f∈√⟨g⟩ h = PT.rec (R[1/ f ]ˣ _ .snd) λ a → lemma1 f h (Σhelper a _ f∈√⟨g⟩)
+  lemma2 : ∀ (f g h : R) → f ∈ (√i ⟨ replicateFinVec 1 g ⟩) .fst
+                       → h ∈ ([_ⁿ|n≥0] R' g) → (_/1 _ _ _ h) ∈ R[1/ f ]ˣ
+  lemma2 f g h = PT.rec2 (R[1/ f ]ˣ _ .snd) (uncurry curriedHelper)
    where
-   Σhelper : Σ[ n ∈ ℕ ] h ≡ g ^ n
-           → (√i ⟨ replicateFinVec 1 g ⟩) .fst ⊆ (√i ⟨ replicateFinVec 1 h ⟩) .fst
-   Σhelper (n , p) = equivFun (invEquiv (√FGIdealChar _ ⟨ replicateFinVec 1 h ⟩))
-                   λ { zero → ^∈√→∈√ _ g n (∈→∈√ _ (g ^ n)
-                                 (subst-∈ (⟨ replicateFinVec 1 h ⟩ .fst) p
-                                    (indInIdeal R' (replicateFinVec 1 h) zero))) }
+   curriedHelper : (n : ℕ) → f ^ n ∈ ⟨ replicateFinVec 1 g ⟩ .fst
+                 → Σ[ m ∈ ℕ ]  h ≡ g ^ m → (_/1 _ _ _ h) ∈ R[1/ f ]ˣ
+   curriedHelper n = PT.rec (isPropΠ (λ _ → R[1/ f ]ˣ _ .snd)) Σhelper
+    where
+    Σhelper : Σ[ α ∈ FinVec R 1 ] f ^ n ≡ linearCombination R' α (replicateFinVec 1 g)
+            → Σ[ m ∈ ℕ ]  h ≡ g ^ m → (_/1 _ _ _ h) ∈ R[1/ f ]ˣ
+    Σhelper (α , p) (m , q) = [ ((α zero) ^ m) , (f ^ (n ·ℕ m)) , ∣ (n ·ℕ m) , refl ∣ ]
+                            , eq/ _ _ ((1r , powersFormMultClosedSubset _ _ .containsOne)
+                            , {!!})
+
+
+  -- PT.rec (R[1/ f ]ˣ _ .snd) λ a → lemma1 f h (Σhelper a _ f∈√⟨g⟩)
+   -- where
+   -- Σhelper : Σ[ n ∈ ℕ ] h ≡ g ^ n
+   --         → (√i ⟨ replicateFinVec 1 g ⟩) .fst ⊆ (√i ⟨ replicateFinVec 1 h ⟩) .fst
+   -- Σhelper (n , p) = equivFun (invEquiv (√FGIdealChar _ ⟨ replicateFinVec 1 h ⟩))
+   --                 λ { zero → ^∈√→∈√ _ g n (∈→∈√ _ (g ^ n)
+   --                               (subst-∈ (⟨ replicateFinVec 1 h ⟩ .fst) p
+   --                                  (indInIdeal R' (replicateFinVec 1 h) zero))) }
 
   --the restriction hom's
   ρ : (f g : R) → f ∈ (√i ⟨ replicateFinVec 1 g ⟩) .fst
     → CommRingHom (R[1/_]AsCommRing R' g) (R[1/_]AsCommRing R' f)
-  ρ f g f∈√⟨g⟩ = ρ' --R[1/g]HasUniversalProp _ (/1AsCommRingHom _ _ _) (lemma2 f g f∈√⟨g⟩) .fst .fst
+  ρ f g f∈√⟨g⟩ = R[1/g]HasUniversalProp _ (/1AsCommRingHom _ _ _) (λ h → lemma2 f g h f∈√⟨g⟩) .fst .fst
    where
    open S⁻¹RUniversalProp R' ([_ⁿ|n≥0] R' g) (powersFormMultClosedSubset _ _)
         hiding (/1AsCommRingHom)
         renaming (S⁻¹RHasUniversalProp to R[1/g]HasUniversalProp)
-   F = R[1/g]HasUniversalProp _ (/1AsCommRingHom _ _ _) (lemma2 f g f∈√⟨g⟩) .fst .fst
-   ρ' : CommRingHom (R[1/ R' ]AsCommRing g) (R[1/ R' ]AsCommRing f)
-   fst ρ' = fst F
-   snd ρ' =  sndρ'
-    where
-    abstract
-     sndρ' : IsRingHom (CommRing→Ring (R[1/ R' ]AsCommRing g) .snd) (fst ρ')
-                       (CommRing→Ring (R[1/ R' ]AsCommRing f) .snd)
-     sndρ' = snd F
+   -- F = R[1/g]HasUniversalProp _ (/1AsCommRingHom _ _ _) (lemma2 f g f∈√⟨g⟩) .fst .fst
+   -- ρ' : CommRingHom (R[1/ R' ]AsCommRing g) (R[1/ R' ]AsCommRing f)
+   -- fst ρ' = fst F
+   -- snd ρ' =  sndρ'
+   --  where
+   --  abstract
+   --   sndρ' : IsRingHom (CommRing→Ring (R[1/ R' ]AsCommRing g) .snd) (fst ρ')
+   --                     (CommRing→Ring (R[1/ R' ]AsCommRing f) .snd)
+   --   sndρ' = snd F
 
   --can we compute with rho?
   module _ (f g h : R) (f∈√⟨g⟩ : f ∈ (√i ⟨ replicateFinVec 1 g ⟩) .fst)
                        (g∈√⟨h⟩ : g ∈ (√i ⟨ replicateFinVec 1 h ⟩) .fst) where
    private
+    path : ∀ f → f · 1r ≡ 1r · f + 0r
+    path = solve R'
     f∈√⟨f⟩ : f ∈ (√i ⟨ replicateFinVec 1 f ⟩) .fst
-    f∈√⟨f⟩ = ∈→∈√ _ _ (indInIdeal _ _ zero)
+    f∈√⟨f⟩ = ∣ 1 , ∣ (λ _ → 1r) , path f ∣ ∣
     f∈√⟨h⟩ : f ∈ (√i ⟨ replicateFinVec 1 h ⟩) .fst
     f∈√⟨h⟩ = equivFun (invEquiv (√FGIdealChar _ ⟨ replicateFinVec 1 h ⟩))
                (λ { zero → g∈√⟨h⟩ }) _ f∈√⟨g⟩
 
    -- no it doesn't work ...
    ρComp : ρ f h f∈√⟨h⟩ ≡ ρ f g f∈√⟨g⟩ ∘r ρ g h g∈√⟨h⟩
-   ρComp = RingHom≡f _ _ (funExt (InvElPropElim R' (λ _ → squash/ _ _) λ r n → {!cong [_] ?!}))
+   ρComp = RingHom≡f _ _ (funExt (InvElPropElim R' (λ _ → squash/ _ _) λ r n → {!eq/ _ _ ?!}))
 
    ρId : ∀ x → ρ f f f∈√⟨f⟩ .fst x ≡ x
-   ρId = InvElPropElim R' (λ _ → squash/ _ _) λ r n → {!!}
+   ρId = InvElPropElim R' (λ _ → squash/ _ _) λ r n → eq/ _ _ ((1r , powersFormMultClosedSubset _ _ .containsOne) , {!!})
    --  λ { r zero → cong [_] (≡-× ? (Σ≡Prop  (λ _ → isPropPropTrunc) ?)) ; r (suc n) → {!!} }
+   -- lemma2 f f (f ^ n) f∈√⟨f⟩ (∣ n , refl ∣) .fst normalizes to:
+   -- [ 1r ^ n , f ^ (n +ℕ 0) , ∣ n +ℕ 0 , (λ _ → f ^ (n +ℕ 0)) ∣ ]

@@ -291,11 +291,20 @@ recPT→Ring 𝓕 σ compCoh = rec→Gpd isGroupoidRing 𝓕 is3-Constant𝓕
 --                  → (∀ (x y : L) (p : P x) (q : P y) → x ≤ y → isContr (RingHom (𝓕 y q) (𝓕 x p)))
 --                 ----------------------------------------------------------------------------------
 --                  → (x : L) → ∥ P x ∥ → Ring ℓ'''
---  recPosetPT→Ring P 𝓕 homContr x = recPT→Ring (𝓕 x) {!!} {!!}
+--  recPosetPT→Ring P 𝓕 homContr x = recPT→Ring (𝓕 x) 𝓕xEquiv {!!}
 --   where
 --   open IsRingHom
 --   open Iso
 
+--   homContrReflx : (x : L) (p q : P x) → isContr (RingHom (𝓕 x p) (𝓕 x q))
+--   homContrReflx x p q = homContr x x q p (is-refl x)
+
+--   𝓕xIso : ∀ p q → Iso ⟨ 𝓕 x p ⟩ ⟨ 𝓕 x q ⟩
+--   fun (𝓕xIso p q) = homContrReflx x p q .fst .fst
+--   inv (𝓕xIso p q) = homContrReflx x q p .fst .fst
+--   rightInv (𝓕xIso p q) = {!!}
+--   leftInv (𝓕xIso p q) = {!!}
+
 --   𝓕xEquiv : ∀ p q → RingEquiv (𝓕 x p) (𝓕 x q)
---   fst (𝓕xEquiv p q) = isoToEquiv (iso {!!} {!!} {!!} {!!})
---   snd (𝓕xEquiv p q) = {!!}
+--   fst (𝓕xEquiv p q) = isoToEquiv (𝓕xIso p q)
+--   snd (𝓕xEquiv p q) = homContrReflx x p q .fst .snd

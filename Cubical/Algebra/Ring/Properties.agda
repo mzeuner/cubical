@@ -14,6 +14,7 @@ open import Cubical.Foundations.GroupoidLaws
 open import Cubical.Foundations.Path
 
 open import Cubical.Data.Sigma
+open import Cubical.Relation.Binary.Poset
 
 open import Cubical.Structures.Axioms
 open import Cubical.Structures.Auto
@@ -27,7 +28,7 @@ open import Cubical.HITs.PropositionalTruncation
 
 private
   variable
-    ℓ ℓ' : Level
+    ℓ ℓ' ℓ'' ℓ''' : Level
     A : Type ℓ'
 
 {-
@@ -281,3 +282,20 @@ recPT→Ring 𝓕 σ compCoh = rec→Gpd isGroupoidRing 𝓕 is3-Constant𝓕
  link is3-Constant𝓕 x y = uaRing (σ x y)
  coh₁ is3-Constant𝓕 x y z = transport⁻ (PathP≡compPath _ _ _)
                               (sym (cong uaRing (compCoh x y z) ∙ uaCompRingEquiv (σ x y) (σ y z)))
+
+-- module _  (L' : Poset ℓ ℓ') where
+--  private L = fst L'
+--  open PosetStr (snd L')
+
+--  recPosetPT→Ring : (P : L → Type ℓ'')  (𝓕 : (x : L) → P x → Ring ℓ''')
+--                  → (∀ (x y : L) (p : P x) (q : P y) → x ≤ y → isContr (RingHom (𝓕 y q) (𝓕 x p)))
+--                 ----------------------------------------------------------------------------------
+--                  → (x : L) → ∥ P x ∥ → Ring ℓ'''
+--  recPosetPT→Ring P 𝓕 homContr x = recPT→Ring (𝓕 x) {!!} {!!}
+--   where
+--   open IsRingHom
+--   open Iso
+
+--   𝓕xEquiv : ∀ p q → RingEquiv (𝓕 x p) (𝓕 x q)
+--   fst (𝓕xEquiv p q) = isoToEquiv (iso {!!} {!!} {!!} {!!})
+--   snd (𝓕xEquiv p q) = {!!}

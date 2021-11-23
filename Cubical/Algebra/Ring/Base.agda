@@ -252,6 +252,14 @@ compIsRingHom {g = g} {f} gh fh .pres+ x y = cong g (fh .pres+ x y) ∙ gh .pres
 compIsRingHom {g = g} {f} gh fh .pres· x y = cong g (fh .pres· x y) ∙ gh .pres· (f x) (f y)
 compIsRingHom {g = g} {f} gh fh .pres- x = cong g (fh .pres- x) ∙ gh .pres- (f x)
 
+idRingHom : {A : Ring ℓ} → RingHom A A
+fst idRingHom = idfun _
+pres0 (snd idRingHom) = refl
+pres1 (snd idRingHom) = refl
+pres+ (snd idRingHom) x y = refl
+pres· (snd idRingHom) x y = refl
+pres- (snd idRingHom) x = refl
+
 _∘r_ : {A : Ring ℓ} {B : Ring ℓ'} {C : Ring ℓ''}
        → RingHom B C → RingHom A B → RingHom A C
 _∘r_  g f .fst = g .fst ∘ f .fst

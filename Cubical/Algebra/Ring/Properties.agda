@@ -283,28 +283,47 @@ recPT→Ring 𝓕 σ compCoh = rec→Gpd isGroupoidRing 𝓕 is3-Constant𝓕
  coh₁ is3-Constant𝓕 x y z = transport⁻ (PathP≡compPath _ _ _)
                               (sym (cong uaRing (compCoh x y z) ∙ uaCompRingEquiv (σ x y) (σ y z)))
 
--- module _  (L' : Poset ℓ ℓ') where
---  private L = fst L'
---  open PosetStr (snd L')
 
---  recPosetPT→Ring : (P : L → Type ℓ'')  (𝓕 : (x : L) → P x → Ring ℓ''')
---                  → (∀ (x y : L) (p : P x) (q : P y) → x ≤ y → isContr (RingHom (𝓕 y q) (𝓕 x p)))
---                 ----------------------------------------------------------------------------------
---                  → (x : L) → ∥ P x ∥ → Ring ℓ'''
---  recPosetPT→Ring P 𝓕 homContr x = recPT→Ring (𝓕 x) 𝓕xEquiv {!!}
---   where
---   open IsRingHom
---   open Iso
+isContrHom→Equiv : (σ : A → Ring ℓ)
+                 → (∀ x y → isContr (RingHom (σ x) (σ y)))
+                 → (∀ x y → isContr (RingEquiv (σ x) (σ y)))
+isContrHom→Equiv σ contrHom x y = σEquiv ,
+  λ e → Σ≡Prop (λ _ → isPropIsRingHom _ _ _)
+          (Σ≡Prop isPropIsEquiv
+             (cong fst (isContr→isProp (contrHom _ _) χ₁ (RingEquiv→RingHom e))))
+  where
+  open Iso
+  χ₁ = contrHom x y .fst
+  χ₂ = contrHom y x .fst
+  χ₁∘χ₂≡id : χ₁ ∘r χ₂ ≡ idRingHom
+  χ₁∘χ₂≡id = isContr→isProp (contrHom _ _) _ _
+  χ₂∘χ₁≡id : χ₂ ∘r χ₁ ≡ idRingHom
+  χ₂∘χ₁≡id = isContr→isProp (contrHom _ _) _ _
 
---   homContrReflx : (x : L) (p q : P x) → isContr (RingHom (𝓕 x p) (𝓕 x q))
---   homContrReflx x p q = homContr x x q p (is-refl x)
+  σIso : Iso ⟨ σ x ⟩ ⟨ σ y ⟩
+  fun σIso = fst χ₁
+  inv σIso = fst χ₂
+  rightInv σIso = funExt⁻ (cong fst χ₁∘χ₂≡id)
+  leftInv σIso = funExt⁻ (cong fst χ₂∘χ₁≡id)
 
---   𝓕xIso : ∀ p q → Iso ⟨ 𝓕 x p ⟩ ⟨ 𝓕 x q ⟩
---   fun (𝓕xIso p q) = homContrReflx x p q .fst .fst
---   inv (𝓕xIso p q) = homContrReflx x q p .fst .fst
---   rightInv (𝓕xIso p q) = {!!}
---   leftInv (𝓕xIso p q) = {!!}
+  σEquiv : RingEquiv (σ x) (σ y)
+  fst σEquiv = isoToEquiv σIso
+  snd σEquiv = snd χ₁
 
---   𝓕xEquiv : ∀ p q → RingEquiv (𝓕 x p) (𝓕 x q)
---   fst (𝓕xEquiv p q) = isoToEquiv (𝓕xIso p q)
---   snd (𝓕xEquiv p q) = homContrReflx x p q .fst .snd
+module _  (L' : Poset ℓ ℓ') where
+ private L = fst L'
+ open PosetStr (snd L')
+
+ recPosetPT→Ring : (P : L → Type ℓ'')  (𝓕 : (x : L) → P x → Ring ℓ''')
+                 → (∀ (x y : L) (p : P x) (q : P y) → x ≤ y → isContr (RingHom (𝓕 y q) (𝓕 x p)))
+                ----------------------------------------------------------------------------------
+                 → (x : L) → ∥ P x ∥ → Ring ℓ'''
+ recPosetPT→Ring P 𝓕 homContr x = recPT→Ring (𝓕 x)
+  (λ p q → 𝓕EquivContr p q .fst)
+     λ p _ q → isContr→isProp (𝓕EquivContr p q) _ _
+  where
+  open IsRingHom
+  open Iso
+
+  𝓕EquivContr : ∀ (p q : P x) → isContr (RingEquiv (𝓕 x p) (𝓕 x q))
+  𝓕EquivContr = isContrHom→Equiv _ λ p q → homContr x x q p (is-refl x)

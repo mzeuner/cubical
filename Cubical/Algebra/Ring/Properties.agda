@@ -284,14 +284,14 @@ recPT→Ring 𝓕 σ compCoh = rec→Gpd isGroupoidRing 𝓕 is3-Constant𝓕
                               (sym (cong uaRing (compCoh x y z) ∙ uaCompRingEquiv (σ x y) (σ y z)))
 
 
-uniqueHom→uniqueEquiv : {A : Type ℓ'} (σ : A → Ring ℓ) (P : {x y : A} → RingHom (σ x) (σ y) → Type ℓ')
+uniqueHom→uniqueEquiv : {A : Type ℓ'} (σ : A → Ring ℓ) (P : {x y : A} → RingHom (σ x) (σ y) → Type ℓ'')
                         (Pid : {x : A} → P (idRingHom {A = σ x}))
                         (Pcomp : {x y z : A} (f : RingHom (σ x) (σ y)) (g : RingHom (σ y) (σ z))
                                → P f → P g → P (g ∘r f))
                       → (∀ x y → ∃![ f ∈ RingHom (σ x) (σ y) ] P f)
                      ----------------------------------------------------------------------------
                       → ∀ x y → ∃![ e ∈ RingEquiv (σ x) (σ y) ] P (RingEquiv→RingHom e)
-uniqueHom→uniqueEquiv σ P Pid Pcomp uniqueHom x y = {!!}
+uniqueHom→uniqueEquiv σ P Pid Pcomp uniqueHom x y = {!uniqueExists!}
 
 
 -- isContrHom→Equiv σ contrHom x y = σEquiv ,
@@ -328,19 +328,11 @@ module _ (L' : Poset ℓ ℓ') (P : (fst L') → Type ℓ'') where
             (Qcomp : {x y z : A} (f : RingHom (𝓕 x) (𝓕 y)) (g : RingHom (𝓕 y) (𝓕 z))
                    → Q f → Q g → Q (g ∘r f))
           → (∀ (x y : A) → fst x ≤ fst y → ∃![ f ∈ RingHom (𝓕 x) (𝓕 y) ] Q f)
-          → Σ L (λ x → ∥ P x ∥) → Ring ℓ'''
- ourLemma 𝓕 Q Qid Qcomp ≤→uniqheHom = uncurry (λ x → recPT→Ring (curry 𝓕 x) {!!} {!!})
-
---  recPosetPT→Ring : (P : L → Type ℓ'')  (𝓕 : (x : L) → P x → Ring ℓ''')
---                  → (∀ (x y : L) (p : P x) (q : P y) → x ≤ y → isContr (RingHom (𝓕 y q) (𝓕 x p)))
---                 ----------------------------------------------------------------------------------
---                  → (x : L) → ∥ P x ∥ → Ring ℓ'''
---  recPosetPT→Ring P 𝓕 homContr x = recPT→Ring (𝓕 x)
---   (λ p q → 𝓕EquivContr p q .fst)
---      λ p _ q → isContr→isProp (𝓕EquivContr p q) _ _
---   where
---   open IsRingHom
---   open Iso
-
---   𝓕EquivContr : ∀ (p q : P x) → isContr (RingEquiv (𝓕 x p) (𝓕 x q))
---   𝓕EquivContr = isContrHom→Equiv _ λ p q → homContr x x q p (is-refl x)
+          → (x : L) → ∥ P x ∥ → Ring ℓ'''
+ ourLemma 𝓕 Q Qid Qcomp ≤→uniqheHom x = recPT→Ring (curry 𝓕 x)
+   (λ p q → 𝓕UniqueEquiv p q .fst .fst)
+     λ p q r → cong fst (𝓕UniqueEquiv p r .snd (_ , Qcomp _ _ (𝓕UniqueEquiv p q .fst .snd)
+                                                               (𝓕UniqueEquiv q r .fst .snd)))
+  where
+  𝓕UniqueEquiv : ∀ (p q : P x) → ∃![ e ∈ RingEquiv (𝓕 (x , p)) (𝓕 (x , q)) ] Q (RingEquiv→RingHom e)
+  𝓕UniqueEquiv = uniqueHom→uniqueEquiv (curry 𝓕 x) Q Qid Qcomp (λ p q → ≤→uniqheHom _ _ (is-refl x))

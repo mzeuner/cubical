@@ -28,8 +28,8 @@ open import Cubical.HITs.PropositionalTruncation
 
 private
   variable
-    ℓ ℓ' ℓ'' ℓ''' : Level
-    A : Type ℓ'
+    ℓ ℓ' ℓ'' ℓ''' ℓ'''' : Level
+
 
 {-
   some basic calculations (used for example in QuotientRing.agda),
@@ -268,7 +268,7 @@ uaCompRingEquiv f g = caracRing≡ _ _ (
 
 
 -- A useful lemma when defining presheaves
-recPT→Ring : (𝓕  : A → Ring ℓ)
+recPT→Ring : {A : Type ℓ'} (𝓕  : A → Ring ℓ)
            → (σ : ∀ x y → RingEquiv (𝓕 x) (𝓕 y))
            → (∀ x y z → σ x z ≡ compRingEquiv (σ x y) (σ y z))
           ------------------------------------------------------
@@ -284,46 +284,63 @@ recPT→Ring 𝓕 σ compCoh = rec→Gpd isGroupoidRing 𝓕 is3-Constant𝓕
                               (sym (cong uaRing (compCoh x y z) ∙ uaCompRingEquiv (σ x y) (σ y z)))
 
 
-isContrHom→Equiv : (σ : A → Ring ℓ)
-                 → (∀ x y → isContr (RingHom (σ x) (σ y)))
-                 → (∀ x y → isContr (RingEquiv (σ x) (σ y)))
-isContrHom→Equiv σ contrHom x y = σEquiv ,
-  λ e → Σ≡Prop (λ _ → isPropIsRingHom _ _ _)
-          (Σ≡Prop isPropIsEquiv
-             (cong fst (isContr→isProp (contrHom _ _) χ₁ (RingEquiv→RingHom e))))
-  where
-  open Iso
-  χ₁ = contrHom x y .fst
-  χ₂ = contrHom y x .fst
-  χ₁∘χ₂≡id : χ₁ ∘r χ₂ ≡ idRingHom
-  χ₁∘χ₂≡id = isContr→isProp (contrHom _ _) _ _
-  χ₂∘χ₁≡id : χ₂ ∘r χ₁ ≡ idRingHom
-  χ₂∘χ₁≡id = isContr→isProp (contrHom _ _) _ _
+uniqueHom→uniqueEquiv : {A : Type ℓ'} (σ : A → Ring ℓ) (P : {x y : A} → RingHom (σ x) (σ y) → Type ℓ')
+                        (Pid : {x : A} → P (idRingHom {A = σ x}))
+                        (Pcomp : {x y z : A} (f : RingHom (σ x) (σ y)) (g : RingHom (σ y) (σ z))
+                               → P f → P g → P (g ∘r f))
+                      → (∀ x y → ∃![ f ∈ RingHom (σ x) (σ y) ] P f)
+                     ----------------------------------------------------------------------------
+                      → ∀ x y → ∃![ e ∈ RingEquiv (σ x) (σ y) ] P (RingEquiv→RingHom e)
+uniqueHom→uniqueEquiv σ P Pid Pcomp uniqueHom x y = {!!}
 
-  σIso : Iso ⟨ σ x ⟩ ⟨ σ y ⟩
-  fun σIso = fst χ₁
-  inv σIso = fst χ₂
-  rightInv σIso = funExt⁻ (cong fst χ₁∘χ₂≡id)
-  leftInv σIso = funExt⁻ (cong fst χ₂∘χ₁≡id)
 
-  σEquiv : RingEquiv (σ x) (σ y)
-  fst σEquiv = isoToEquiv σIso
-  snd σEquiv = snd χ₁
+-- isContrHom→Equiv σ contrHom x y = σEquiv ,
+--   λ e → Σ≡Prop (λ _ → isPropIsRingHom _ _ _)
+--           (Σ≡Prop isPropIsEquiv
+--              (cong fst (isContr→isProp (contrHom _ _) χ₁ (RingEquiv→RingHom e))))
+--   where
+--   open Iso
+--   χ₁ = contrHom x y .fst
+--   χ₂ = contrHom y x .fst
+--   χ₁∘χ₂≡id : χ₁ ∘r χ₂ ≡ idRingHom
+--   χ₁∘χ₂≡id = isContr→isProp (contrHom _ _) _ _
+--   χ₂∘χ₁≡id : χ₂ ∘r χ₁ ≡ idRingHom
+--   χ₂∘χ₁≡id = isContr→isProp (contrHom _ _) _ _
 
-module _  (L' : Poset ℓ ℓ') where
- private L = fst L'
+--   σIso : Iso ⟨ σ x ⟩ ⟨ σ y ⟩
+--   fun σIso = fst χ₁
+--   inv σIso = fst χ₂
+--   rightInv σIso = funExt⁻ (cong fst χ₁∘χ₂≡id)
+--   leftInv σIso = funExt⁻ (cong fst χ₂∘χ₁≡id)
+
+--   σEquiv : RingEquiv (σ x) (σ y)
+--   fst σEquiv = isoToEquiv σIso
+--   snd σEquiv = snd χ₁
+
+module _ (L' : Poset ℓ ℓ') (P : (fst L') → Type ℓ'') where
+ private
+  L = fst L'
+  A = Σ L P
  open PosetStr (snd L')
 
- recPosetPT→Ring : (P : L → Type ℓ'')  (𝓕 : (x : L) → P x → Ring ℓ''')
-                 → (∀ (x y : L) (p : P x) (q : P y) → x ≤ y → isContr (RingHom (𝓕 y q) (𝓕 x p)))
-                ----------------------------------------------------------------------------------
-                 → (x : L) → ∥ P x ∥ → Ring ℓ'''
- recPosetPT→Ring P 𝓕 homContr x = recPT→Ring (𝓕 x)
-  (λ p q → 𝓕EquivContr p q .fst)
-     λ p _ q → isContr→isProp (𝓕EquivContr p q) _ _
-  where
-  open IsRingHom
-  open Iso
+ ourLemma : (𝓕 : A → Ring ℓ''') (Q : {x y : A} → RingHom (𝓕 x) (𝓕 y) → Type ℓ'''')
+            (Qid : {x : A} → Q (idRingHom {A = 𝓕 x}))
+            (Qcomp : {x y z : A} (f : RingHom (𝓕 x) (𝓕 y)) (g : RingHom (𝓕 y) (𝓕 z))
+                   → Q f → Q g → Q (g ∘r f))
+          → (∀ (x y : A) → fst x ≤ fst y → ∃![ f ∈ RingHom (𝓕 x) (𝓕 y) ] Q f)
+          → Σ L (λ x → ∥ P x ∥) → Ring ℓ'''
+ ourLemma 𝓕 Q Qid Qcomp ≤→uniqheHom = uncurry (λ x → recPT→Ring (curry 𝓕 x) {!!} {!!})
 
-  𝓕EquivContr : ∀ (p q : P x) → isContr (RingEquiv (𝓕 x p) (𝓕 x q))
-  𝓕EquivContr = isContrHom→Equiv _ λ p q → homContr x x q p (is-refl x)
+--  recPosetPT→Ring : (P : L → Type ℓ'')  (𝓕 : (x : L) → P x → Ring ℓ''')
+--                  → (∀ (x y : L) (p : P x) (q : P y) → x ≤ y → isContr (RingHom (𝓕 y q) (𝓕 x p)))
+--                 ----------------------------------------------------------------------------------
+--                  → (x : L) → ∥ P x ∥ → Ring ℓ'''
+--  recPosetPT→Ring P 𝓕 homContr x = recPT→Ring (𝓕 x)
+--   (λ p q → 𝓕EquivContr p q .fst)
+--      λ p _ q → isContr→isProp (𝓕EquivContr p q) _ _
+--   where
+--   open IsRingHom
+--   open Iso
+
+--   𝓕EquivContr : ∀ (p q : P x) → isContr (RingEquiv (𝓕 x p) (𝓕 x q))
+--   𝓕EquivContr = isContrHom→Equiv _ λ p q → homContr x x q p (is-refl x)

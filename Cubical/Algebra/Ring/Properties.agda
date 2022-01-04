@@ -285,13 +285,40 @@ recPT→Ring 𝓕 σ compCoh = rec→Gpd isGroupoidRing 𝓕 is3-Constant𝓕
 
 
 uniqueHom→uniqueEquiv : {A : Type ℓ'} (σ : A → Ring ℓ) (P : {x y : A} → RingHom (σ x) (σ y) → Type ℓ'')
+                        (isPropP : {x y : A} (f : RingHom (σ x) (σ y)) → isProp (P f))
                         (Pid : {x : A} → P (idRingHom {A = σ x}))
-                        (Pcomp : {x y z : A} (f : RingHom (σ x) (σ y)) (g : RingHom (σ y) (σ z))
+                        (Pcomp : {x y z : A} {f : RingHom (σ x) (σ y)} {g : RingHom (σ y) (σ z)}
                                → P f → P g → P (g ∘r f))
                       → (∀ x y → ∃![ f ∈ RingHom (σ x) (σ y) ] P f)
                      ----------------------------------------------------------------------------
                       → ∀ x y → ∃![ e ∈ RingEquiv (σ x) (σ y) ] P (RingEquiv→RingHom e)
-uniqueHom→uniqueEquiv σ P Pid Pcomp uniqueHom x y = {!uniqueExists!}
+uniqueHom→uniqueEquiv σ P isPropP Pid Pcomp uniqueHom x y = (σEquiv , Pχ₁) ,
+  λ e → Σ≡Prop (λ _ → isPropP _)
+         (Σ≡Prop (λ _ → isPropIsRingHom _ _ _)
+           (Σ≡Prop isPropIsEquiv (cong (fst ∘ fst)
+                                       (uniqueHom _ _ .snd (RingEquiv→RingHom (e .fst) , e .snd)))))
+  where
+  open Iso
+  χ₁ = uniqueHom x y .fst .fst
+  Pχ₁ = uniqueHom x y .fst .snd
+  χ₂ = uniqueHom y x .fst .fst
+  Pχ₂ = uniqueHom y x .fst .snd
+  χ₁∘χ₂≡id : χ₁ ∘r χ₂ ≡ idRingHom
+  χ₁∘χ₂≡id = cong fst (isContr→isProp (uniqueHom _ _)
+                                      (χ₁ ∘r χ₂ , Pcomp Pχ₂ Pχ₁) (idRingHom , Pid))
+  χ₂∘χ₁≡id : χ₂ ∘r χ₁ ≡ idRingHom
+  χ₂∘χ₁≡id = cong fst (isContr→isProp (uniqueHom _ _)
+                                      (χ₂ ∘r χ₁ , Pcomp Pχ₁ Pχ₂) (idRingHom , Pid))
+
+  σIso : Iso ⟨ σ x ⟩ ⟨ σ y ⟩
+  fun σIso = fst χ₁
+  inv σIso = fst χ₂
+  rightInv σIso = funExt⁻ (cong fst χ₁∘χ₂≡id)
+  leftInv σIso = funExt⁻ (cong fst χ₂∘χ₁≡id)
+
+  σEquiv : RingEquiv (σ x) (σ y)
+  fst σEquiv = isoToEquiv σIso
+  snd σEquiv = snd χ₁
 
 
 -- isContrHom→Equiv σ contrHom x y = σEquiv ,
@@ -324,15 +351,16 @@ module _ (L' : Poset ℓ ℓ') (P : (fst L') → Type ℓ'') where
  open PosetStr (snd L')
 
  ourLemma : (𝓕 : A → Ring ℓ''') (Q : {x y : A} → RingHom (𝓕 x) (𝓕 y) → Type ℓ'''')
+            (IsPropQ : {x y : A} (f : RingHom (𝓕 x) (𝓕 y)) → isProp (Q f))
             (Qid : {x : A} → Q (idRingHom {A = 𝓕 x}))
-            (Qcomp : {x y z : A} (f : RingHom (𝓕 x) (𝓕 y)) (g : RingHom (𝓕 y) (𝓕 z))
+            (Qcomp : {x y z : A} {f : RingHom (𝓕 x) (𝓕 y)} {g : RingHom (𝓕 y) (𝓕 z)}
                    → Q f → Q g → Q (g ∘r f))
           → (∀ (x y : A) → fst x ≤ fst y → ∃![ f ∈ RingHom (𝓕 x) (𝓕 y) ] Q f)
           → (x : L) → ∥ P x ∥ → Ring ℓ'''
- ourLemma 𝓕 Q Qid Qcomp ≤→uniqheHom x = recPT→Ring (curry 𝓕 x)
+ ourLemma 𝓕 Q isPropQ Qid Qcomp ≤→uniqheHom x = recPT→Ring (curry 𝓕 x)
    (λ p q → 𝓕UniqueEquiv p q .fst .fst)
-     λ p q r → cong fst (𝓕UniqueEquiv p r .snd (_ , Qcomp _ _ (𝓕UniqueEquiv p q .fst .snd)
-                                                               (𝓕UniqueEquiv q r .fst .snd)))
+     λ p q r → cong fst (𝓕UniqueEquiv p r .snd (_ , Qcomp (𝓕UniqueEquiv p q .fst .snd)
+                                                           (𝓕UniqueEquiv q r .fst .snd)))
   where
   𝓕UniqueEquiv : ∀ (p q : P x) → ∃![ e ∈ RingEquiv (𝓕 (x , p)) (𝓕 (x , q)) ] Q (RingEquiv→RingHom e)
-  𝓕UniqueEquiv = uniqueHom→uniqueEquiv (curry 𝓕 x) Q Qid Qcomp (λ p q → ≤→uniqheHom _ _ (is-refl x))
+  𝓕UniqueEquiv = uniqueHom→uniqueEquiv (curry 𝓕 x) Q isPropQ Qid Qcomp (λ p q → ≤→uniqheHom _ _ (is-refl x))

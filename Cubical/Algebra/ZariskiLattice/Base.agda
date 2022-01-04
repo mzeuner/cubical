@@ -43,6 +43,7 @@ open import Cubical.Algebra.RingSolver.ReflectionSolving
 open import Cubical.Algebra.Semilattice
 open import Cubical.Algebra.Lattice
 open import Cubical.Algebra.DistLattice
+open import Cubical.Algebra.DistLattice.Basis
 open import Cubical.Algebra.DistLattice.BigOps
 open import Cubical.Algebra.Matrix
 
@@ -53,8 +54,7 @@ open Iso
 open BinaryRelation
 open isEquivRel
 
-private
-  variable
+private variable
     ℓ ℓ' : Level
 
 
@@ -77,7 +77,7 @@ module ZarLat (R' : CommRing ℓ) where
   ⟨ V ⟩ = ⟨ V ⟩[ R' ]
 
  _∼_ : A → A → Type (ℓ-suc ℓ)
- (_ , α) ∼ (_ , β) = √i ⟨ α ⟩ ≡ √i ⟨ β ⟩ --replace this by ≡ᴾ := ⊆ × ⊇ to preserve universe level
+ (_ , α) ∼ (_ , β) = √i ⟨ α ⟩ ≡ √i ⟨ β ⟩
 
  ∼EquivRel : isEquivRel (_∼_)
  reflexive ∼EquivRel _ = refl
@@ -443,3 +443,187 @@ module ZarLatUniversalProp (R' : CommRing ℓ) where
       ≡⟨ cong (λ β → fst χ' [ suc n , β ]) (funExt (λ { zero → refl ; (suc i) → refl })) ⟩
 
        fst χ' [ suc n , α ] ∎
+
+
+ -- the map induced by applying the universal property to the Zariski lattice
+ -- itself is the identity hom
+ ZLUniversalPropCorollary : ZLHasUniversalProp ZariskiLattice D isZarMapD .fst .fst
+                          ≡ idDistLatticeHom ZariskiLattice
+ ZLUniversalPropCorollary = cong fst
+                              (ZLHasUniversalProp ZariskiLattice D isZarMapD .snd
+                                 (idDistLatticeHom ZariskiLattice , refl))
+
+
+-- An equivalent definition that doesn't bump up the unviverse level
+module SmallZarLat (R' : CommRing ℓ) where
+ open CommRingStr (snd R')
+ open CommIdeal R'
+ open RadicalIdeal R'
+ open ZarLat R'
+
+ open Iso
+
+ private
+  R = fst R'
+  A = Σ[ n ∈ ℕ ] (FinVec R n)
+  ⟨_⟩ : {n : ℕ} → FinVec R n → CommIdeal
+  ⟨ V ⟩ = ⟨ V ⟩[ R' ]
+  -- This is small!
+  _≼_ : A → A → Type ℓ
+  (_ , α) ≼ (_ , β) = ∀ i → α i ∈ √ (⟨ β ⟩ .fst)
+
+ _∼'_ :  A → A → Type ℓ
+ (_ , α) ∼' (_ , β) = ((_ , α) ≼ (_ , β)) × ((_ , β) ≼ (_ , α))
+
+ -- lives in the same universe as R
+ ZL' : Type ℓ
+ ZL' = A / (_∼'_)
+
+
+ IsoLarLatSmall : Iso ZL ZL'
+ IsoLarLatSmall = relBiimpl→TruncIso ~→∼' ~'→∼
+  where
+  ~→∼' : ∀ {a b : A} → a ∼ b → a ∼' b
+  ~→∼' r = equivFun (√FGIdealChar _ ⟨ _ ⟩) (λ x h → subst (λ p → x ∈ p) (cong fst r) h)
+         , equivFun (√FGIdealChar _ ⟨ _ ⟩) (λ x h → subst (λ p → x ∈ p) (cong fst (sym r)) h)
+
+  ~'→∼ : ∀ {a b : A} → a ∼' b → a ∼ b
+  ~'→∼ r = CommIdeal≡Char (equivFun (invEquiv (√FGIdealChar _ ⟨ _ ⟩)) (fst r))
+                          (equivFun (invEquiv (√FGIdealChar _ ⟨ _ ⟩)) (snd r))
+
+ ZL≃ZL' : ZL ≃ ZL'
+ ZL≃ZL' = isoToEquiv IsoLarLatSmall
+
+
+
+module BasicOpens (R' : CommRing ℓ) where
+ open CommRingStr (snd R')
+ open RingTheory (CommRing→Ring R')
+ -- open Sum (CommRing→Ring R')
+ -- open CommRingTheory R'
+ open Exponentiation R'
+ -- open BinomialThm R'
+ open CommIdeal R'
+ open RadicalIdeal R'
+ open isCommIdeal
+
+
+ open ZarLat R'
+ open ZarLatUniversalProp R'
+ open IsZarMap
+
+ open Join ZariskiLattice
+
+ private
+  R = fst R'
+  ⟨_⟩ : {n : ℕ} → FinVec R n → CommIdeal
+  ⟨ V ⟩ = ⟨ V ⟩[ R' ]
+
+ BasicOpens : ℙ ZL
+ BasicOpens 𝔞 = (∃[ f ∈ R ] (D f ≡ 𝔞)) , isPropPropTrunc
+
+ BO : Type (ℓ-suc ℓ)
+ BO = Σ[ 𝔞 ∈ ZL ] (𝔞 ∈ BasicOpens)
+
+ open IsBasis
+ basicOpensAreBasis : IsBasis ZariskiLattice BasicOpens
+ contains0 basicOpensAreBasis = ∣ 0r , isZarMapD .pres0 ∣
+ ∧lClosed basicOpensAreBasis 𝔞 𝔟 = map2
+            λ (f , Df≡𝔞) (g , Dg≡𝔟) → (f · g) , isZarMapD .·≡∧ f g ∙ cong₂ (_∧z_) Df≡𝔞 Dg≡𝔟
+ ⋁Basis basicOpensAreBasis = elimProp (λ _ → isPropPropTrunc) Σhelper
+  where
+  Σhelper : (a : Σ[ n ∈ ℕ ] FinVec R n)
+          → ∃[ n ∈ ℕ ] Σ[ α ∈ FinVec ZL n ] (∀ i → α i ∈ BasicOpens) × (⋁ α ≡ [ a ])
+  Σhelper (n , α) = ∣ n , (D ∘ α) , (λ i → ∣ α i , refl ∣) , path ∣
+   where
+   path : ⋁ (D ∘ α) ≡ [ n , α ]
+   path = funExt⁻ (cong fst ZLUniversalPropCorollary) _
+
+ module √→Loc where
+  --open Loc R'
+  open S⁻¹RUniversalProp
+  open isMultClosedSubset
+  private
+   R[1/_]ˣ : (f : R) → ℙ (R[1/_]AsCommRing R' f .fst)
+   R[1/ f ]ˣ = (R[1/_]AsCommRing R' f) ˣ
+
+  lemma1 : ∀ (f g : R) → f ∈ (√i ⟨ replicateFinVec 1 g ⟩) .fst → (_/1 _ _ _ g) ∈ R[1/ f ]ˣ
+  lemma1 f g = PT.rec propHelper (uncurry (λ n → PT.rec propHelper (uncurry (lemmaCurried n))))
+   where
+   propHelper = R[1/ f ]ˣ (_/1 _ _ _ g) .snd
+   path1 : (y z : R) → 1r · (y · z) · 1r ≡ z · y + 0r
+   path1 = solve R'
+   path2 : (xn : R) → xn ≡ 1r · 1r · (1r · xn)
+   path2 = solve R'
+
+   lemmaCurried : (n : ℕ) (a : FinVec R 1)
+                → f ^ n ≡ linearCombination R' a (replicateFinVec 1 g)
+                → (_/1 _ _ _ g) ∈ R[1/ f ]ˣ
+   lemmaCurried n a p = [ a zero , (f ^ n) ,  PT.∣ n , refl ∣ ] -- fⁿ≡a₀g → g⁻¹ ≡ a₀/fⁿ
+                      , eq/ _ _ ((1r , powersFormMultClosedSubset _ _ .containsOne)
+                      , (path1 _ _ ∙∙ sym p ∙∙ path2 _))
+
+
+  lemma2 : ∀ (f g h : R) → f ∈ (√i ⟨ replicateFinVec 1 g ⟩) .fst
+                       → h ∈ ([_ⁿ|n≥0] R' g) → (_/1 _ _ _ h) ∈ R[1/ f ]ˣ
+  lemma2 f g h = PT.rec2 (R[1/ f ]ˣ _ .snd) (uncurry curriedHelper)
+   where
+   curriedHelper : (n : ℕ) → f ^ n ∈ ⟨ replicateFinVec 1 g ⟩ .fst
+                 → Σ[ m ∈ ℕ ]  h ≡ g ^ m → (_/1 _ _ _ h) ∈ R[1/ f ]ˣ
+   curriedHelper n = PT.rec (isPropΠ (λ _ → R[1/ f ]ˣ _ .snd)) Σhelper
+    where
+    Σhelper : Σ[ α ∈ FinVec R 1 ] f ^ n ≡ linearCombination R' α (replicateFinVec 1 g)
+            → Σ[ m ∈ ℕ ]  h ≡ g ^ m → (_/1 _ _ _ h) ∈ R[1/ f ]ˣ
+    Σhelper (α , p) (m , q) = [ ((α zero) ^ m) , (f ^ (n ·ℕ m)) , ∣ (n ·ℕ m) , refl ∣ ]
+                            , eq/ _ _ ((1r , powersFormMultClosedSubset _ _ .containsOne)
+                            , {!!})
+
+
+  -- PT.rec (R[1/ f ]ˣ _ .snd) λ a → lemma1 f h (Σhelper a _ f∈√⟨g⟩)
+   -- where
+   -- Σhelper : Σ[ n ∈ ℕ ] h ≡ g ^ n
+   --         → (√i ⟨ replicateFinVec 1 g ⟩) .fst ⊆ (√i ⟨ replicateFinVec 1 h ⟩) .fst
+   -- Σhelper (n , p) = equivFun (invEquiv (√FGIdealChar _ ⟨ replicateFinVec 1 h ⟩))
+   --                 λ { zero → ^∈√→∈√ _ g n (∈→∈√ _ (g ^ n)
+   --                               (subst-∈ (⟨ replicateFinVec 1 h ⟩ .fst) p
+   --                                  (indInIdeal R' (replicateFinVec 1 h) zero))) }
+
+  --the restriction hom's
+  ρ : (f g : R) → f ∈ (√i ⟨ replicateFinVec 1 g ⟩) .fst
+    → CommRingHom (R[1/_]AsCommRing R' g) (R[1/_]AsCommRing R' f)
+  ρ f g f∈√⟨g⟩ = R[1/g]HasUniversalProp _ (/1AsCommRingHom _ _ _) (λ h → lemma2 f g h f∈√⟨g⟩) .fst .fst
+   where
+   open S⁻¹RUniversalProp R' ([_ⁿ|n≥0] R' g) (powersFormMultClosedSubset _ _)
+        hiding (/1AsCommRingHom)
+        renaming (S⁻¹RHasUniversalProp to R[1/g]HasUniversalProp)
+   -- F = R[1/g]HasUniversalProp _ (/1AsCommRingHom _ _ _) (lemma2 f g f∈√⟨g⟩) .fst .fst
+   -- ρ' : CommRingHom (R[1/ R' ]AsCommRing g) (R[1/ R' ]AsCommRing f)
+   -- fst ρ' = fst F
+   -- snd ρ' =  sndρ'
+   --  where
+   --  abstract
+   --   sndρ' : IsRingHom (CommRing→Ring (R[1/ R' ]AsCommRing g) .snd) (fst ρ')
+   --                     (CommRing→Ring (R[1/ R' ]AsCommRing f) .snd)
+   --   sndρ' = snd F
+
+  --can we compute with rho?
+  module _ (f g h : R) (f∈√⟨g⟩ : f ∈ (√i ⟨ replicateFinVec 1 g ⟩) .fst)
+                       (g∈√⟨h⟩ : g ∈ (√i ⟨ replicateFinVec 1 h ⟩) .fst) where
+   private
+    path : ∀ f → f · 1r ≡ 1r · f + 0r
+    path = solve R'
+    f∈√⟨f⟩ : f ∈ (√i ⟨ replicateFinVec 1 f ⟩) .fst
+    f∈√⟨f⟩ = ∣ 1 , ∣ (λ _ → 1r) , path f ∣ ∣
+    f∈√⟨h⟩ : f ∈ (√i ⟨ replicateFinVec 1 h ⟩) .fst
+    f∈√⟨h⟩ = equivFun (invEquiv (√FGIdealChar _ ⟨ replicateFinVec 1 h ⟩))
+               (λ { zero → g∈√⟨h⟩ }) _ f∈√⟨g⟩
+
+   -- no it doesn't work ...
+   ρComp : ρ f h f∈√⟨h⟩ ≡ ρ f g f∈√⟨g⟩ ∘r ρ g h g∈√⟨h⟩
+   ρComp = RingHom≡f _ _ (funExt (InvElPropElim R' (λ _ → squash/ _ _) λ r n → {!eq/ _ _ ?!}))
+
+   ρId : ∀ x → ρ f f f∈√⟨f⟩ .fst x ≡ x
+   ρId = InvElPropElim R' (λ _ → squash/ _ _) λ r n → eq/ _ _ ((1r , powersFormMultClosedSubset _ _ .containsOne) , {!!})
+   --  λ { r zero → cong [_] (≡-× ? (Σ≡Prop  (λ _ → isPropPropTrunc) ?)) ; r (suc n) → {!!} }
+   -- lemma2 f f (f ^ n) f∈√⟨f⟩ (∣ n , refl ∣) .fst normalizes to:
+   -- [ 1r ^ n , f ^ (n +ℕ 0) , ∣ n +ℕ 0 , (λ _ → f ^ (n +ℕ 0)) ∣ ]

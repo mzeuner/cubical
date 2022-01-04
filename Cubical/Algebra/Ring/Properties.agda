@@ -1,7 +1,8 @@
-{-# OPTIONS --safe #-}
+{-# OPTIONS --safe --experimental-lossy-unification #-}
 module Cubical.Algebra.Ring.Properties where
 
 open import Cubical.Foundations.Prelude
+open import Cubical.Foundations.Function
 open import Cubical.Foundations.Equiv
 open import Cubical.Foundations.Equiv.HalfAdjoint
 open import Cubical.Foundations.HLevels
@@ -9,8 +10,11 @@ open import Cubical.Foundations.Isomorphism
 open import Cubical.Foundations.Univalence
 open import Cubical.Foundations.Transport
 open import Cubical.Foundations.SIP
+open import Cubical.Foundations.GroupoidLaws
+open import Cubical.Foundations.Path
 
 open import Cubical.Data.Sigma
+open import Cubical.Relation.Binary.Poset
 
 open import Cubical.Structures.Axioms
 open import Cubical.Structures.Auto
@@ -20,9 +24,12 @@ open import Cubical.Algebra.Monoid
 open import Cubical.Algebra.AbGroup
 open import Cubical.Algebra.Ring.Base
 
+open import Cubical.HITs.PropositionalTruncation
+
 private
   variable
-    ℓ : Level
+    ℓ ℓ' ℓ'' ℓ''' ℓ'''' : Level
+
 
 {-
   some basic calculations (used for example in QuotientRing.agda),
@@ -199,3 +206,139 @@ module _{R S : Ring ℓ} (φ ψ : RingHom R S) where
 
  RingHom≡f : fst φ ≡ fst ψ → φ ≡ ψ
  RingHom≡f = Σ≡Prop λ f → isPropIsRingHom _ f _
+
+
+-- the Ring version of uaCompEquiv
+-- can reduce this or do you need a RingEquivJ?
+-- RingPathCompEquiv : ∀ {A B C : Ring ℓ} (f : RingEquiv A B) (g : RingEquiv B C)
+--   → RingPath A C .fst (compRingEquiv f g) ≡ RingPath A B .fst f ∙ RingPath B C .fst g
+-- RingPathCompEquiv {B = B} {C} f g = {!!}
+
+-- Ring-ua functoriality
+open RingStr
+
+Ring≡ : (A B : Ring ℓ) → (
+  Σ[ p ∈ ⟨ A ⟩ ≡ ⟨ B ⟩ ]
+  Σ[ q0 ∈ PathP (λ i → p i) (0r (snd A)) (0r (snd B)) ]
+  Σ[ q1 ∈ PathP (λ i → p i) (1r (snd A)) (1r (snd B)) ]
+  Σ[ r+ ∈ PathP (λ i → p i → p i → p i) (_+_ (snd A)) (_+_ (snd B)) ]
+  Σ[ r· ∈ PathP (λ i → p i → p i → p i) (_·_ (snd A)) (_·_ (snd B)) ]
+  Σ[ s ∈ PathP (λ i → p i → p i) (-_ (snd A)) (-_ (snd B)) ]
+  PathP (λ i → IsRing (q0 i) (q1 i) (r+ i) (r· i) (s i)) (isRing (snd A)) (isRing (snd B)))
+  ≃ (A ≡ B)
+Ring≡ A B = isoToEquiv theIso
+  where
+  open Iso
+  theIso : Iso _ _
+  fun theIso (p , q0 , q1 , r+ , r· , s , t) i = p i , ringstr (q0 i) (q1 i) (r+ i) (r· i) (s i) (t i)
+  inv theIso x = cong ⟨_⟩ x , cong (0r ∘ snd) x , cong (1r ∘ snd) x
+               , cong (_+_ ∘ snd) x , cong (_·_ ∘ snd) x , cong (-_ ∘ snd) x , cong (isRing ∘ snd) x
+  rightInv theIso _ = refl
+  leftInv theIso _ = refl
+
+caracRing≡ : {A B : Ring ℓ} (p q : A ≡ B) → cong ⟨_⟩ p ≡ cong ⟨_⟩ q → p ≡ q
+caracRing≡ {A = A} {B = B} p q P =
+  sym (transportTransport⁻ (ua (Ring≡ A B)) p)
+                                   ∙∙ cong (transport (ua (Ring≡ A B))) helper
+                                   ∙∙ transportTransport⁻ (ua (Ring≡ A B)) q
+    where
+    helper : transport (sym (ua (Ring≡ A B))) p ≡ transport (sym (ua (Ring≡ A B))) q
+    helper = Σ≡Prop
+               (λ _ → isPropΣ
+                         (isOfHLevelPathP' 1 (is-set (snd B)) _ _)
+                         λ _ → isPropΣ (isOfHLevelPathP' 1 (is-set (snd B)) _ _)
+                         λ _ → isPropΣ (isOfHLevelPathP' 1 (isSetΠ2 λ _ _ → is-set (snd B)) _ _)
+                         λ _ → isPropΣ (isOfHLevelPathP' 1 (isSetΠ2 λ _ _ → is-set (snd B)) _ _)
+                         λ _ → isPropΣ (isOfHLevelPathP' 1 (isSetΠ λ _ → is-set (snd B)) _ _)
+                         λ _ → isOfHLevelPathP 1 (isPropIsRing _ _ _ _ _) _ _)
+              (transportRefl (cong ⟨_⟩ p) ∙ P ∙ sym (transportRefl (cong ⟨_⟩ q)))
+
+-- uaRingId : (A : Ring ℓ) → uaRing (idRingEquiv {A = A}) ≡ refl
+-- uaRingId A = caracRing≡ _ _ uaIdEquiv
+
+uaCompRingEquiv : {A B C : Ring ℓ} (f : RingEquiv A B) (g : RingEquiv B C)
+                 → uaRing (compRingEquiv f g) ≡ uaRing f ∙ uaRing g
+uaCompRingEquiv f g = caracRing≡ _ _ (
+  cong ⟨_⟩ (uaRing (compRingEquiv f g))
+    ≡⟨ uaCompEquiv _ _ ⟩
+  cong ⟨_⟩ (uaRing f) ∙ cong ⟨_⟩ (uaRing g)
+    ≡⟨ sym (cong-∙ ⟨_⟩ (uaRing f) (uaRing g)) ⟩
+  cong ⟨_⟩ (uaRing f ∙ uaRing g) ∎)
+
+
+
+-- A useful lemma when defining presheaves
+recPT→Ring : {A : Type ℓ'} (𝓕  : A → Ring ℓ)
+           → (σ : ∀ x y → RingEquiv (𝓕 x) (𝓕 y))
+           → (∀ x y z → σ x z ≡ compRingEquiv (σ x y) (σ y z))
+          ------------------------------------------------------
+           → ∥ A ∥ → Ring ℓ
+recPT→Ring 𝓕 σ compCoh = rec→Gpd isGroupoidRing 𝓕 is3-Constant𝓕
+ where
+ open 3-Constant
+ open GpdElim
+
+ is3-Constant𝓕 : 3-Constant 𝓕
+ link is3-Constant𝓕 x y = uaRing (σ x y)
+ coh₁ is3-Constant𝓕 x y z = transport⁻ (PathP≡compPath _ _ _)
+                              (sym (cong uaRing (compCoh x y z) ∙ uaCompRingEquiv (σ x y) (σ y z)))
+
+
+uniqueHom→uniqueEquiv : {A : Type ℓ'} (σ : A → Ring ℓ) (P : {x y : A} → RingHom (σ x) (σ y) → Type ℓ'')
+                        (isPropP : {x y : A} (f : RingHom (σ x) (σ y)) → isProp (P f))
+                        (Pid : {x : A} → P (idRingHom {A = σ x}))
+                        (Pcomp : {x y z : A} {f : RingHom (σ x) (σ y)} {g : RingHom (σ y) (σ z)}
+                               → P f → P g → P (g ∘r f))
+                      → (∀ x y → ∃![ f ∈ RingHom (σ x) (σ y) ] P f)
+                     ----------------------------------------------------------------------------
+                      → ∀ x y → ∃![ e ∈ RingEquiv (σ x) (σ y) ] P (RingEquiv→RingHom e)
+uniqueHom→uniqueEquiv σ P isPropP Pid Pcomp uniqueHom x y = (σEquiv , Pχ₁) ,
+  λ e → Σ≡Prop (λ _ → isPropP _)
+         (Σ≡Prop (λ _ → isPropIsRingHom _ _ _)
+           (Σ≡Prop isPropIsEquiv (cong (fst ∘ fst)
+                                       (uniqueHom _ _ .snd (RingEquiv→RingHom (e .fst) , e .snd)))))
+  where
+  open Iso
+  χ₁ = uniqueHom x y .fst .fst
+  Pχ₁ = uniqueHom x y .fst .snd
+  χ₂ = uniqueHom y x .fst .fst
+  Pχ₂ = uniqueHom y x .fst .snd
+  χ₁∘χ₂≡id : χ₁ ∘r χ₂ ≡ idRingHom
+  χ₁∘χ₂≡id = cong fst (isContr→isProp (uniqueHom _ _)
+                                      (χ₁ ∘r χ₂ , Pcomp Pχ₂ Pχ₁) (idRingHom , Pid))
+  χ₂∘χ₁≡id : χ₂ ∘r χ₁ ≡ idRingHom
+  χ₂∘χ₁≡id = cong fst (isContr→isProp (uniqueHom _ _)
+                                      (χ₂ ∘r χ₁ , Pcomp Pχ₁ Pχ₂) (idRingHom , Pid))
+
+  σIso : Iso ⟨ σ x ⟩ ⟨ σ y ⟩
+  fun σIso = fst χ₁
+  inv σIso = fst χ₂
+  rightInv σIso = funExt⁻ (cong fst χ₁∘χ₂≡id)
+  leftInv σIso = funExt⁻ (cong fst χ₂∘χ₁≡id)
+
+  σEquiv : RingEquiv (σ x) (σ y)
+  fst σEquiv = isoToEquiv σIso
+  snd σEquiv = snd χ₁
+
+
+
+module _ (L' : Poset ℓ ℓ') (P : (fst L') → Type ℓ'') where
+ private
+  L = fst L'
+  A = Σ L P
+ open PosetStr (snd L')
+
+ ourLemma : (𝓕 : A → Ring ℓ''') (Q : {x y : A} → RingHom (𝓕 x) (𝓕 y) → Type ℓ'''')
+            (IsPropQ : {x y : A} (f : RingHom (𝓕 x) (𝓕 y)) → isProp (Q f))
+            (Qid : {x : A} → Q (idRingHom {A = 𝓕 x}))
+            (Qcomp : {x y z : A} {f : RingHom (𝓕 x) (𝓕 y)} {g : RingHom (𝓕 y) (𝓕 z)}
+                   → Q f → Q g → Q (g ∘r f))
+          → (∀ (x y : A) → fst x ≤ fst y → ∃![ f ∈ RingHom (𝓕 x) (𝓕 y) ] Q f)
+          → (x : L) → ∥ P x ∥ → Ring ℓ'''
+ ourLemma 𝓕 Q isPropQ Qid Qcomp ≤→uniqheHom x = recPT→Ring (curry 𝓕 x)
+   (λ p q → 𝓕UniqueEquiv p q .fst .fst)
+     λ p q r → cong fst (𝓕UniqueEquiv p r .snd (_ , Qcomp (𝓕UniqueEquiv p q .fst .snd)
+                                                           (𝓕UniqueEquiv q r .fst .snd)))
+  where
+  𝓕UniqueEquiv : ∀ (p q : P x) → ∃![ e ∈ RingEquiv (𝓕 (x , p)) (𝓕 (x , q)) ] Q (RingEquiv→RingHom e)
+  𝓕UniqueEquiv = uniqueHom→uniqueEquiv (curry 𝓕 x) Q isPropQ Qid Qcomp (λ p q → ≤→uniqheHom _ _ (is-refl x))

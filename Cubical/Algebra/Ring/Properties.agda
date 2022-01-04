@@ -321,28 +321,6 @@ uniqueHom→uniqueEquiv σ P isPropP Pid Pcomp uniqueHom x y = (σEquiv , Pχ₁
   snd σEquiv = snd χ₁
 
 
--- isContrHom→Equiv σ contrHom x y = σEquiv ,
---   λ e → Σ≡Prop (λ _ → isPropIsRingHom _ _ _)
---           (Σ≡Prop isPropIsEquiv
---              (cong fst (isContr→isProp (contrHom _ _) χ₁ (RingEquiv→RingHom e))))
---   where
---   open Iso
---   χ₁ = contrHom x y .fst
---   χ₂ = contrHom y x .fst
---   χ₁∘χ₂≡id : χ₁ ∘r χ₂ ≡ idRingHom
---   χ₁∘χ₂≡id = isContr→isProp (contrHom _ _) _ _
---   χ₂∘χ₁≡id : χ₂ ∘r χ₁ ≡ idRingHom
---   χ₂∘χ₁≡id = isContr→isProp (contrHom _ _) _ _
-
---   σIso : Iso ⟨ σ x ⟩ ⟨ σ y ⟩
---   fun σIso = fst χ₁
---   inv σIso = fst χ₂
---   rightInv σIso = funExt⁻ (cong fst χ₁∘χ₂≡id)
---   leftInv σIso = funExt⁻ (cong fst χ₂∘χ₁≡id)
-
---   σEquiv : RingEquiv (σ x) (σ y)
---   fst σEquiv = isoToEquiv σIso
---   snd σEquiv = snd χ₁
 
 module _ (L' : Poset ℓ ℓ') (P : (fst L') → Type ℓ'') where
  private

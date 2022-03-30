@@ -125,6 +125,33 @@ module _ (L : DistLattice ℓ) (C : Category ℓ' ℓ'') (T : Terminal C) where
   DLSheaf = Σ[ F ∈ DLPreSheaf ] isDLSheaf F
 
 
+  -- a DLSheaf preserves all pullbacks
+  module _ (cspan : Cospan (DLCat ^op)) (pullback : Pullback _ cspan) (F' : DLSheaf) where
+
+    open Cospan
+    open Pullback
+
+    private
+     F = F' .fst
+     FPresCanPB = F' .snd .snd
+
+     a = pullback .pbOb
+     b = cspan .r
+     c = cspan .l
+     d = cspan .m
+
+     a≥b = pullback .pbPr₂
+     a≥c = pullback .pbPr₁
+     b≥d = cspan .s₂
+     c≥d = cspan .s₁
+
+     a≤b∨c : a ≤ b ∨l c
+     a≤b∨c = pullback .univProp (∨≤LCancel _ _) (∨≤RCancel _ _) (is-prop-valued _ _ _ _) .fst .fst
+
+     pbOb≡ : a ≡ b ∨l c
+     pbOb≡ = is-antisym _ _ a≤b∨c (∨lIsMax _ _ _ a≥b a≥c)
+
+
 
 module SheafOnBasis (L : DistLattice ℓ) (C : Category ℓ' ℓ'') (T : Terminal C)
                     (L' : ℙ (fst L)) (hB : IsBasis L L') where

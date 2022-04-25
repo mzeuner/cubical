@@ -18,6 +18,7 @@ open import Cubical.Algebra.DistLattice.Basis
 
 open import Cubical.Categories.Category
 open import Cubical.Categories.Functor
+open import Cubical.Categories.Morphism
 open import Cubical.Categories.NaturalTransformation
 open import Cubical.Categories.Limits.Pullback
 open import Cubical.Categories.Limits.Terminal
@@ -30,6 +31,8 @@ open import Cubical.Categories.Instances.Semilattice
 open import Cubical.Categories.Instances.Lattice
 open import Cubical.Categories.Instances.DistLattice
 
+open import Cubical.Categories.DistLatticeSheaf.Diagram
+
 private
   variable
     ℓ ℓ' ℓ'' : Level
@@ -37,6 +40,10 @@ private
 
 module PreSheafExtension (L : DistLattice ℓ) (C : Category ℓ' ℓ'')
                          (limitC : Limits {ℓ} {ℓ} C) (L' : ℙ (fst L)) where
+
+ open DistLatticeStr (snd L)
+ open JoinSemilattice (Lattice→JoinSemilattice (DistLattice→Lattice L))
+ open PosetStr (IndPoset .snd) hiding (_≤_)
 
  open Functor
 
@@ -54,6 +61,27 @@ module PreSheafExtension (L : DistLattice ℓ) (C : Category ℓ' ℓ'')
 
  DLRan : DLSubPreSheaf → DLPreSheaf
  DLRan = Ran limitC (i ^opF)
+
+ -- since i is fully faithful, we get a natural iso:
+ open NatIso
+ DLRanNatIso : (F : DLSubPreSheaf) → NatIso (funcComp (DLRan F) (i ^opF)) F
+ trans (DLRanNatIso F) = RanNatTrans limitC (i ^opF) F
+ nIso (DLRanNatIso F) (x , x∈L') = natTransIsIso
+  where
+  open isIso
+  open NatTrans
+  open LimCone
+  Fx = (F .F-ob (x , x∈L'))
+
+  natTransIsIso : isIso C ((trans (DLRanNatIso F)) .N-ob (x , x∈L'))
+  inv natTransIsIso = limArrow (limitC ((limitC ↓Diag) (i ^opF) F x) _) Fx invCone
+   where
+   open Cone
+   invCone : Cone _ Fx
+   coneOut invCone ((y , y∈L') , y≤x) = F .F-hom y≤x
+   coneOutCommutes invCone u≥v = sym (F .F-seq _ _) ∙ cong (F-hom F) (is-prop-valued _ _ _ _)
+  sec natTransIsIso = {!!}
+  ret natTransIsIso = {!!}
 
 
 

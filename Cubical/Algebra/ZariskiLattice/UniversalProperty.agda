@@ -46,6 +46,8 @@ open import Cubical.Algebra.ZariskiLattice.Base
 open import Cubical.HITs.SetQuotients as SQ
 open import Cubical.HITs.PropositionalTruncation as PT
 
+open import Cubical.Reflection.RecordEquiv
+
 private
   variable
     ℓ ℓ' : Level
@@ -122,6 +124,14 @@ module _ (R' : CommRing ℓ) (L' : DistLattice ℓ') where
                               d (x ^ n)
      ≤⟨ subst (λ y → y ≤ ⋁ (d ∘ α)) (sym (cong d xⁿ≡∑βα)) (linearCombination≤LCancel β α) ⟩
                               ⋁ (d ∘ α) ◾
+
+ unquoteDecl IsZarMapIsoΣ = declareRecordIsoΣ IsZarMapIsoΣ (quote IsZarMap)
+ isPropIsZarMap : ∀ d → isProp (IsZarMap d)
+ isPropIsZarMap d = isOfHLevelRetractFromIso 1 IsZarMapIsoΣ
+                      (isProp×3 (isSetL _ _)
+                                (isSetL _ _)
+                                (isPropΠ2 (λ _ _  → isSetL _ _))
+                                (isPropΠ2 (λ _ _  → isSetL _ _)))
 
 module ZarLatUniversalProp (R' : CommRing ℓ) where
  open CommRingStr (snd R')

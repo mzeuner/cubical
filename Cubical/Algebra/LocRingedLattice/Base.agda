@@ -70,6 +70,7 @@ module _ {ℓ : Level} (L : DistLattice ℓ)
              → 𝓕 .F-hom (𝓓≤ u s) .fst s ∈ (𝓕 .F-ob (𝓓 u s)) ˣ
     𝓓RestInv _ _ = ≤𝓓ToInv _ _ _ (𝓓≤ _ _) (is-refl _)
 
+    -- should probably be in properties
     𝓓Pres≤ : (u v : L .fst) (s : 𝓕 .F-ob u .fst) (v≤u : v ≤ u)
            → 𝓓 v (𝓕 .F-hom v≤u .fst s) ≤ 𝓓 u s
     𝓓Pres≤ u v s v≤u = ≤𝓓FromInv _ _ _ (is-trans _ _ _ (𝓓≤ _ _) v≤u)
@@ -111,6 +112,7 @@ record LocRingedLattice (ℓ : Level) : Type (ℓ-suc ℓ) where
     𝓓 : (u : L .fst) → 𝓕 .F-ob u .fst → L .fst
     isInvSupport𝓓 : IsInvSupport L 𝓕 𝓓
 
+  -- should probably be in properties
   open DistLatticeStr (L .snd)
   open Order (DistLattice→Lattice L)
   open JoinSemilattice (Lattice→JoinSemilattice (DistLattice→Lattice L))

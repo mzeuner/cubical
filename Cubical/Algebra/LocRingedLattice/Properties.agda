@@ -21,6 +21,7 @@ open import Cubical.Algebra.CommRing
 open import Cubical.Algebra.Semilattice
 open import Cubical.Algebra.Lattice
 open import Cubical.Algebra.DistLattice
+open import Cubical.Algebra.DistLattice.Basis
 
 open import Cubical.Algebra.ZariskiLattice.UniversalProperty renaming (IsZarMap to isSupport ; isPropIsZarMap to isPropIsSupport)
 
@@ -49,3 +50,31 @@ open NatTrans
 private
   variable
     ℓ ℓ' : Level
+
+
+module _
+         {ℓ : Level}
+         (L' : DistLattice ℓ)
+         (B' : ℙ (fst L'))
+         (isBasisB : IsBasis L' B')
+
+         (𝓕 : Functor ((DistLatticeCategory L') ^op) (CommRingsCategory {ℓ}))
+         (isSheaf𝓕 : isDLSheaf L' _ 𝓕)
+         where
+
+  open JoinSemilattice (Lattice→JoinSemilattice (DistLattice→Lattice L'))
+  private
+    L = fst L'
+    B = Σ[ u ∈ L ] (u ∈ B')
+    -- LPos = JoinSemilattice.IndPoset (Lattice→JoinSemilattice (DistLattice→Lattice L'))
+    -- BPos = MeetSemilattice.IndPoset (Basis→MeetSemilattice L' B' isBasisB)
+
+  InvMapFromBasis :
+      (𝓓ᴮ : (u : B) → 𝓕 .F-ob (u .fst) .fst → B)
+      (𝓓ᴮ≤ : (u : B) (s : 𝓕 .F-ob (u .fst) .fst) → 𝓓ᴮ u s .fst ≤ (u .fst))
+      (≤𝓓ᴮToInv : (u v : B) (s : 𝓕 .F-ob (u .fst) .fst) (v≤u : v .fst ≤ (u .fst))
+                → v .fst ≤ 𝓓ᴮ u s .fst → 𝓕 .F-hom v≤u .fst s ∈ (𝓕 .F-ob (v .fst)) ˣ)
+      (≤𝓓ᴮFromInv : (u v : B) (s : 𝓕 .F-ob (u .fst) .fst) (v≤u : v .fst ≤ (u .fst))
+                  → 𝓕 .F-hom v≤u .fst s ∈ (𝓕 .F-ob (v .fst)) ˣ → v .fst ≤ 𝓓ᴮ u s .fst)
+    → InvMap L' 𝓕
+  InvMapFromBasis = {!!}

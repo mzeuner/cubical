@@ -31,6 +31,7 @@ open import Cubical.Categories.NaturalTransformation
 open import Cubical.Categories.Instances.CommRings
 open import Cubical.Categories.Instances.DistLattice
 open import Cubical.Categories.Instances.Semilattice
+open import Cubical.Categories.Instances.Poset
 
 open import Cubical.Categories.DistLatticeSheaf.Diagram
 open import Cubical.Categories.DistLatticeSheaf.Base

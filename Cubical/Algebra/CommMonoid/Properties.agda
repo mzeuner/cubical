@@ -50,9 +50,11 @@ module CommMonoidTheory (M' : CommMonoid ℓ) where
  commAssocr : (x y z : M) → x · y · z ≡ x · z · y
  commAssocr x y z = sym (·Assoc x y z) ∙∙ cong (x ·_) (·Comm y z) ∙∙ ·Assoc x z y
 
-
  commAssocr2 : (x y z : M) → x · y · z ≡ z · y · x
  commAssocr2 x y z = commAssocr _ _ _ ∙∙ cong (_· y) (·Comm _ _) ∙∙ commAssocr _ _ _
+
+ commAssocr3 : (x y z : M) → x · y · z ≡ y · z · x
+ commAssocr3 x y z = commAssocr x y z ∙ commAssocr2 x z y
 
  commAssocSwap : (x y z w : M) → (x · y) · (z · w) ≡ (x · z) · (y · w)
  commAssocSwap x y z w = ·Assoc (x · y) z w ∙∙ cong (_· w) (commAssocr x y z)

@@ -56,7 +56,7 @@ module _ {ℓ : Level} (P : Poset ℓ ℓ)
 
   open PosetStr (P .snd)
 
-  -- an invertability suprema of u ∈ P and a section s ∈ 𝓕(u) is
+  -- an invertibility suprema of u ∈ P and a section s ∈ 𝓕(u) is
   -- a maximal element ≤ u where the restriction of s becomes invertible
   record IsInvSup (u : P .fst) (s : 𝓕 .F-ob u .fst) (𝓓ᵤs : P .fst) : Type ℓ where
     field

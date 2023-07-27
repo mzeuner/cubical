@@ -185,3 +185,38 @@ module _ {ℓJ ℓJ' : Level} where
       (isPropIsConeMor cc (limCone (LimitsCommRingsCategory J D)))
       (λ a' x → Σ≡Prop (λ _ → isPropIsRingHom _ _ _)
                        (funExt (λ y → cone≡ λ v → funExt (λ _ → sym (funExt⁻ (cong fst (x v)) y)))))
+
+
+module _ {ℓJ ℓJ' : Level} {J : Category ℓJ ℓJ'}
+         (D : Functor J (CommRingsCategory {ℓ = ℓ-max ℓJ ℓJ'})) where
+
+  open Functor
+  open Cone
+  open LimCone (LimitsCommRingsCategory J D)
+
+  invLimLemma : (s : lim .fst)
+              → (∀ j → s .coneOut j tt* ∈ D .F-ob j ˣ)
+              → s ∈ lim ˣ
+  invLimLemma s sⱼ⁻¹ = s⁻¹ , cone≡ λ j → funExt λ _ → sⱼ⁻¹ j .snd
+    where
+    s⁻¹ : Cone (ForgetfulCommRing→Set ∘F D) _
+    coneOut s⁻¹ j tt* = sⱼ⁻¹ j .fst
+    coneOutCommutes s⁻¹ {u} {v} e = funExt λ _ → path
+      where
+      sᵤ = s .coneOut u tt*
+      sᵥ = s .coneOut v tt*
+      sᵤ⁻¹ = sⱼ⁻¹ u .fst
+      open CommRingHomTheory (D .F-hom e)
+      instance
+        _ : sᵤ ∈ D .F-ob u ˣ
+        _ = sⱼ⁻¹ u
+        _ : sᵥ ∈ D .F-ob v ˣ
+        _ = sⱼ⁻¹ v
+        _ : D .F-hom e .fst sᵤ ∈ D .F-ob v ˣ
+        _ = RingHomRespInv sᵤ
+      open Units (D .F-ob v)
+
+      path : D .F-hom e .fst sᵤ⁻¹ ≡ sᵥ ⁻¹
+      path = D .F-hom e .fst sᵤ⁻¹          ≡⟨ φ[x⁻¹]≡φ[x]⁻¹ sᵤ ⟩
+             (D .F-hom e .fst sᵤ) ⁻¹       ≡⟨ unitCong (funExt⁻ (s .coneOutCommutes e) tt*) ⟩
+             sᵥ ⁻¹ ∎

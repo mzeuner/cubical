@@ -136,12 +136,13 @@ module RingedLatticeTheory (L : DistLattice ℓ)
     invToRestInv : s ∈ 𝓕 .F-ob u ˣ
                  → ∀ i → s↿ i ∈ 𝓕 .F-ob (α i) ˣ
     invToRestInv sInv i = RingHomRespInv _ ⦃ sInv ⦄
-      where
-      open CommRingHomTheory {A' = 𝓕 .F-ob _} {B' = 𝓕 .F-ob _} (𝓕 .F-hom (α≤u i))
+      where open CommRingHomTheory (𝓕 .F-hom (α≤u i))
 
     invFromRestInv : (∀ i → s↿ i ∈ 𝓕 .F-ob (α i) ˣ)
                    → s ∈ 𝓕 .F-ob u ˣ
-    invFromRestInv s↿Inv = {!!}
+    invFromRestInv s↿Inv = subst (λ x → x ∈ (𝓕 .F-ob u ˣ))
+                                 s''≡s
+                                 (RingHomRespInv _ ⦃ s'Inv ⦄)
       where
       ⋁α≤u : ⋁ α ≤ u
       ⋁α≤u = subst (λ x → ⋁ α ≤ x) ⋁α≡u (is-refl _)
@@ -149,7 +150,31 @@ module RingedLatticeTheory (L : DistLattice ℓ)
       u≤⋁α : u ≤ ⋁ α
       u≤⋁α = subst (λ x → x ≤ ⋁ α) ⋁α≡u (is-refl _)
 
+      open CommRingHomTheory (𝓕 .F-hom u≤⋁α)
+
       s' = 𝓕 .F-hom ⋁α≤u .fst s
 
+      s'' = 𝓕 .F-hom u≤⋁α .fst s'
+
+      s''≡s : s'' ≡ s
+      s''≡s = s''
+            ≡⟨ funExt⁻ (cong fst (sym (𝓕 .F-seq  ⋁α≤u u≤⋁α))) s ⟩
+              𝓕 .F-hom (is-trans _ _ _ u≤⋁α ⋁α≤u) .fst s
+            ≡⟨ cong (λ x → 𝓕 .F-hom x .fst s) (is-prop-valued _ _ _ _) ⟩
+              𝓕 .F-hom (is-refl _) .fst s
+            ≡⟨ funExt⁻ (cong fst (𝓕 .F-id)) s ⟩
+              s ∎
+
+      s'↿ : (i : Fin n) → 𝓕 .F-ob (α i) .fst
+      s'↿ i = 𝓕 .F-hom (ind≤bigOp α i) .fst s'
+
+      s↿≡s'↿ : ∀ i → s↿ i ≡ s'↿ i
+      s↿≡s'↿ i = 𝓕 .F-hom (α≤u i) .fst s
+               ≡⟨ cong (λ x → 𝓕 .F-hom x .fst s) (is-prop-valued _ _ _ _) ⟩
+                 𝓕 .F-hom (is-trans _ _ _ (ind≤bigOp α i) ⋁α≤u) .fst s
+               ≡⟨ funExt⁻ (cong fst (𝓕 .F-seq  _ _)) s ⟩
+                 𝓕 .F-hom (ind≤bigOp α i) .fst s' ∎
+
       s'Inv : s' ∈ 𝓕 .F-ob (⋁ α) ˣ
-      s'Inv = {!!}
+      s'Inv = invFromRestInv⋁ _ _
+                λ i → subst (λ x → x ∈ 𝓕 .F-ob (α i) ˣ) (s↿≡s'↿ i) (s↿Inv i)

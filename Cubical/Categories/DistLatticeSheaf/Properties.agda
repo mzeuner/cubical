@@ -135,8 +135,7 @@ module RingedLatticeTheory (L : DistLattice ℓ)
 
     invToRestInv : s ∈ 𝓕 .F-ob u ˣ
                  → ∀ i → s↿ i ∈ 𝓕 .F-ob (α i) ˣ
-    invToRestInv sInv i = RingHomRespInv _ ⦃ sInv ⦄
-      where open CommRingHomTheory (𝓕 .F-hom (α≤u i))
+    invToRestInv sInv i = let open CommRingHomTheory (𝓕 .F-hom (α≤u i)) in RingHomRespInv _ ⦃ sInv ⦄
 
     invFromRestInv : (∀ i → s↿ i ∈ 𝓕 .F-ob (α i) ˣ)
                    → s ∈ 𝓕 .F-ob u ˣ

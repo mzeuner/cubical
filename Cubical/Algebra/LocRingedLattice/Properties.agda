@@ -38,6 +38,7 @@ open import Cubical.Categories.Instances.Poset
 
 open import Cubical.Categories.DistLatticeSheaf.Diagram
 open import Cubical.Categories.DistLatticeSheaf.Base
+open import Cubical.Categories.DistLatticeSheaf.Properties
 
 open import Cubical.Relation.Binary
 open import Cubical.Relation.Binary.Poset
@@ -155,6 +156,7 @@ module _
   open PosetStr using (is-prop-valued)
 
   open Functor
+  open RingedLatticeTheory
 
   private
     L = fst L'
@@ -177,11 +179,11 @@ module _
     open PosetStr (LPoset .snd) hiding (_≤_)
 
     InvMapFromBasisStage : (u : L) → InvMapAtStage LPoset 𝓕 u
-    InvMapFromBasisStage u = PT.rec (isPropInvMapAtStage LPoset 𝓕 u) helperΣ (⋁Basis u)
+    InvMapFromBasisStage u = PT.rec (isPropInvMapAtStage LPoset 𝓕 u) uHelperΣ (⋁Basis u)
       where
-      helperΣ : Σ[ n ∈ ℕ ] Σ[ α ∈ FinVec L n ] (∀ i → α i ∈ B') × (⋁ α ≡ u)
+      uHelperΣ : Σ[ n ∈ ℕ ] Σ[ α ∈ FinVec L n ] (∀ i → α i ∈ B') × (⋁ α ≡ u)
               → InvMapAtStage LPoset 𝓕 u
-      helperΣ (n , α , α∈B , ⋁α≡u) = 𝓓ᵤ , isInvMapAtStage𝓓ᵤ
+      uHelperΣ (n , α , α∈B , ⋁α≡u) = 𝓓ᵤ , isInvMapAtStage𝓓ᵤ
         where
         α≤u : ∀ i → α i ≤ u
         α≤u i = subst (λ x → α i ≤ x) ⋁α≡u (ind≤bigOp α i)
@@ -189,11 +191,81 @@ module _
         𝓓ᵤ : 𝓕 .F-ob u .fst → L
         𝓓ᵤ s = ⋁ λ i → 𝓓ᴮ (α i , α∈B i) (𝓕 .F-hom (α≤u i) .fst s) .fst
 
+        ≤𝓓ToInvB : ∀ (s : 𝓕 .F-ob u .fst) (v : B) (v≤u : v .fst ≤ u)
+                 → v .fst ≤ 𝓓ᵤ s → 𝓕 .F-hom v≤u .fst s ∈ 𝓕 .F-ob (v .fst) ˣ
+        ≤𝓓ToInvB s (v , v∈B) v≤u v≤𝓓ᵤs = {!!}
+          where
+          open DistLatticeStr (L' .snd)
+          open SemilatticeStr ((Basis→MeetSemilattice L' B' isBasisB) .snd) renaming (_·_ to _∧b_)
+
+          v∧α≤u : ∀ i → v ∧l (α i) ≤ u
+          v∧α≤u i = {!!}
+
+          --s↿v∧α : (i : Fin n) → 𝓕 .F-ob
+
+          ⋁𝓓ᴮ[s↿v∧α]≡v : ⋁ {!!} ≡ v
+          ⋁𝓓ᴮ[s↿v∧α]≡v = {!!}
+
+        ≤𝓓FromInvB : ∀ (s : 𝓕 .F-ob u .fst) (v : B) (v≤u : v .fst ≤ u)
+                   → 𝓕 .F-hom v≤u .fst s ∈ 𝓕 .F-ob (v .fst) ˣ → v .fst ≤ 𝓓ᵤ s
+        ≤𝓓FromInvB s (v , v∈B) v≤u s↿vInv = {!!}
+
         open IsInvSup
         isInvMapAtStage𝓓ᵤ : ∀ s → IsInvSup LPoset 𝓕 _ _ (𝓓ᵤ s)
         𝓓≤ (isInvMapAtStage𝓓ᵤ s) = bigOpIsMax _ u
           λ i → is-trans _ _ _
                   (B↪L .F-hom (isInvMap𝓓ᴮ (α i , α∈B i) (𝓕 .F-hom (α≤u i) .fst s) .𝓓≤))
                   (α≤u i)
-        ≤𝓓ToInv (isInvMapAtStage𝓓ᵤ s) = {!!}
-        ≤𝓓FromInv (isInvMapAtStage𝓓ᵤ s) = {!!}
+
+        ≤𝓓ToInv (isInvMapAtStage𝓓ᵤ s) v =
+          PT.rec (isPropΠ2 (λ _ _ → ∈-isProp (𝓕 .F-ob v ˣ) _)) vHelperΣ (⋁Basis v)
+          where
+          vHelperΣ : Σ[ m ∈ ℕ ] Σ[ β ∈ FinVec L m ] (∀ i → β i ∈ B') × (⋁ β ≡ v)
+                   → (v≤u : v ≤ u) → v ≤ 𝓓ᵤ s → 𝓕 .F-hom v≤u .fst s ∈ 𝓕 .F-ob v ˣ
+          vHelperΣ (m , β , β∈B , ⋁β≡v) v≤u v≤𝓓ᵤs =
+            invFromRestInv L' 𝓕 isSheaf𝓕 v s↿v β ⋁β≡v s↿v↿βInv
+            where
+            β≤v : ∀ i → β i ≤ v
+            β≤v i = subst (λ x → β i ≤ x) ⋁β≡v (ind≤bigOp β i)
+
+            s↿v = 𝓕 .F-hom v≤u .fst s
+
+            s↿v↿β : (i : Fin m) → 𝓕 .F-ob (β i) .fst
+            s↿v↿β i = 𝓕 .F-hom (β≤v i) .fst s↿v
+
+            s↿v↿βInv : ∀ i → s↿v↿β i ∈ 𝓕 .F-ob (β i) ˣ
+            s↿v↿βInv i = subst (λ x → x ∈ 𝓕 .F-ob (β i) ˣ)
+                              (funExt⁻ (cong fst (𝓕 .F-seq _ _)) s)
+                              (≤𝓓ToInvB s (β i , β∈B i) βᵢ≤u βᵢ≤𝓓ᵤs)
+              where
+              βᵢ≤u : β i ≤ u
+              βᵢ≤u = is-trans _ _ _ (β≤v i) v≤u
+
+              βᵢ≤𝓓ᵤs : β i ≤ 𝓓ᵤ s
+              βᵢ≤𝓓ᵤs = is-trans _ _ _ (β≤v i) v≤𝓓ᵤs
+
+        ≤𝓓FromInv (isInvMapAtStage𝓓ᵤ s) v =
+          PT.rec (isPropΠ2 (λ _ _ → LPoset .snd .is-prop-valued _ _)) vHelperΣ (⋁Basis v)
+          where
+          vHelperΣ : Σ[ m ∈ ℕ ] Σ[ β ∈ FinVec L m ] (∀ i → β i ∈ B') × (⋁ β ≡ v)
+                   → (v≤u : v ≤ u) → 𝓕 .F-hom v≤u .fst s ∈ 𝓕 .F-ob v ˣ → v ≤ 𝓓ᵤ s
+          vHelperΣ (m , β , β∈B , ⋁β≡v) v≤u s↿vInv =
+            subst (λ x → x ≤ 𝓓ᵤ s) ⋁β≡v (bigOpIsMax β (𝓓ᵤ s) β≤𝓓ᵤs)
+            where
+            β≤v : ∀ i → β i ≤ v
+            β≤v i = subst (λ x → β i ≤ x) ⋁β≡v (ind≤bigOp β i)
+
+            β≤𝓓ᵤs : ∀ i → β i ≤ 𝓓ᵤ s
+            β≤𝓓ᵤs i = ≤𝓓FromInvB s (β i , β∈B i) βᵢ≤u (subst (λ x → x ∈ 𝓕 .F-ob (β i) ˣ)
+                                                        (funExt⁻ (cong fst (sym (𝓕 .F-seq _ _))) s)
+                                                        s↿v↿βᵢInv)
+              where
+              open CommRingHomTheory {A' = 𝓕 .F-ob _} {B' = 𝓕 .F-ob _} (𝓕 .F-hom (β≤v i))
+              βᵢ≤u : β i ≤ u
+              βᵢ≤u = is-trans _ _ _ (β≤v i) v≤u
+
+              s↿v = 𝓕 .F-hom v≤u .fst s
+              s↿v↿βᵢ = 𝓕 .F-hom (β≤v i) .fst s↿v
+
+              s↿v↿βᵢInv : s↿v↿βᵢ ∈ 𝓕 .F-ob (β i) ˣ
+              s↿v↿βᵢInv = RingHomRespInv _ ⦃ s↿vInv ⦄

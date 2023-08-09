@@ -9,7 +9,6 @@ open import Cubical.Foundations.Powerset
 open import Cubical.Data.Sigma
 open import Cubical.Data.Unit
 open import Cubical.Data.Nat using (ℕ)
---open import Cubical.Data.Nat.Order
 open import Cubical.Data.FinData
 
 open import Cubical.Relation.Binary.Poset
@@ -63,13 +62,13 @@ module RingedLatticeTheory (L : DistLattice ℓ)
 
     private
       s↿ : (i : Fin n) → 𝓕 .F-ob (α i) .fst
-      s↿ i = 𝓕 .F-hom (ind≤bigOp α i) .fst s
+      s↿ i = 𝓕 .F-hom (ind≤⋁ α i) .fst s
 
     invToRestInv⋁ : s ∈ 𝓕 .F-ob (⋁ α) ˣ
                   → ∀ i → s↿ i ∈ 𝓕 .F-ob (α i) ˣ
     invToRestInv⋁ sInv i = RingHomRespInv _ ⦃ sInv ⦄
       where
-      open CommRingHomTheory {A' = 𝓕 .F-ob _} {B' = 𝓕 .F-ob _} (𝓕 .F-hom (ind≤bigOp α i))
+      open CommRingHomTheory {A' = 𝓕 .F-ob _} {B' = 𝓕 .F-ob _} (𝓕 .F-hom (ind≤⋁ α i))
 
     invFromRestInv⋁ : (∀ i → s↿ i ∈ 𝓕 .F-ob (α i) ˣ)
                     → s ∈ 𝓕 .F-ob (⋁ α) ˣ
@@ -128,7 +127,7 @@ module RingedLatticeTheory (L : DistLattice ℓ)
 
     private
       α≤u : ∀ i → α i ≤ u
-      α≤u i = subst (λ x → α i ≤ x) ⋁α≡u (ind≤bigOp α i)
+      α≤u i = subst (λ x → α i ≤ x) ⋁α≡u (ind≤⋁ α i)
 
       s↿ : (i : Fin n) → 𝓕 .F-ob (α i) .fst
       s↿ i = 𝓕 .F-hom (α≤u i) .fst s
@@ -165,14 +164,14 @@ module RingedLatticeTheory (L : DistLattice ℓ)
               s ∎
 
       s'↿ : (i : Fin n) → 𝓕 .F-ob (α i) .fst
-      s'↿ i = 𝓕 .F-hom (ind≤bigOp α i) .fst s'
+      s'↿ i = 𝓕 .F-hom (ind≤⋁ α i) .fst s'
 
       s↿≡s'↿ : ∀ i → s↿ i ≡ s'↿ i
       s↿≡s'↿ i = 𝓕 .F-hom (α≤u i) .fst s
                ≡⟨ cong (λ x → 𝓕 .F-hom x .fst s) (is-prop-valued _ _ _ _) ⟩
-                 𝓕 .F-hom (is-trans _ _ _ (ind≤bigOp α i) ⋁α≤u) .fst s
+                 𝓕 .F-hom (is-trans _ _ _ (ind≤⋁ α i) ⋁α≤u) .fst s
                ≡⟨ funExt⁻ (cong fst (𝓕 .F-seq  _ _)) s ⟩
-                 𝓕 .F-hom (ind≤bigOp α i) .fst s' ∎
+                 𝓕 .F-hom (ind≤⋁ α i) .fst s' ∎
 
       s'Inv : s' ∈ 𝓕 .F-ob (⋁ α) ˣ
       s'Inv = invFromRestInv⋁ _ _

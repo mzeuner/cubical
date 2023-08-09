@@ -43,8 +43,6 @@ open import Cubical.Categories.DistLatticeSheaf.Properties
 open import Cubical.Relation.Binary
 open import Cubical.Relation.Binary.Poset
 
--- open import Cubical.Reflection.RecordEquiv
-
 open import Cubical.Algebra.LocRingedLattice.Base
 
 open Iso
@@ -131,10 +129,10 @@ module MeetSemilatticeInvSupTheory (M' : Semilattice ℓ) where
               s↿v↿v∧𝓓us ∎
 
     𝓓OfRest∧ : (u : M) (s : 𝓕 .F-ob u .fst) (v : M)
-             → 𝓓 (u ∧l v) (𝓕 .F-hom (∧≤RCancel _ _) .fst s) ≡ v ∧l 𝓓 u s
+             → 𝓓 (v ∧l u) (𝓕 .F-hom (∧≤LCancel _ _) .fst s) ≡ v ∧l 𝓓 u s
     𝓓OfRest∧ u s v =
-      𝓓 (u ∧l v) (𝓕 .F-hom (∧≤RCancel _ _) .fst s) ≡⟨ 𝓓OfRest u s (u ∧l v) (∧≤RCancel _ _) ⟩
-      u ∧l v ∧l 𝓓 u s ≡⟨ commAssocr3 _ _ _ ⟩
+      𝓓 (v ∧l u) (𝓕 .F-hom (∧≤LCancel _ _) .fst s) ≡⟨ 𝓓OfRest u s (v ∧l u) (∧≤LCancel _ _) ⟩
+      v ∧l u ∧l 𝓓 u s ≡⟨ commAssocr _ _ _ ⟩
       v ∧l 𝓓 u s ∧l u ≡⟨ sym (∧Assoc _ _ _) ⟩
       v ∧l (𝓓 u s ∧l u) ≡⟨ cong (v ∧l_) (isInvMap𝓓 u s .𝓓≤) ⟩
       v ∧l 𝓓 u s ∎
@@ -156,7 +154,7 @@ module _
   open PosetStr using (is-prop-valued)
 
   open Functor
-  open RingedLatticeTheory
+  open RingedLatticeTheory L' 𝓕 isSheaf𝓕
 
   private
     L = fst L'
@@ -176,7 +174,7 @@ module _
   module _ (𝓓ᴮ : (u : B) → 𝓕ᴮ .F-ob u .fst → B) (isInvMap𝓓ᴮ : IsInvMap BPoset 𝓕ᴮ 𝓓ᴮ) where
 
     open IsBasis isBasisB
-    open PosetStr (LPoset .snd) hiding (_≤_)
+    open PosetStr (LPoset .snd) hiding (_≤_ ; is-prop-valued)
 
     InvMapFromBasisStage : (u : L) → InvMapAtStage LPoset 𝓕 u
     InvMapFromBasisStage u = PT.rec (isPropInvMapAtStage LPoset 𝓕 u) uHelperΣ (⋁Basis u)
@@ -186,33 +184,124 @@ module _
       uHelperΣ (n , α , α∈B , ⋁α≡u) = 𝓓ᵤ , isInvMapAtStage𝓓ᵤ
         where
         α≤u : ∀ i → α i ≤ u
-        α≤u i = subst (λ x → α i ≤ x) ⋁α≡u (ind≤bigOp α i)
+        α≤u i = subst (λ x → α i ≤ x) ⋁α≡u (ind≤⋁ α i)
 
         𝓓ᵤ : 𝓕 .F-ob u .fst → L
         𝓓ᵤ s = ⋁ λ i → 𝓓ᴮ (α i , α∈B i) (𝓕 .F-hom (α≤u i) .fst s) .fst
 
         ≤𝓓ToInvB : ∀ (s : 𝓕 .F-ob u .fst) (v : B) (v≤u : v .fst ≤ u)
                  → v .fst ≤ 𝓓ᵤ s → 𝓕 .F-hom v≤u .fst s ∈ 𝓕 .F-ob (v .fst) ˣ
-        ≤𝓓ToInvB s (v , v∈B) v≤u v≤𝓓ᵤs = {!!}
+        ≤𝓓ToInvB s (v , v∈B) v≤u v≤𝓓ᵤs =
+          invFromRestInv v s↿v 𝓓ᴮ[s↿v↿v∧α] ⋁𝓓ᴮ[s↿v↿v∧α]≡v
+            λ i → subst (λ x → x ∈ 𝓕 .F-ob (𝓓ᴮ[s↿v↿v∧α] i) ˣ)
+                  (funExt⁻ (cong fst (sym (𝓕 .F-seq _ _))) s↿v
+                    ∙ cong (λ x → 𝓕 .F-hom x .fst s↿v)
+                           (LPoset .snd .is-prop-valued _ _ _ _))
+                  (𝓓Inv (isInvMap𝓓ᴮ ((v , v∈B) ∧b (α i , α∈B i)) (s↿v↿v∧α i)))
           where
           open DistLatticeStr (L' .snd)
+          open MeetSemilattice (Basis→MeetSemilattice L' B' isBasisB) renaming (_≤_ to _≤b_) hiding (IndPoset)
           open SemilatticeStr ((Basis→MeetSemilattice L' B' isBasisB) .snd) renaming (_·_ to _∧b_)
+          open IsInvSup
+          open MeetSemilatticeInvSupTheory (Basis→MeetSemilattice L' B' isBasisB)
 
-          v∧α≤u : ∀ i → v ∧l (α i) ≤ u
-          v∧α≤u i = {!!}
+          v∧α≤α : ∀ i → (v , v∈B) ∧b (α i , α∈B i) ≤b (α i , α∈B i)
+          v∧α≤α i = ∧≤LCancel _ _
 
-          --s↿v∧α : (i : Fin n) → 𝓕 .F-ob
+          v∧α≤v : ∀ i → (v , v∈B) ∧b (α i , α∈B i) ≤b (v , v∈B)
+          v∧α≤v i = ∧≤RCancel _ _
 
-          ⋁𝓓ᴮ[s↿v∧α]≡v : ⋁ {!!} ≡ v
-          ⋁𝓓ᴮ[s↿v∧α]≡v = {!!}
+          s↿v = 𝓕 .F-hom v≤u .fst s
+
+          s↿α : (i : Fin n) → 𝓕 .F-ob (α i) .fst
+          s↿α i = 𝓕 .F-hom (α≤u i) .fst s
+
+          s↿α↿v∧α : (i : Fin n) → 𝓕 .F-ob (v ∧l α i) .fst
+          s↿α↿v∧α i = 𝓕 .F-hom (B↪L .F-hom (v∧α≤α i)) .fst (s↿α i)
+
+          s↿v↿v∧α : (i : Fin n) → 𝓕 .F-ob (v ∧l α i) .fst
+          s↿v↿v∧α i = 𝓕 .F-hom (B↪L .F-hom (v∧α≤v i)) .fst s↿v
+
+          𝓓ᴮ[s↿α] : FinVec L n
+          𝓓ᴮ[s↿α] i = 𝓓ᴮ (α i , α∈B i) (𝓕 .F-hom (α≤u i) .fst s) .fst
+
+          𝓓ᴮ[s↿v↿v∧α] : FinVec L n
+          𝓓ᴮ[s↿v↿v∧α] i = 𝓓ᴮ ((v , v∈B) ∧b (α i , α∈B i)) (s↿v↿v∧α i) .fst
+
+          𝓓ᴮ≡ : ∀ i →  𝓓ᴮ[s↿v↿v∧α] i ≡ v ∧l 𝓓ᴮ[s↿α] i
+          𝓓ᴮ≡ i =
+              cong (λ x → 𝓓ᴮ ((v , v∈B) ∧b (α i , α∈B i)) x .fst) s↿≡
+            ∙ cong fst (𝓓OfRest∧ 𝓕ᴮ 𝓓ᴮ isInvMap𝓓ᴮ  (α i , α∈B i) (s↿α i) (v , v∈B))
+            where
+            s↿≡ : s↿v↿v∧α i ≡ s↿α↿v∧α i
+            s↿≡ = s↿v↿v∧α i
+                ≡⟨ funExt⁻ (cong fst (sym (𝓕 .F-seq _ _))) s ⟩
+                  𝓕 .F-hom (is-trans _ _ _ _ _) .fst s
+                ≡⟨ cong (λ x → 𝓕 .F-hom x .fst s) (LPoset .snd .is-prop-valued _ _ _ _) ⟩
+                  𝓕 .F-hom (is-trans _ _ _ ((B↪L .F-hom (v∧α≤α i))) (α≤u i)) .fst s
+                ≡⟨ funExt⁻ (cong fst (𝓕 .F-seq _ _)) s ⟩
+                  s↿α↿v∧α i ∎
+
+          ⋁𝓓ᴮ[s↿v↿v∧α]≡v : ⋁ 𝓓ᴮ[s↿v↿v∧α] ≡ v
+          ⋁𝓓ᴮ[s↿v↿v∧α]≡v = ⋁Ext 𝓓ᴮ≡ ∙∙ sym (⋁Meetrdist v 𝓓ᴮ[s↿α]) ∙∙ ≤j→≤m _ _ v≤𝓓ᵤs
+
 
         ≤𝓓FromInvB : ∀ (s : 𝓕 .F-ob u .fst) (v : B) (v≤u : v .fst ≤ u)
                    → 𝓕 .F-hom v≤u .fst s ∈ 𝓕 .F-ob (v .fst) ˣ → v .fst ≤ 𝓓ᵤ s
-        ≤𝓓FromInvB s (v , v∈B) v≤u s↿vInv = {!!}
+        ≤𝓓FromInvB s (v , v∈B) v≤u s↿vInv =
+          subst (λ x → x ≤ 𝓓ᵤ s) ⋁v∧α≡v (≤-⋁Ext _ _ v∧α≤𝓓ᴮs↿α)
+          where
+          open DistLatticeStr (L' .snd)
+          open MeetSemilattice (Basis→MeetSemilattice L' B' isBasisB) renaming (_≤_ to _≤b_) hiding (IndPoset)
+          open SemilatticeStr ((Basis→MeetSemilattice L' B' isBasisB) .snd) renaming (_·_ to _∧b_)
+          open IsInvSup
+
+          v∧α≤α : ∀ i → (v , v∈B) ∧b (α i , α∈B i) ≤b (α i , α∈B i)
+          v∧α≤α i = ∧≤LCancel _ _
+
+          v∧α≤v : ∀ i → (v , v∈B) ∧b (α i , α∈B i) ≤b (v , v∈B)
+          v∧α≤v i = ∧≤RCancel _ _
+
+          s↿α : (i : Fin n) → 𝓕 .F-ob (α i) .fst
+          s↿α i = 𝓕 .F-hom (α≤u i) .fst s
+
+          s↿v = 𝓕 .F-hom v≤u .fst s
+
+          s↿v↿v∧α : (i : Fin n) → 𝓕 .F-ob (v ∧l α i) .fst
+          s↿v↿v∧α i = 𝓕 .F-hom (B↪L .F-hom (v∧α≤v i)) .fst s↿v
+
+          s↿α↿v∧α : (i : Fin n) → 𝓕 .F-ob (v ∧l α i) .fst
+          s↿α↿v∧α i = 𝓕 .F-hom (B↪L .F-hom (v∧α≤α i)) .fst (s↿α i)
+
+          s↿α↿v∧αInv : ∀ i → s↿α↿v∧α i ∈ 𝓕 .F-ob (v ∧l α i) ˣ
+          s↿α↿v∧αInv i =
+            subst (λ x → x ∈ (𝓕 .F-ob (v ∧l α i) ˣ)) s↿≡ (RingHomRespInv _ ⦃ s↿vInv ⦄)
+            where
+            open CommRingHomTheory {A' = 𝓕 .F-ob _} {B' = 𝓕 .F-ob _}
+                                   (𝓕 .F-hom (B↪L .F-hom (v∧α≤v i)))
+            s↿≡ : s↿v↿v∧α i ≡ s↿α↿v∧α i
+            s↿≡ = s↿v↿v∧α i
+                ≡⟨ funExt⁻ (cong fst (sym (𝓕 .F-seq _ _))) s ⟩
+                  𝓕 .F-hom (is-trans _ _ _ _ _) .fst s
+                ≡⟨ cong (λ x → 𝓕 .F-hom x .fst s) (LPoset .snd .is-prop-valued _ _ _ _) ⟩
+                  𝓕 .F-hom (is-trans _ _ _ ((B↪L .F-hom (v∧α≤α i))) (α≤u i)) .fst s
+                ≡⟨ funExt⁻ (cong fst (𝓕 .F-seq _ _)) s ⟩
+                  s↿α↿v∧α i ∎
+
+
+
+          v∧α≤𝓓ᴮs↿α : ∀ i → v ∧l α i ≤ 𝓓ᴮ (α i , α∈B i) (s↿α i) .fst
+          v∧α≤𝓓ᴮs↿α i = B↪L .F-hom (isInvMap𝓓ᴮ (α i , α∈B i) (s↿α i)
+                                      .≤𝓓FromInv _ (v∧α≤α i) (s↿α↿v∧αInv i))
+
+          ⋁v∧α≡v : ⋁ (λ i → v ∧l α i) ≡ v
+          ⋁v∧α≡v = sym (⋁Meetrdist v α) ∙∙ cong (v ∧l_) (⋁α≡u) ∙∙ ≤j→≤m _ _ v≤u
+
+
 
         open IsInvSup
         isInvMapAtStage𝓓ᵤ : ∀ s → IsInvSup LPoset 𝓕 _ _ (𝓓ᵤ s)
-        𝓓≤ (isInvMapAtStage𝓓ᵤ s) = bigOpIsMax _ u
+        𝓓≤ (isInvMapAtStage𝓓ᵤ s) = ⋁IsMax _ u
           λ i → is-trans _ _ _
                   (B↪L .F-hom (isInvMap𝓓ᴮ (α i , α∈B i) (𝓕 .F-hom (α≤u i) .fst s) .𝓓≤))
                   (α≤u i)
@@ -223,10 +312,10 @@ module _
           vHelperΣ : Σ[ m ∈ ℕ ] Σ[ β ∈ FinVec L m ] (∀ i → β i ∈ B') × (⋁ β ≡ v)
                    → (v≤u : v ≤ u) → v ≤ 𝓓ᵤ s → 𝓕 .F-hom v≤u .fst s ∈ 𝓕 .F-ob v ˣ
           vHelperΣ (m , β , β∈B , ⋁β≡v) v≤u v≤𝓓ᵤs =
-            invFromRestInv L' 𝓕 isSheaf𝓕 v s↿v β ⋁β≡v s↿v↿βInv
+            invFromRestInv v s↿v β ⋁β≡v s↿v↿βInv
             where
             β≤v : ∀ i → β i ≤ v
-            β≤v i = subst (λ x → β i ≤ x) ⋁β≡v (ind≤bigOp β i)
+            β≤v i = subst (λ x → β i ≤ x) ⋁β≡v (ind≤⋁ β i)
 
             s↿v = 𝓕 .F-hom v≤u .fst s
 
@@ -250,10 +339,10 @@ module _
           vHelperΣ : Σ[ m ∈ ℕ ] Σ[ β ∈ FinVec L m ] (∀ i → β i ∈ B') × (⋁ β ≡ v)
                    → (v≤u : v ≤ u) → 𝓕 .F-hom v≤u .fst s ∈ 𝓕 .F-ob v ˣ → v ≤ 𝓓ᵤ s
           vHelperΣ (m , β , β∈B , ⋁β≡v) v≤u s↿vInv =
-            subst (λ x → x ≤ 𝓓ᵤ s) ⋁β≡v (bigOpIsMax β (𝓓ᵤ s) β≤𝓓ᵤs)
+            subst (λ x → x ≤ 𝓓ᵤ s) ⋁β≡v (⋁IsMax β (𝓓ᵤ s) β≤𝓓ᵤs)
             where
             β≤v : ∀ i → β i ≤ v
-            β≤v i = subst (λ x → β i ≤ x) ⋁β≡v (ind≤bigOp β i)
+            β≤v i = subst (λ x → β i ≤ x) ⋁β≡v (ind≤⋁ β i)
 
             β≤𝓓ᵤs : ∀ i → β i ≤ 𝓓ᵤ s
             β≤𝓓ᵤs i = ≤𝓓FromInvB s (β i , β∈B i) βᵢ≤u (subst (λ x → x ∈ 𝓕 .F-ob (β i) ˣ)

@@ -47,14 +47,10 @@ module _ (R : CommRing ℓ) where
   open ZarLat
   open LocRingedLattice
 
-  -- open IsInvSupport
-  -- Spec𝓓 : InvSupport (ZariskiLattice R) (𝓞 R)
-  -- fst Spec𝓓 = {!!}
-  -- snd Spec𝓓 = {!!}
-
   DLSpec : LocRingedLattice ℓ
   L DLSpec = ZariskiLattice R
   𝓕 DLSpec = 𝓞 R
   isSheaf𝓕 DLSpec = isSheaf𝓞 R
   𝓓 DLSpec = {!!}
-  isInvSupport𝓓 DLSpec = {!!}
+  isSupport𝓓 DLSpec = {!!}
+  isInvMap𝓓 DLSpec = {!!}

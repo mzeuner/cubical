@@ -119,6 +119,9 @@ module _ {ℓ : Level} (P : Poset ℓ ℓ)
            (funExt (λ u → cong fst (isPropInvMapAtStage u (𝓓 u , isInvMap𝓓 u)
                                                           (𝓓' u , isInvMap𝓓' u))))
 
+  InvMapAtStage→InvMap : (∀ u → InvMapAtStage u) → InvMap
+  fst (InvMapAtStage→InvMap invMapAtStage) u = invMapAtStage u .fst
+  snd (InvMapAtStage→InvMap invMapAtStage) u = invMapAtStage u .snd
 
 record LocRingedLattice (ℓ : Level) : Type (ℓ-suc ℓ) where
   field

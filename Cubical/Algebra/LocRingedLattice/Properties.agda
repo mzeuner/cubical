@@ -163,17 +163,18 @@ module _
     LPoset = JoinSemilattice.IndPoset (Lattice→JoinSemilattice (DistLattice→Lattice L'))
     BPoset = MeetSemilattice.IndPoset (Basis→MeetSemilattice L' B' isBasisB)
 
-    B↪L : Functor (PosetCategory BPoset) (PosetCategory LPoset)
-    F-ob B↪L = fst
-    F-hom B↪L {x} {y} x≤y = ≤m→≤j (fst x) (fst y) (cong fst x≤y)
-    F-id B↪L = LPoset .snd .is-prop-valued _ _ _ _
-    F-seq B↪L _ _ = LPoset .snd .is-prop-valued _ _ _ _
+  B↪L : Functor (PosetCategory BPoset) (PosetCategory LPoset)
+  F-ob B↪L = fst
+  F-hom B↪L {x} {y} x≤y = ≤m→≤j (fst x) (fst y) (cong fst x≤y)
+  F-id B↪L = LPoset .snd .is-prop-valued _ _ _ _
+  F-seq B↪L _ _ = LPoset .snd .is-prop-valued _ _ _ _
 
-    𝓕ᴮ = 𝓕 ∘F (B↪L ^opF)
+  private 𝓕ᴮ = 𝓕 ∘F (B↪L ^opF)
 
   module _ (𝓓ᴮ : (u : B) → 𝓕ᴮ .F-ob u .fst → B) (isInvMap𝓓ᴮ : IsInvMap BPoset 𝓕ᴮ 𝓓ᴮ) where
 
-    open IsBasis isBasisB
+    open IsBasis ⦃...⦄
+    private instance _ = isBasisB
     open PosetStr (LPoset .snd) hiding (_≤_ ; is-prop-valued)
 
     InvMapFromBasisStage : (u : L) → InvMapAtStage LPoset 𝓕 u
@@ -358,3 +359,36 @@ module _
 
               s↿v↿βᵢInv : s↿v↿βᵢ ∈ 𝓕 .F-ob (β i) ˣ
               s↿v↿βᵢInv = RingHomRespInv _ ⦃ s↿vInv ⦄
+
+    InvMapFromBasis : InvMap LPoset 𝓕
+    InvMapFromBasis = InvMapAtStage→InvMap _ _ InvMapFromBasisStage
+
+    private 𝓓 = InvMapFromBasis .fst
+    open DistLatticeStr ⦃...⦄
+    private instance _ = L' .snd
+    module _ (pres1𝓓ᴮ : ∀ u →  𝓓ᴮ u (𝓕 .F-ob (u .fst) .snd .CommRingStr.1r) .fst ≡ 1l)
+             (pres0𝓓ᴮ : ∀ u →  𝓓ᴮ u (𝓕 .F-ob (u .fst) .snd .CommRingStr.0r) .fst ≡ 0l)
+             (·≡∧𝓓ᴮ : ∀ u x y → 𝓓ᴮ u (𝓕 .F-ob (u .fst) .snd .CommRingStr._·_ x y) .fst
+                              ≡ 𝓓ᴮ u x .fst ∧l 𝓓ᴮ u y .fst)
+             (+≤∨𝓓ᴮ : ∀ u x y → 𝓓ᴮ u (𝓕 .F-ob (u .fst) .snd .CommRingStr._+_ x y) .fst
+                              ≤ 𝓓ᴮ u x .fst ∨l 𝓓ᴮ u y .fst) where
+
+      open isSupport
+      isSupport𝓓 : ∀ u → isSupport (𝓕 .F-ob u) L' (𝓓 u)
+      isSupport𝓓 u = PT.rec (isPropIsSupport (𝓕 .F-ob u) L' (𝓓 u)) uHelperΣ (⋁Basis u)
+        where
+        uHelperΣ : Σ[ n ∈ ℕ ] Σ[ α ∈ FinVec L n ] (∀ i → α i ∈ B') × (⋁ α ≡ u)
+                 → isSupport (𝓕 .F-ob u) L' (𝓓 u)
+        pres0 (uHelperΣ (n , α , α∈B , ⋁α≡u)) = {!!} ∙ path
+          where
+          open CommRingStr ⦃...⦄
+          private instance _ = (𝓕 .F-ob u .snd)
+          α≤u : ∀ i → α i ≤ u
+          α≤u i = subst (λ x → α i ≤ x) ⋁α≡u (ind≤⋁ α i)
+          path : (⋁ λ i → 𝓓ᴮ (α i , α∈B i) (𝓕 .F-hom (α≤u i) .fst 0r) .fst) ≡ 0l
+          path = {!!}
+          -- 𝓓ᵤ : 𝓕 .F-ob u .fst → L
+          -- 𝓓ᵤ s = ⋁ λ i → 𝓓ᴮ (α i , α∈B i) (𝓕 .F-hom (α≤u i) .fst s) .fst
+        pres1 (uHelperΣ (n , α , α∈B , ⋁α≡u)) = {!!}
+        ·≡∧ (uHelperΣ (n , α , α∈B , ⋁α≡u)) = {!!}
+        +≤∨ (uHelperΣ (n , α , α∈B , ⋁α≡u)) = {!!}

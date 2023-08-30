@@ -15,6 +15,7 @@ open import Cubical.Data.FinData
 
 open import Cubical.HITs.PropositionalTruncation as PT
 
+open import Cubical.Algebra.Ring
 open import Cubical.Algebra.CommRing
 open import Cubical.Algebra.Monoid
 open import Cubical.Algebra.Monoid.BigOp
@@ -152,6 +153,8 @@ module _
   open Join L'
   open Order (DistLattice→Lattice L')
   open PosetStr using (is-prop-valued)
+  open DistLatticeStr ⦃...⦄
+  private instance _ = L' .snd
 
   open Functor
   open RingedLatticeTheory L' 𝓕 isSheaf𝓕
@@ -171,18 +174,30 @@ module _
 
   private 𝓕ᴮ = 𝓕 ∘F (B↪L ^opF)
 
-  module _ (𝓓ᴮ : (u : B) → 𝓕ᴮ .F-ob u .fst → B) (isInvMap𝓓ᴮ : IsInvMap BPoset 𝓕ᴮ 𝓓ᴮ) where
+  module _ (𝓓ᴮ : (u : B) → 𝓕ᴮ .F-ob u .fst → B)
+           (isInvMap𝓓ᴮ : IsInvMap BPoset 𝓕ᴮ 𝓓ᴮ)
+           (pres1𝓓ᴮ : ∀ u →  𝓓ᴮ u (𝓕 .F-ob (u .fst) .snd .CommRingStr.1r) .fst ≡ 1l)
+           (pres0𝓓ᴮ : ∀ u →  𝓓ᴮ u (𝓕 .F-ob (u .fst) .snd .CommRingStr.0r) .fst ≡ 0l)
+           (·≡∧𝓓ᴮ : ∀ u x y → 𝓓ᴮ u (𝓕 .F-ob (u .fst) .snd .CommRingStr._·_ x y) .fst
+                            ≡ 𝓓ᴮ u x .fst ∧l 𝓓ᴮ u y .fst)
+           (+≤∨𝓓ᴮ : ∀ u x y → 𝓓ᴮ u (𝓕 .F-ob (u .fst) .snd .CommRingStr._+_ x y) .fst
+                            ≤ 𝓓ᴮ u x .fst ∨l 𝓓ᴮ u y .fst) where
+
 
     open IsBasis ⦃...⦄
     private instance _ = isBasisB
     open PosetStr (LPoset .snd) hiding (_≤_ ; is-prop-valued)
 
-    InvMapFromBasisStage : (u : L) → InvMapAtStage LPoset 𝓕 u
-    InvMapFromBasisStage u = PT.rec (isPropInvMapAtStage LPoset 𝓕 u) uHelperΣ (⋁Basis u)
+    InvMapFromBasisStage : (u : L) → Σ[ 𝓓 ∈ InvMapAtStage LPoset 𝓕 u ]
+                                       isSupport (𝓕 .F-ob u) L' (𝓓 .fst)
+    InvMapFromBasisStage u = PT.rec (isPropΣ (isPropInvMapAtStage _ _ _)
+                                               λ _ → isPropIsSupport _ _ _)
+                                      uHelperΣ
+                                        (⋁Basis u)
       where
       uHelperΣ : Σ[ n ∈ ℕ ] Σ[ α ∈ FinVec L n ] (∀ i → α i ∈ B') × (⋁ α ≡ u)
-              → InvMapAtStage LPoset 𝓕 u
-      uHelperΣ (n , α , α∈B , ⋁α≡u) = 𝓓ᵤ , isInvMapAtStage𝓓ᵤ
+              → Σ[ 𝓓 ∈ InvMapAtStage LPoset 𝓕 u ] isSupport (𝓕 .F-ob u) L' (𝓓 .fst)
+      uHelperΣ (n , α , α∈B , ⋁α≡u) = (𝓓ᵤ , isInvMapAtStage𝓓ᵤ) , isSupport𝓓ᵤ
         where
         α≤u : ∀ i → α i ≤ u
         α≤u i = subst (λ x → α i ≤ x) ⋁α≡u (ind≤⋁ α i)
@@ -200,7 +215,6 @@ module _
                            (LPoset .snd .is-prop-valued _ _ _ _))
                   (𝓓Inv (isInvMap𝓓ᴮ ((v , v∈B) ∧b (α i , α∈B i)) (s↿v↿v∧α i)))
           where
-          open DistLatticeStr (L' .snd)
           open MeetSemilattice (Basis→MeetSemilattice L' B' isBasisB) renaming (_≤_ to _≤b_) hiding (IndPoset)
           open SemilatticeStr ((Basis→MeetSemilattice L' B' isBasisB) .snd) renaming (_·_ to _∧b_)
           open IsInvSup
@@ -252,7 +266,6 @@ module _
         ≤𝓓FromInvB s (v , v∈B) v≤u s↿vInv =
           subst (λ x → x ≤ 𝓓ᵤ s) ⋁v∧α≡v (≤-⋁Ext _ _ v∧α≤𝓓ᴮs↿α)
           where
-          open DistLatticeStr (L' .snd)
           open MeetSemilattice (Basis→MeetSemilattice L' B' isBasisB) renaming (_≤_ to _≤b_) hiding (IndPoset)
           open SemilatticeStr ((Basis→MeetSemilattice L' B' isBasisB) .snd) renaming (_·_ to _∧b_)
           open IsInvSup
@@ -360,35 +373,50 @@ module _
               s↿v↿βᵢInv : s↿v↿βᵢ ∈ 𝓕 .F-ob (β i) ˣ
               s↿v↿βᵢInv = RingHomRespInv _ ⦃ s↿vInv ⦄
 
-    InvMapFromBasis : InvMap LPoset 𝓕
-    InvMapFromBasis = InvMapAtStage→InvMap _ _ InvMapFromBasisStage
+        open isSupport
+        open IsRingHom
+        open CommRingStr ⦃...⦄
+        private instance _ = (𝓕 .F-ob u .snd)
+        isSupport𝓓ᵤ : isSupport (𝓕 .F-ob u) L' 𝓓ᵤ
+        pres0 isSupport𝓓ᵤ =
+            (⋁ λ i → 𝓓ᴮ (α i , α∈B i) (𝓕 .F-hom (α≤u i) .fst 0r) .fst)
+          ≡⟨ ⋁Ext (λ i → cong (λ s → 𝓓ᴮ (α i , α∈B i) s .fst) (𝓕 .F-hom (α≤u i) .snd .pres0)) ⟩
+            (⋁ λ i → 𝓓ᴮ (α i , α∈B i) (𝓕 .F-ob (α i) .snd .0r) .fst)
+          ≡⟨ ⋁Ext (λ i → pres0𝓓ᴮ (α i , α∈B i)) ⟩
+            (⋁ {n = n} λ _ → 0l)
+          ≡⟨ ⋁0l n ⟩
+            0l ∎
 
-    private 𝓓 = InvMapFromBasis .fst
-    open DistLatticeStr ⦃...⦄
-    private instance _ = L' .snd
-    module _ (pres1𝓓ᴮ : ∀ u →  𝓓ᴮ u (𝓕 .F-ob (u .fst) .snd .CommRingStr.1r) .fst ≡ 1l)
-             (pres0𝓓ᴮ : ∀ u →  𝓓ᴮ u (𝓕 .F-ob (u .fst) .snd .CommRingStr.0r) .fst ≡ 0l)
-             (·≡∧𝓓ᴮ : ∀ u x y → 𝓓ᴮ u (𝓕 .F-ob (u .fst) .snd .CommRingStr._·_ x y) .fst
-                              ≡ 𝓓ᴮ u x .fst ∧l 𝓓ᴮ u y .fst)
-             (+≤∨𝓓ᴮ : ∀ u x y → 𝓓ᴮ u (𝓕 .F-ob (u .fst) .snd .CommRingStr._+_ x y) .fst
-                              ≤ 𝓓ᴮ u x .fst ∨l 𝓓ᴮ u y .fst) where
-
-      open isSupport
-      isSupport𝓓 : ∀ u → isSupport (𝓕 .F-ob u) L' (𝓓 u)
-      isSupport𝓓 u = PT.rec (isPropIsSupport (𝓕 .F-ob u) L' (𝓓 u)) uHelperΣ (⋁Basis u)
-        where
-        uHelperΣ : Σ[ n ∈ ℕ ] Σ[ α ∈ FinVec L n ] (∀ i → α i ∈ B') × (⋁ α ≡ u)
-                 → isSupport (𝓕 .F-ob u) L' (𝓓 u)
-        pres0 (uHelperΣ (n , α , α∈B , ⋁α≡u)) = {!!} ∙ path
+        pres1 isSupport𝓓ᵤ = {!!} -- with (n == 0)
+        -- ... | true = ?
+        -- ... | false = ?
           where
-          open CommRingStr ⦃...⦄
-          private instance _ = (𝓕 .F-ob u .snd)
-          α≤u : ∀ i → α i ≤ u
-          α≤u i = subst (λ x → α i ≤ x) ⋁α≡u (ind≤⋁ α i)
-          path : (⋁ λ i → 𝓓ᴮ (α i , α∈B i) (𝓕 .F-hom (α≤u i) .fst 0r) .fst) ≡ 0l
-          path = {!!}
-          -- 𝓓ᵤ : 𝓕 .F-ob u .fst → L
-          -- 𝓓ᵤ s = ⋁ λ i → 𝓓ᴮ (α i , α∈B i) (𝓕 .F-hom (α≤u i) .fst s) .fst
-        pres1 (uHelperΣ (n , α , α∈B , ⋁α≡u)) = {!!}
-        ·≡∧ (uHelperΣ (n , α , α∈B , ⋁α≡u)) = {!!}
-        +≤∨ (uHelperΣ (n , α , α∈B , ⋁α≡u)) = {!!}
+          path : 𝓓ᵤ 1r ≡ ⋁ {n = n} λ _ → 1l -- 𝓓ᵤ 1 = u!!!!!!!!!!!!!!!
+          path = ⋁Ext (λ i → cong (λ s → 𝓓ᴮ (α i , α∈B i) s .fst) (𝓕 .F-hom (α≤u i) .snd .pres1))
+               ∙ ⋁Ext (λ i → pres1𝓓ᴮ (α i , α∈B i))
+          -- need case distinction:
+          -- if n = 0 ⇒ 1=0 in L
+          -- else: ⋁1l
+
+        ·≡∧ isSupport𝓓ᵤ s t = {!!}
+          --   (⋁ λ i → 𝓓ᴮ (α i , α∈B i) (𝓕 .F-hom (α≤u i) .fst (s · t)) .fst)
+          -- ≡⟨ {!!} ⟩
+          --   (⋁ λ i → 𝓓ᴮ (α i , α∈B i)
+          --                (𝓕 .F-ob (α i) .snd ._·_ (𝓕 .F-hom (α≤u i) .fst s)
+          --                                          (𝓕 .F-hom (α≤u i) .fst t)) .fst)
+          -- ≡⟨ {!!} ⟩
+          --   (⋁ λ i → 𝓓ᴮ (α i , α∈B i) (𝓕 .F-hom (α≤u i) .fst s) .fst
+          --         ∧l 𝓓ᴮ (α i , α∈B i) (𝓕 .F-hom (α≤u i) .fst t) .fst)
+          -- ≡⟨ {!!} ⟩ --this is not a general lemma
+          --   𝓓ᵤ s ∧l 𝓓ᵤ t ∎
+
+        +≤∨ isSupport𝓓ᵤ s t =
+          subst2 (_≤_)
+                 (sym (⋁Ext (λ i → cong (λ x → 𝓓ᴮ (α i , α∈B i) x .fst) (𝓕 .F-hom (α≤u i) .snd .pres+ s t))))
+                 (⋁Split (λ i → 𝓓ᴮ (α i , α∈B i) (𝓕 .F-hom (α≤u i) .fst s) .fst)
+                          (λ i → 𝓓ᴮ (α i , α∈B i) (𝓕 .F-hom (α≤u i) .fst t) .fst))
+                 (≤-⋁Ext _ _ λ i → +≤∨𝓓ᴮ (α i , α∈B i) (𝓕 .F-hom (α≤u i) .fst s) (𝓕 .F-hom (α≤u i) .fst t))
+
+
+    InvMapFromBasis : InvMap LPoset 𝓕
+    InvMapFromBasis = InvMapAtStage→InvMap _ _ λ u → InvMapFromBasisStage u .fst

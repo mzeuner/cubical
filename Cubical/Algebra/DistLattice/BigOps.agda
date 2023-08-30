@@ -100,6 +100,9 @@ module Join (L' : DistLattice ℓ) where
    (λ i → 0lLeftAnnihilates∧l (V zero) i ∨l ⋁ (λ i → (δ j i) ∧l V (suc i)))
    ∙∙ ∨lLid _ ∙∙ ⋁Meet1r n (V ∘ suc) j
 
+ ⋁1l : ∀ n → ⋁ (replicateFinVec (suc n) 1l) ≡ 1l
+ ⋁1l n = 1lLeftAnnihilates∨l _
+
  -- inequalities of big joins
  open JoinSemilattice (Lattice→JoinSemilattice (DistLattice→Lattice L'))
  ind≤⋁ = ind≤bigOp

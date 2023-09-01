@@ -55,48 +55,48 @@ module _ {ℓ : Level} (P : Poset ℓ ℓ)
          (𝓕 : Functor ((PosetCategory P) ^op) (CommRingsCategory {ℓ})) where
 
   open PosetStr (P .snd)
+  open PosetDownset P
 
   -- an invertibility suprema of u ∈ P and a section s ∈ 𝓕(u) is
   -- a maximal element ≤ u where the restriction of s becomes invertible
-  record IsInvSup (u : P .fst) (s : 𝓕 .F-ob u .fst) (𝓓ᵤs : P .fst) : Type ℓ where
+  record IsInvSup (u : P .fst) (s : 𝓕 .F-ob u .fst) (𝓓ᵤs : ↓ u) : Type ℓ where
     field
-      𝓓≤ : 𝓓ᵤs ≤ u
       ≤𝓓ToInv : (v : P .fst) (v≤u : v ≤ u)
-               → v ≤ 𝓓ᵤs → 𝓕 .F-hom v≤u .fst s ∈ (𝓕 .F-ob v) ˣ
+               → v ≤ 𝓓ᵤs .fst → 𝓕 .F-hom v≤u .fst s ∈ (𝓕 .F-ob v) ˣ
       ≤𝓓FromInv : (v : P .fst) (v≤u : v ≤ u)
-                 → 𝓕 .F-hom v≤u .fst s ∈ (𝓕 .F-ob v) ˣ → v ≤ 𝓓ᵤs
+                 → 𝓕 .F-hom v≤u .fst s ∈ (𝓕 .F-ob v) ˣ → v ≤ 𝓓ᵤs .fst
 
-    𝓓Inv : 𝓕 .F-hom 𝓓≤ .fst s ∈ (𝓕 .F-ob (𝓓ᵤs)) ˣ
-    𝓓Inv = ≤𝓓ToInv _ 𝓓≤ (is-refl _)
+    𝓓Inv : 𝓕 .F-hom (𝓓ᵤs .snd) .fst s ∈ (𝓕 .F-ob (𝓓ᵤs .fst)) ˣ
+    𝓓Inv = ≤𝓓ToInv _ (𝓓ᵤs .snd) (is-refl _)
 
   unquoteDecl IsInvSupIsoΣ = declareRecordIsoΣ IsInvSupIsoΣ (quote IsInvSup)
   open IsInvSup
 
   isPropIsInvSup : ∀ u s 𝓓ᵤs → isProp (IsInvSup u s 𝓓ᵤs)
   isPropIsInvSup _ _ _ = isOfHLevelRetractFromIso 1 IsInvSupIsoΣ
-                           (isProp×2 (is-prop-valued _ _)
-                                     (isPropΠ3 (λ _ _ _ → ∈-isProp ((𝓕 .F-ob _) ˣ) _))
-                                     (isPropΠ3 λ _ _ _ → is-prop-valued _ _))
+                           (isProp× (isPropΠ3 (λ _ _ _ → ∈-isProp ((𝓕 .F-ob _) ˣ) _))
+                                    (isPropΠ3 λ _ _ _ → is-prop-valued _ _))
 
   InvSup : (u : P .fst) (s : 𝓕 .F-ob u .fst) → Type ℓ
-  InvSup u s = Σ[ 𝓓ᵤs ∈ P .fst ] IsInvSup u s 𝓓ᵤs
+  InvSup u s = Σ[ 𝓓ᵤs ∈ ↓ u ] IsInvSup u s 𝓓ᵤs
 
   -- invertibility suprema are unique (if they exist)
   isPropInvSup : ∀ u s → isProp (InvSup u s)
-  isPropInvSup _ _ (_ , isInvSup𝓓) (_ , isInvSup𝓓') =
+  isPropInvSup _ _ (𝓓ᵤs , isInvSup𝓓) (𝓓'ᵤs , isInvSup𝓓') =
     Σ≡Prop (isPropIsInvSup _ _)
-           (is-antisym _ _
-             (isInvSup𝓓' .≤𝓓FromInv _ (isInvSup𝓓 .𝓓≤) (𝓓Inv isInvSup𝓓))
-             (isInvSup𝓓 .≤𝓓FromInv _ (isInvSup𝓓' .𝓓≤) (𝓓Inv isInvSup𝓓')))
+     (Σ≡Prop (λ _ → is-prop-valued _ _)
+             (is-antisym _ _
+               (isInvSup𝓓' .≤𝓓FromInv _ (𝓓ᵤs .snd) (𝓓Inv isInvSup𝓓))
+               (isInvSup𝓓 .≤𝓓FromInv _ (𝓓'ᵤs .snd) (𝓓Inv isInvSup𝓓'))))
 
-  IsInvMapAtStage : (u : P .fst) (𝓓ᵤ : 𝓕 .F-ob u .fst → P .fst) → Type ℓ
+  IsInvMapAtStage : (u : P .fst) (𝓓ᵤ : 𝓕 .F-ob u .fst → ↓ u) → Type ℓ
   IsInvMapAtStage u 𝓓ᵤ = ∀ s → IsInvSup u s (𝓓ᵤ s)
 
   isPropIsInvMapAtStage : ∀ u 𝓓ᵤ → isProp (IsInvMapAtStage u 𝓓ᵤ)
   isPropIsInvMapAtStage _ _ = isPropΠ (λ _ →  isPropIsInvSup _ _ _)
 
   InvMapAtStage : (u : P .fst) → Type ℓ
-  InvMapAtStage u = Σ[ 𝓓ᵤ ∈ (𝓕 .F-ob u .fst → P .fst) ] IsInvMapAtStage u 𝓓ᵤ
+  InvMapAtStage u = Σ[ 𝓓ᵤ ∈ (𝓕 .F-ob u .fst → ↓ u) ] IsInvMapAtStage u 𝓓ᵤ
 
   isPropInvMapAtStage : ∀ u → isProp (InvMapAtStage u)
   isPropInvMapAtStage u (𝓓ᵤ , isInvMapAtStageU𝓓ᵤ) (𝓓'ᵤ , isInvMapAtStageU𝓓'ᵤ) =
@@ -104,13 +104,13 @@ module _ {ℓ : Level} (P : Poset ℓ ℓ)
            (funExt (λ s → cong fst (isPropInvSup u s (𝓓ᵤ s , isInvMapAtStageU𝓓ᵤ s)
                                                      (𝓓'ᵤ s , isInvMapAtStageU𝓓'ᵤ s))))
 
-  IsInvMap : (𝓓 : (u : P .fst) → 𝓕 .F-ob u .fst → P .fst) → Type ℓ
+  IsInvMap : (𝓓 : (u : P .fst) → 𝓕 .F-ob u .fst → ↓ u) → Type ℓ
   IsInvMap 𝓓 = ∀ u → IsInvMapAtStage u (𝓓 u)
 
   isPropIsInvMap : ∀ 𝓓 → isProp (IsInvMap 𝓓)
   isPropIsInvMap 𝓓 = isPropΠ (λ _ → isPropIsInvMapAtStage _ _)
 
-  InvMap = Σ[ 𝓓 ∈ ((u : P .fst) → 𝓕 .F-ob u .fst → P .fst) ] IsInvMap 𝓓
+  InvMap = Σ[ 𝓓 ∈ ((u : P .fst) → 𝓕 .F-ob u .fst → ↓ u) ] IsInvMap 𝓓
 
   -- invertibility maps are a property like structure
   isPropInvMap : isProp InvMap
@@ -127,22 +127,21 @@ record LocRingedLattice (ℓ : Level) : Type (ℓ-suc ℓ) where
   field
     L : DistLattice ℓ
 
-
     𝓕 : Functor ((DistLatticeCategory L) ^op) (CommRingsCategory {ℓ})
     isSheaf𝓕 : isDLSheaf L _ 𝓕
 
-    𝓓 : (u : L .fst) → 𝓕 .F-ob u .fst → L .fst
-    isSupport𝓓 : ∀ u → isSupport (𝓕 .F-ob u) L (𝓓 u)
-
   open JoinSemilattice (Lattice→JoinSemilattice (DistLattice→Lattice L))
+  open PosetDownset IndPoset
   field
+    𝓓 : (u : L .fst) → 𝓕 .F-ob u .fst → ↓ u
     isInvMap𝓓 : IsInvMap IndPoset 𝓕 𝓓
+    -- isSupport𝓓 : ∀ u → isSupport (𝓕 .F-ob u) L (𝓓 u)
 
 
-record LocRingedLatticeHom (Y X : LocRingedLattice ℓ) : Type ℓ where
-  open LocRingedLattice
-  field
-    π : DistLatticeHom (Y .L) (X .L)
-    π♯ : NatTrans (Y .𝓕) ((X .𝓕) ∘F ((DistLatticeFunc (Y .L) (X .L) π) ^opF))
-    pres𝓓 : {u : Y .L .fst} (s : Y .𝓕 .F-ob u .fst)
-          → π .fst (Y .𝓓 u s) ≡ X .𝓓 (π .fst u) (π♯ .N-ob u .fst s)
+-- record LocRingedLatticeHom (Y X : LocRingedLattice ℓ) : Type ℓ where
+--   open LocRingedLattice
+--   field
+--     π : DistLatticeHom (Y .L) (X .L)
+--     π♯ : NatTrans (Y .𝓕) ((X .𝓕) ∘F ((DistLatticeFunc (Y .L) (X .L) π) ^opF))
+--     pres𝓓 : {u : Y .L .fst} (s : Y .𝓕 .F-ob u .fst)
+--           → π .fst (Y .𝓓 u s) ≡ X .𝓓 (π .fst u) (π♯ .N-ob u .fst s)

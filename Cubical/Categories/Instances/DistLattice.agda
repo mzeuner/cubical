@@ -15,6 +15,7 @@ open Category
 DistLatticeCategory : ∀ {ℓ} (L : DistLattice ℓ) → Category ℓ ℓ
 DistLatticeCategory L = LatticeCategory (DistLattice→Lattice L)
 
+--only need order preserving!!!!!!!
 open Functor
 DistLatticeFunc : ∀ {ℓ} {ℓ'} (L : DistLattice ℓ) (L' : DistLattice ℓ') (f : DistLatticeHom L L')
                 → Functor (DistLatticeCategory L) (DistLatticeCategory L')

@@ -14,6 +14,7 @@ open import Cubical.Algebra.Semilattice
 open import Cubical.Algebra.Lattice
 open import Cubical.Algebra.DistLattice
 open import Cubical.Algebra.DistLattice.Basis
+open import Cubical.Algebra.DistLattice.DownSet
 
 open import Cubical.Algebra.ZariskiLattice.Base
 open import Cubical.Algebra.ZariskiLattice.UniversalProperty renaming (IsZarMap to isSupport ; isPropIsZarMap to isPropIsSupport)
@@ -50,9 +51,7 @@ module _ (R : CommRing ℓ) where
   open ZarLat
   open ZarLatUniversalProp
   open LocRingedLattice
-
   open Order (DistLattice→Lattice (ZariskiLattice R))
-
   open PosetStr using (is-prop-valued)
 
   private
@@ -61,8 +60,9 @@ module _ (R : CommRing ℓ) where
 
     BOPosetIncl : Functor (PosetCategory BOPoset) (ZariskiCat R)
     BOPosetIncl = B↪L _ _ (basicOpensAreBasis R) _ (isSheaf𝓞 R)
+  open PosetDownset BOPoset
 
-  𝓓ᴮᴼ : (u : BO R) → 𝓞 R .F-ob (u .fst) .fst → BO R
+  𝓓ᴮᴼ : (u : BO R) → 𝓞 R .F-ob (u .fst) .fst → ↓ u
   𝓓ᴮᴼ = {!!}
 
   IsInvMap𝓓ᴮᴼ : IsInvMap BOPoset (𝓞 R ∘F (BOPosetIncl ^opF)) 𝓓ᴮᴼ

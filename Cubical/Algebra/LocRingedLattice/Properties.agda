@@ -201,7 +201,7 @@ module _
       uHelperΣ : Σ[ n ∈ ℕ ] Σ[ α ∈ FinVec L n ] (∀ i → α i ∈ B') × (⋁ α ≡ u)
               → InvMapAtStage LPoset 𝓕 u
 -- Σ[ 𝓓 ∈ InvMapAtStage LPoset 𝓕 u ] isSupport (𝓕 .F-ob u) L' (𝓓 .fst)
-      uHelperΣ (n , α , α∈B , ⋁α≡u) = 𝓓ᵤ , {!!}
+      uHelperΣ (n , α , α∈B , ⋁α≡u) = 𝓓ᵤ , isInvMapAtStage𝓓ᵤ
         where
         α≤u : ∀ i → α i ≤ u
         α≤u i = subst (λ x → α i ≤ x) ⋁α≡u (ind≤⋁ α i)

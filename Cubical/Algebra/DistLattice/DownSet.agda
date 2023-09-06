@@ -23,14 +23,13 @@ private
   variable
     ℓ ℓ' : Level
 
-module _ (L' : DistLattice ℓ) where
+module DistLatticeDownSet (L' : DistLattice ℓ) where
 
   open DistLatticeStr ⦃...⦄
   open PosetStr ⦃...⦄ hiding (is-set)
   open JoinSemilattice (Lattice→JoinSemilattice (DistLattice→Lattice L'))
   open MeetSemilattice (Lattice→MeetSemilattice (DistLattice→Lattice L')) hiding (_≤_ ; IndPoset)
   open LatticeTheory (DistLattice→Lattice L')
-  --open Join L'
   open Order (DistLattice→Lattice L')
   open PosetDownset IndPoset
 

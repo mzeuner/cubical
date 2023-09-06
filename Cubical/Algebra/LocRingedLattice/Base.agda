@@ -21,6 +21,7 @@ open import Cubical.Algebra.CommRing
 open import Cubical.Algebra.Semilattice
 open import Cubical.Algebra.Lattice
 open import Cubical.Algebra.DistLattice
+open import Cubical.Algebra.DistLattice.DownSet
 
 open import Cubical.Algebra.ZariskiLattice.UniversalProperty renaming (IsZarMap to isSupport ; isPropIsZarMap to isPropIsSupport)
 
@@ -132,16 +133,17 @@ record LocRingedLattice (ℓ : Level) : Type (ℓ-suc ℓ) where
 
   open JoinSemilattice (Lattice→JoinSemilattice (DistLattice→Lattice L))
   open PosetDownset IndPoset
+  open DistLatticeDownSet L
   field
     𝓓 : (u : L .fst) → 𝓕 .F-ob u .fst → ↓ u
     isInvMap𝓓 : IsInvMap IndPoset 𝓕 𝓓
-    -- isSupport𝓓 : ∀ u → isSupport (𝓕 .F-ob u) L (𝓓 u)
+    isSupport𝓓 : ∀ u → isSupport (𝓕 .F-ob u) (↓ᴰᴸ u) (𝓓 u)
 
 
--- record LocRingedLatticeHom (Y X : LocRingedLattice ℓ) : Type ℓ where
---   open LocRingedLattice
---   field
---     π : DistLatticeHom (Y .L) (X .L)
---     π♯ : NatTrans (Y .𝓕) ((X .𝓕) ∘F ((DistLatticeFunc (Y .L) (X .L) π) ^opF))
---     pres𝓓 : {u : Y .L .fst} (s : Y .𝓕 .F-ob u .fst)
---           → π .fst (Y .𝓓 u s) ≡ X .𝓓 (π .fst u) (π♯ .N-ob u .fst s)
+record LocRingedLatticeHom (Y X : LocRingedLattice ℓ) : Type ℓ where
+  open LocRingedLattice
+  field
+    π : DistLatticeHom (Y .L) (X .L)
+    π♯ : NatTrans (Y .𝓕) ((X .𝓕) ∘F ((DistLatticeFunc (Y .L) (X .L) π) ^opF))
+    pres𝓓 : {u : Y .L .fst} (s : Y .𝓕 .F-ob u .fst)
+          → π .fst (Y .𝓓 u s .fst) ≡ X .𝓓 (π .fst u) (π♯ .N-ob u .fst s) .fst

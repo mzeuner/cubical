@@ -27,7 +27,7 @@ open import Cubical.Algebra.DistLattice
 open import Cubical.Algebra.DistLattice.BigOps
 open import Cubical.Algebra.DistLattice.Basis
 
-open import Cubical.Algebra.ZariskiLattice.UniversalProperty renaming (IsZarMap to isSupport ; isPropIsZarMap to isPropIsSupport)
+open import Cubical.Algebra.ZariskiLattice.UniversalProperty
 
 open import Cubical.Categories.Category.Base
 open import Cubical.Categories.Functor

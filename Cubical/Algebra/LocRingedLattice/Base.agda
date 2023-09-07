@@ -23,7 +23,7 @@ open import Cubical.Algebra.Lattice
 open import Cubical.Algebra.DistLattice
 open import Cubical.Algebra.DistLattice.DownSet
 
-open import Cubical.Algebra.ZariskiLattice.UniversalProperty renaming (IsZarMap to isSupport ; isPropIsZarMap to isPropIsSupport)
+open import Cubical.Algebra.ZariskiLattice.UniversalProperty
 
 open import Cubical.Categories.Category.Base
 open import Cubical.Categories.Functor
@@ -137,7 +137,7 @@ record LocRingedLattice (ℓ : Level) : Type (ℓ-suc ℓ) where
   field
     𝓓 : (u : L .fst) → 𝓕 .F-ob u .fst → ↓ u
     isInvMap𝓓 : IsInvMap IndPoset 𝓕 𝓓
-    isSupport𝓓 : ∀ u → isSupport (𝓕 .F-ob u) (↓ᴰᴸ u) (𝓓 u)
+    isSupport𝓓 : ∀ u → IsSupport (𝓕 .F-ob u) (↓ᴰᴸ u) (𝓓 u)
 
 
 record LocRingedLatticeHom (Y X : LocRingedLattice ℓ) : Type ℓ where

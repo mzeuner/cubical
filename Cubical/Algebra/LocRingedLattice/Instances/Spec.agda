@@ -10,6 +10,7 @@ open import Cubical.Foundations.HLevels
 open import Cubical.Data.Sigma
 
 open import Cubical.Algebra.CommRing
+open import Cubical.Algebra.CommRing.Localisation
 open import Cubical.Algebra.Semilattice
 open import Cubical.Algebra.Lattice
 open import Cubical.Algebra.DistLattice
@@ -17,7 +18,7 @@ open import Cubical.Algebra.DistLattice.Basis
 open import Cubical.Algebra.DistLattice.DownSet
 
 open import Cubical.Algebra.ZariskiLattice.Base
-open import Cubical.Algebra.ZariskiLattice.UniversalProperty renaming (IsZarMap to isSupport ; isPropIsZarMap to isPropIsSupport)
+open import Cubical.Algebra.ZariskiLattice.UniversalProperty
 open import Cubical.Algebra.ZariskiLattice.StructureSheaf
 
 open import Cubical.Categories.Category.Base
@@ -38,6 +39,9 @@ open import Cubical.Relation.Binary.Poset
 open import Cubical.Algebra.LocRingedLattice.Base
 open import Cubical.Algebra.LocRingedLattice.Properties
 
+open import Cubical.HITs.SetQuotients as SQ
+open import Cubical.HITs.PropositionalTruncation as PT
+
 open Iso
 open Functor
 open NatTrans
@@ -49,10 +53,11 @@ private
 
 module _ (R : CommRing ℓ) where
   open ZarLat
-  open ZarLatUniversalProp
+  open ZarLatUniversalProp R
   open LocRingedLattice
   open Order (DistLattice→Lattice (ZariskiLattice R))
   open PosetStr using (is-prop-valued)
+  open InvertingElementsBase R
 
   private
     BOPoset = MeetSemilattice.IndPoset
@@ -60,21 +65,28 @@ module _ (R : CommRing ℓ) where
 
     BOPosetIncl : Functor (PosetCategory BOPoset) (ZariskiCat R)
     BOPosetIncl = B↪L _ _ (basicOpensAreBasis R) _ (isSheaf𝓞 R)
+
+    Dᴮᴼ : R .fst → BO R
+    Dᴮᴼ f = D f , ∣ f , refl ∣₁
+
   open PosetDownset BOPoset
 
-  𝓓ᴮᴼ : (u : BO R) → 𝓞 R .F-ob (u .fst) .fst → ↓ u
-  𝓓ᴮᴼ = {!!}
+  𝓓base : (f : R .fst) → R[1/ f ] → ↓ (Dᴮᴼ f)
+  𝓓base = {!!} -- s.t. this is a InvSup ,but how to state with posets and presheaves?
 
-  IsInvMap𝓓ᴮᴼ : IsInvMap BOPoset (𝓞 R ∘F (BOPosetIncl ^opF)) 𝓓ᴮᴼ
-  IsInvMap𝓓ᴮᴼ = {!!}
+  -- 𝓓ᴮᴼ : (u : BO R) → 𝓞 R .F-ob (u .fst) .fst → ↓ u
+  -- 𝓓ᴮᴼ = {!!}
+
+  BOInvMap : InvMap BOPoset (𝓞 R ∘F (BOPosetIncl ^opF))
+  BOInvMap = {!!}
 
   ZLInvMap : InvMap _ (𝓞 R)
-  ZLInvMap = InvMapFromBasis _ _ (basicOpensAreBasis R) _ (isSheaf𝓞 R) 𝓓ᴮᴼ IsInvMap𝓓ᴮᴼ
+  ZLInvMap = InvMapFromBasis _ _ (basicOpensAreBasis R) _ (isSheaf𝓞 R) (BOInvMap .fst) (BOInvMap .snd)
 
   DLSpec : LocRingedLattice ℓ
   L DLSpec = ZariskiLattice R
   𝓕 DLSpec = 𝓞 R
   isSheaf𝓕 DLSpec = isSheaf𝓞 R
   𝓓 DLSpec = ZLInvMap .fst
-  isSupport𝓓 DLSpec = {!!}
   isInvMap𝓓 DLSpec = ZLInvMap .snd
+  isSupport𝓓 DLSpec = {!!}

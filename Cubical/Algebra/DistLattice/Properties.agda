@@ -29,6 +29,17 @@ private
   variable
     ℓ ℓ' ℓ'' : Level
 
+
+
+module _ {L : DistLattice ℓ} {L' : DistLattice ℓ'} (φ : DistLatticeHom L L') where
+  open JoinSemilattice (Lattice→JoinSemilattice (DistLattice→Lattice L))
+  open JoinSemilattice (Lattice→JoinSemilattice (DistLattice→Lattice L')) renaming (_≤_ to _≤'_)
+
+  pres≤ : ∀ {u v : L .fst} → v ≤ u → φ .fst v ≤' φ .fst u
+  pres≤ v≤u = sym (φ .snd .IsLatticeHom.pres∨l _ _) ∙ cong (φ .fst) v≤u
+
+
+
 module _ where
   open LatticeHoms
 

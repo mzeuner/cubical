@@ -27,6 +27,7 @@ open import Cubical.Algebra.Semilattice
 open import Cubical.Algebra.Lattice
 open import Cubical.Algebra.DistLattice
 open import Cubical.Algebra.DistLattice.BigOps
+open import Cubical.Algebra.RingedLattice
 open import Cubical.Algebra.ZariskiLattice.Base
 open import Cubical.Algebra.ZariskiLattice.UniversalProperty
 
@@ -36,6 +37,7 @@ open import Cubical.Categories.Instances.Sets
 open import Cubical.Categories.Instances.CommRings
 open import Cubical.Categories.Instances.DistLattice
 open import Cubical.Categories.Instances.DistLattices
+open import Cubical.Categories.Instances.RingedLattices
 open import Cubical.Categories.Instances.Functors
 open import Cubical.Categories.NaturalTransformation
 open import Cubical.Categories.Yoneda
@@ -448,3 +450,19 @@ module _ {ℓ : Level} where
     F-hom 𝓞 U≥V = Γ .F-hom (compOpenIncl U≥V)
     F-id 𝓞 = cong (Γ .F-hom) compOpenInclId ∙ Γ .F-id
     F-seq 𝓞 _ _ = cong (Γ .F-hom) (compOpenInclSeq _ _) ∙ Γ .F-seq _ _
+
+  -- budling everything as the geometric realization functor
+  open RingedLattice
+  open RingedLatticeHom
+  geoRealization : Functor (ℤFUNCTOR {ℓ = ℓ}) (RingedLatticesCategory {ℓ = ℓ-suc ℓ} ^op)
+  L (F-ob geoRealization X) = F-ob CompOpenDistLattice X
+  𝓕 (F-ob geoRealization X) = 𝓞 X
+  isSheaf𝓕 (F-ob geoRealization X) = {!!} -- is this gonna be hard?
+
+  π (F-hom geoRealization α) = F-hom CompOpenDistLattice α
+  fst (π♯ (F-hom geoRealization α) U) β = {!!}
+  snd (π♯ (F-hom geoRealization α) U) = {!!}
+  isNatπ♯ (F-hom geoRealization α) = {!!}
+
+  F-id geoRealization = {!!}
+  F-seq geoRealization = {!!}

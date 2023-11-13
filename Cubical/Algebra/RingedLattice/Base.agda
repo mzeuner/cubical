@@ -42,6 +42,7 @@ record RingedLatticeHom (Y : RingedLattice ℓ) (X : RingedLattice ℓ') : Type 
     isNatπ♯ : ∀ (u v : Y .L .fst) (u≥v : v ≤ u)
             → π♯ v ∘cr (Y .𝓕 .F-hom u≥v) ≡ (X .𝓕 .F-hom (pres≤ π u≥v)) ∘cr π♯ u
 
+
 unquoteDecl RingedLatticeHomIsoΣ = declareRecordIsoΣ RingedLatticeHomIsoΣ (quote RingedLatticeHom)
 
 isSetRingedLatticeHom : (Y : RingedLattice ℓ) (X : RingedLattice ℓ') → isSet (RingedLatticeHom Y X)
@@ -49,3 +50,20 @@ isSetRingedLatticeHom _ _ = isOfHLevelRetractFromIso 2 RingedLatticeHomIsoΣ
                               (isSetΣ (isSetLatticeHom _ _)
                                 λ _ → isSetΣSndProp (isSetΠ (λ _ → isSetRingHom _ _))
                                   λ _ → isPropΠ3 (λ _ _ _ → isSetRingHom _ _ _ _))
+
+
+open RingedLattice
+open RingedLatticeHom
+
+RingedLatticeHom≡ : {Y : RingedLattice ℓ} {X : RingedLattice ℓ'} (f g : RingedLatticeHom Y X)
+  → (p : f .π ≡ g .π)
+  → (q : ∀ (u : Y .L .fst)
+       → PathP (λ i → CommRingHom (Y .𝓕 .F-ob u) (X .𝓕 .F-ob (p i .fst u)))
+               (f .π♯ u) (g .π♯ u))
+  → f ≡ g
+π (RingedLatticeHom≡ f g p q i) = p i
+π♯ (RingedLatticeHom≡ f g p q i) u = q u i
+isNatπ♯ (RingedLatticeHom≡ {Y = Y} {X = X} f g p q i) u v u≥v =
+  isProp→PathP
+    {B = λ i → q v i ∘cr Y .𝓕 .F-hom u≥v ≡ X .𝓕 .F-hom (pres≤ (p i) u≥v) ∘cr q u i}
+    (λ _ → isSetRingHom _ _ _ _) (f .isNatπ♯ u v u≥v) (g .isNatπ♯ u v u≥v) i
